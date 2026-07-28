@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.sp
 import com.rtiqa.mobile.domain.model.QuizQuestion
 import com.rtiqa.mobile.ui.viewmodel.QuizUiState
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.mobile.R
+
 @Composable
 fun QuizScreen(
     uiState: QuizUiState,
@@ -82,7 +85,7 @@ fun QuizScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = if (isArabic) "اكتمل التقييم بنجاح! 🎉" else "Assessment Completed! 🎉",
+                    text = stringResource(R.string.quiz_completed_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -90,8 +93,7 @@ fun QuizScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = if (isArabic) "ربحت ${uiState.xpEarned} نقطة XP و ${uiState.coinsEarned} عملة رتقاء" 
-                           else "You earned +${uiState.xpEarned} XP and +${uiState.coinsEarned} Rtiqa Coins!",
+                    text = stringResource(R.string.quiz_rewards_earned, uiState.xpEarned, uiState.coinsEarned),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
@@ -109,7 +111,7 @@ fun QuizScreen(
                         .testTag("claim_rewards_button"),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text(if (isArabic) "إعادة التقييم أو المطالبة" else "Claim Rewards & Retry")
+                    Text(stringResource(R.string.claim_rewards))
                 }
             }
         } else {
@@ -120,8 +122,7 @@ fun QuizScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isArabic) "السؤال ${uiState.currentQuestionIndex + 1} من ${uiState.quiz.questions.size}"
-                           else "Question ${uiState.currentQuestionIndex + 1} of ${uiState.quiz.questions.size}",
+                    text = stringResource(R.string.question_progress, uiState.currentQuestionIndex + 1, uiState.quiz.questions.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -155,7 +156,7 @@ fun QuizScreen(
                         Column {
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "💡 Hint: ${if (isArabic) question.hintAr else question.hint}",
+                                text = "${stringResource(R.string.hint)}: ${if (isArabic) question.hintAr else question.hint}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.tertiary,
                                 fontWeight = FontWeight.SemiBold
@@ -226,7 +227,7 @@ fun QuizScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = if (uiState.isCorrect) " Correct! +${question.xpReward} XP" else " Incorrect",
+                            text = if (uiState.isCorrect) stringResource(R.string.correct_feedback, question.xpReward) else stringResource(R.string.incorrect_feedback),
                             color = Color.White,
                             fontWeight = FontWeight.Bold
                         )
@@ -252,7 +253,7 @@ fun QuizScreen(
                         .testTag("quiz_submit_button"),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text(if (isArabic) "تأكيد الإجابة" else "Submit Answer")
+                    Text(stringResource(R.string.submit_answer))
                 }
             } else {
                 Button(
@@ -262,7 +263,7 @@ fun QuizScreen(
                         .testTag("quiz_next_button"),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text(if (isArabic) "السؤال التالي ➔" else "Next Question ➔")
+                    Text(stringResource(R.string.next_question))
                 }
             }
 

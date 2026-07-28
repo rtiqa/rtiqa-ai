@@ -31,11 +31,11 @@ fun HomeStreakCardFoundation(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Daily Streak",
+                text = "التتابع اليومي",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)
             )
-            RdsBadge(text = "$streakDays Days", type = RdsBadgeType.SUCCESS)
+            RdsBadge(text = "$streakDays يوم", type = RdsBadgeType.SUCCESS)
             Spacer(modifier = Modifier.width(8.dp))
             RdsBadge(text = "$xpPoints XP", type = RdsBadgeType.AI)
         }

@@ -51,6 +51,9 @@ import com.rtiqa.core.ui.button.RdsPrimaryButton
 import com.rtiqa.core.ui.button.RdsTextButton
 import com.rtiqa.core.ui.input.RdsTextField
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.feature.auth.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
@@ -80,12 +83,12 @@ fun LoginScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (isArabic) "تسجيل الدخول" else "Login") },
+                title = { Text(stringResource(R.string.login)) },
                 navigationIcon = {
                     IconButton(onClick = onBack, modifier = Modifier.testTag("login_back_button")) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -136,7 +139,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = if (isArabic) "مرحباً بعودتك" else "Welcome Back",
+                    text = stringResource(R.string.welcome_back),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 26.sp
@@ -148,7 +151,7 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = if (isArabic) "أدخل بياناتك للمتابعة والوصول إلى دوراتك" else "Enter your credentials to access your courses",
+                    text = stringResource(R.string.login_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -170,7 +173,7 @@ fun LoginScreen(
                         RdsTextField(
                             value = uiState.email,
                             onValueChange = { viewModel.onAction(LoginUiAction.EmailChanged(it)) },
-                            label = if (isArabic) "البريد الإلكتروني" else "Email Address",
+                            label = stringResource(R.string.email),
                             placeholder = "user@example.com",
                             leadingIcon = Icons.Default.Email,
                             isError = uiState.emailError != null,
@@ -183,7 +186,7 @@ fun LoginScreen(
                         RdsTextField(
                             value = uiState.password,
                             onValueChange = { viewModel.onAction(LoginUiAction.PasswordChanged(it)) },
-                            label = if (isArabic) "كلمة المرور" else "Password",
+                            label = stringResource(R.string.password),
                             leadingIcon = Icons.Default.Lock,
                             visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             isError = uiState.passwordError != null,
@@ -209,7 +212,7 @@ fun LoginScreen(
                             horizontalArrangement = Arrangement.End
                         ) {
                             RdsTextButton(
-                                text = if (isArabic) "نسيت كلمة المرور؟" else "Forgot password?",
+                                text = stringResource(R.string.forgot_password_question),
                                 onClick = onNavigateToForgotPassword,
                                 testTag = "login_forgot_password_button"
                             )
@@ -218,7 +221,7 @@ fun LoginScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         RdsPrimaryButton(
-                            text = if (isArabic) "تسجيل الدخول" else "Login",
+                            text = stringResource(R.string.login),
                             onClick = { viewModel.onAction(LoginUiAction.SubmitLogin) },
                             isLoading = uiState.isLoading,
                             modifier = Modifier.fillMaxWidth(),
@@ -235,12 +238,12 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (isArabic) "ليس لديك حساب؟" else "Don't have an account?",
+                        text = stringResource(R.string.no_account_question),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     RdsTextButton(
-                        text = if (isArabic) "إنشاء حساب" else "Register",
+                        text = stringResource(R.string.register_now),
                         onClick = onNavigateToRegister,
                         testTag = "login_register_link"
                     )

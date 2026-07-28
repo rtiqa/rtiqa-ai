@@ -10,7 +10,7 @@ data class UserProfile(
     val level: Int = 5,
     val streakDays: Int = 12,
     val currentGoal: String = "Master AI Neural Networks in 30 Days",
-    val language: String = "en", // "en" or "ar"
+    val language: String = "ar", // "ar" or "en"
     val isOfflineAutoSyncEnabled: Boolean = true,
     val isDarkMode: Boolean = true
 )

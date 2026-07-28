@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rtiqa.mobile.R
 import com.rtiqa.mobile.domain.model.UserProfile
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun ProfileScreen(
@@ -105,16 +106,16 @@ fun ProfileScreen(
                         horizontalArrangement = Arrangement.SpaceAround
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("XP", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.xp), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text("${userProfile.xp}", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Coins", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.coins), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text("${userProfile.coins}", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = MaterialTheme.colorScheme.tertiary)
                         }
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Level", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text("Lvl ${userProfile.level}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text(stringResource(R.string.level), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${userProfile.level}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
                     }
                 }
@@ -124,7 +125,7 @@ fun ProfileScreen(
 
             // Verified Certificate Section
             Text(
-                text = if (isArabic) "الشهادات المعتمدة من رتقاء" else "Verified Certificates",
+                text = stringResource(R.string.certificates_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -189,7 +190,7 @@ fun ProfileScreen(
 
             // Achievements List
             Text(
-                text = if (isArabic) "الإنجازات والأوسمة" else "Achievements & Badges",
+                text = stringResource(R.string.achievements_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )

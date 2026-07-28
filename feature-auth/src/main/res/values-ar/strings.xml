@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_title">ارتق بمهاراتك مع رتقاء</string>
+    <string name="welcome_subtitle">منصتك التفاعلية للتعلم الذكي المستمر والتطوير الشخصي بالذكاء الاصطناعي وبدون اتصال بالإنترنت</string>
+    <string name="create_account">إنشاء حساب جديد</string>
+    <string name="login">تسجيل الدخول</string>
+    <string name="continue_as_guest">التصفح كزائر</string>
+    <string name="welcome_back">مرحباً بعودتك</string>
+    <string name="login_subtitle">سجل دخولك لمتابعة رحلة التعلم الذكي</string>
+    <string name="email">البريد الإلكتروني</string>
+    <string name="password">كلمة المرور</string>
+    <string name="forgot_password_question">نسيت كلمة المرور؟</string>
+    <string name="no_account_question">ليس لديك حساب؟</string>
+    <string name="register_now">سجل الآن</string>
+    <string name="full_name">الاسم الكامل</string>
+    <string name="confirm_password">تأكيد كلمة المرور</string>
+    <string name="already_have_account">لديك حساب بالفعل؟</string>
+    <string name="reset_password">استعادة كلمة المرور</string>
+    <string name="reset_password_instruction">أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور</string>
+    <string name="send_reset_link">إرسال رابط التعيين</string>
+    <string name="back">رجوع</string>
+</resources>

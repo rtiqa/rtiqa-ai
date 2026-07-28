@@ -25,6 +25,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.mobile.R
+
 @Composable
 fun OfflineModeBanner(
     isOnline: Boolean,
@@ -54,8 +57,7 @@ fun OfflineModeBanner(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (isArabic) "وضع رتقاء المستقل ينشط حالياً - جميع المحتويات محفوظة محلياً" 
-                           else "Smart Offline Active — All features remain 100% accessible locally",
+                    text = stringResource(R.string.offline_banner_text),
                     color = Color.White,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium

@@ -1,3 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App Details -->
     <string name="app_name">Rtiqa</string>
+    <string name="app_slogan">Smart Learning &amp; Skill Advancement Platform</string>
+    <string name="back">Back</string>
+    <string name="see_all">See All</string>
+    <string name="rating">Rating</string>
+    <string name="duration">Duration</string>
+    <string name="level">Level</string>
+    <string name="xp">XP</string>
+    <string name="coins">Coins</string>
+    <string name="streak">Streak Days</string>
+    <string name="mins">mins</string>
+    <string name="lessons">lessons</string>
+
+    <!-- Auth & Splash -->
+    <string name="welcome_title">Elevate Your Skills with Rtiqa</string>
+    <string name="welcome_subtitle">Smart platform combining AI courses, interactive learning, and offline/online assessments</string>
+    <string name="create_account">Create Account</string>
+    <string name="login">Login</string>
+    <string name="continue_as_guest">Continue as Guest</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="login_subtitle">Sign in to continue your smart learning journey</string>
+    <string name="email">Email Address</string>
+    <string name="password">Password</string>
+    <string name="forgot_password_question">Forgot Password?</string>
+    <string name="no_account_question">Don\'t have an account?</string>
+    <string name="register_now">Register Now</string>
+    <string name="full_name">Full Name</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="already_have_account">Already have an account?</string>
+    <string name="reset_password">Reset Password</string>
+    <string name="reset_password_instruction">Enter your email address and we\'ll send you a password reset link</string>
+    <string name="send_reset_link">Send Reset Link</string>
+
+    <!-- Home Screen -->
+    <string name="welcome_user">Welcome back, %1$s</string>
+    <string name="user_level_subtitle">Level %1$d • Rtiqa Learner</string>
+    <string name="ai_tutor_banner_title">Rtiqa AI Learning Engine</string>
+    <string name="ai_tutor_banner_desc">Ask AI Tutor anything &amp; master any subject offline</string>
+    <string name="quick_action_ai_tutor">AI Tutor</string>
+    <string name="quick_action_quiz">Quiz Hub</string>
+    <string name="quick_action_downloads">Offline</string>
+    <string name="quick_action_catalog">Catalog</string>
+    <string name="section_continue_recommended">Continue &amp; Recommended Courses</string>
+
+    <!-- Courses Catalog Screen -->
+    <string name="courses_title">Course Catalog &amp; Learning Paths</string>
+    <string name="search_placeholder">Search courses, topics, AI...</string>
+    <string name="category_all">All</string>
+    <string name="category_ai">AI &amp; ML</string>
+    <string name="category_programming">Programming</string>
+    <string name="category_design">Design</string>
+    <string name="category_business">Business</string>
+
+    <!-- Course Detail Screen -->
+    <string name="syllabus_lessons">Syllabus &amp; Lessons (%1$d)</string>
+    <string name="course_quiz_button">Course Quiz</string>
+    <string name="lesson_duration_format">%1$d mins • Video &amp; Text</string>
+
+    <!-- Lesson Player Screen -->
+    <string name="playing_stream_offline">Playing Stream (Offline Mode Active)</string>
+    <string name="tap_to_play">Tap to Play High-Res Audio/Video</string>
+    <string name="mark_complete">Mark Complete</string>
+    <string name="completed_check">Completed ✓</string>
+    <string name="ai_summary">AI Summary</string>
+    <string name="lesson_content_title">Lesson Transcript &amp; Notes</string>
+
+    <!-- Quiz Screen -->
+    <string name="quiz_completed_title">Assessment Completed! 🎉</string>
+    <string name="quiz_rewards_earned">You earned +%1$d XP and +%2$d Rtiqa Coins!</string>
+    <string name="claim_rewards">Claim Rewards &amp; Retry</string>
+    <string name="question_progress">Question %1$d of %2$d</string>
+    <string name="hint">Hint</string>
+    <string name="submit_answer">Submit Answer</string>
+    <string name="next_question">Next Question ➔</string>
+    <string name="correct_feedback">Correct! +%1$d XP</string>
+    <string name="incorrect_feedback">Incorrect</string>
+
+    <!-- AI Tutor Screen -->
+    <string name="ai_tutor_title">Rtiqa AI Tutor Hub</string>
+    <string name="ai_tutor_subtitle">Gemini 3.5 Flash &amp; Offline Synthesizer</string>
+    <string name="ask_ai_placeholder">Ask AI Tutor anything...</string>
+    <string name="suggestion_1">Explain Perceptrons in 3 simple points</string>
+    <string name="suggestion_2">How does Backpropagation calculate gradients?</string>
+    <string name="suggestion_3">Create a 5-step Study Plan for AI &amp; Math</string>
+
+    <!-- Downloads Screen -->
+    <string name="downloads_title">Offline Storage &amp; Downloads</string>
+    <string name="storage_used">Rtiqa Offline Storage Used: 142 MB</string>
+    <string name="downloaded_lessons_count">Downloaded Lessons (%1$d)</string>
+    <string name="available_offline_text">Available 100%% Offline • %1$d min</string>
+
+    <!-- Profile Screen -->
+    <string name="certificates_title">Verified Certificates</string>
+    <string name="accredited_cert">RTIQA ACCREDITED CERTIFICATE</string>
+    <string name="cert_ai_title">Artificial Intelligence &amp; Neural Networks</string>
+    <string name="cert_issued_to">Issued to: %1$s • Code: RTIQA-2026-X92</string>
+    <string name="achievements_title">Achievements &amp; Badges</string>
+    <string name="achievement_ai_pioneer">AI Pioneer</string>
+    <string name="achievement_ai_pioneer_desc">Complete 5 AI lessons offline</string>
+    <string name="achievement_consistent">Consistent Scholar</string>
+    <string name="achievement_consistent_desc">Maintain a 12-day study streak</string>
+    <string name="achievement_quiz_master">Master Quizzer</string>
+    <string name="achievement_quiz_master_desc">Score 100%% on 3 assessments</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_title">Settings &amp; System</string>
+    <string name="app_language">App Language / اللغة</string>
+    <string name="arabic_default">Arabic (Default)</string>
+    <string name="english_selected">English</string>
+    <string name="dark_theme">Dark Theme</string>
+    <string name="dark_theme_desc">High contrast dark canvas</string>
+    <string name="offline_auto_sync">Offline Auto-Sync</string>
+    <string name="auto_sync_desc">Background sync when internet restores</string>
+    <string name="gemini_status_title">Gemini API Status</string>
+    <string name="gemini_live">Live Gemini API Active</string>
+    <string name="gemini_offline">Defaulting to Smart Offline AI Engine</string>
+    <string name="network_status_title">Network State</string>
+    <string name="network_online">Cloud Connected</string>
+    <string name="network_offline">Smart Offline Mode</string>
+
+    <!-- Navigation & Banner -->
+    <string name="nav_home">Home</string>
+    <string name="nav_courses">Courses</string>
+    <string name="nav_ai_tutor">AI Tutor</string>
+    <string name="nav_quiz">Quiz</string>
+    <string name="nav_downloads">Offline</string>
+    <string name="nav_profile">Profile</string>
+    <string name="offline_banner_text">Smart Offline Active — All features remain 100%% accessible locally</string>
 </resources>

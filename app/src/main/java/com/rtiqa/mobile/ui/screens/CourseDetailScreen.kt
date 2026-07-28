@@ -50,6 +50,8 @@ import com.rtiqa.mobile.R
 import com.rtiqa.mobile.domain.model.Course
 import com.rtiqa.mobile.domain.model.Lesson
 
+import androidx.compose.ui.res.stringResource
+
 @Composable
 fun CourseDetailScreen(
     course: Course?,
@@ -84,7 +86,7 @@ fun CourseDetailScreen(
                     onClick = onBack,
                     modifier = Modifier.testTag("course_detail_back_button")
                 ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -137,15 +139,15 @@ fun CourseDetailScreen(
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Rating", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.rating), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("★ ${course.rating}", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Duration", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("${course.durationMinutes}m", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(stringResource(R.string.duration), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("${course.durationMinutes}${stringResource(R.string.mins)}", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Level", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.level), fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(course.level, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
@@ -159,7 +161,7 @@ fun CourseDetailScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isArabic) "دروس المنهج الدراسي (${lessons.size})" else "Syllabus & Lessons (${lessons.size})",
+                    text = stringResource(R.string.syllabus_lessons, lessons.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -171,7 +173,7 @@ fun CourseDetailScreen(
                 ) {
                     Icon(Icons.Default.Quiz, contentDescription = "Quiz", modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(if (isArabic) "التقييم" else "Course Quiz")
+                    Text(stringResource(R.string.course_quiz_button))
                 }
             }
 
@@ -210,7 +212,7 @@ fun CourseDetailScreen(
                             fontSize = 14.sp
                         )
                         Text(
-                            text = "${lesson.durationMinutes} mins • Video & Text",
+                            text = stringResource(R.string.lesson_duration_format, lesson.durationMinutes),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

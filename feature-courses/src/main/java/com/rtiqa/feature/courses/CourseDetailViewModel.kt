@@ -65,7 +65,7 @@ class CourseDetailViewModel(
                     course = course,
                     lessons = lessons,
                     isLoading = false,
-                    errorMessage = if (course == null) "Course not found" else null
+                    errorMessage = if (course == null) "لم يتم العثور على الدورة" else null
                 )
             }
         }.launchIn(viewModelScope)
@@ -77,13 +77,13 @@ class CourseDetailViewModel(
         viewModelScope.launch {
             when (val result = downloadCourseUseCase(id)) {
                 is com.rtiqa.core.domain.result.RtiqaResult.Success -> {
-                    sendEvent(CourseDetailUiEvent.ShowToast("Offline download started successfully!"))
+                    sendEvent(CourseDetailUiEvent.ShowToast("بدأ التحميل للعمل بدون إنترنت بنجاح!"))
                 }
                 is com.rtiqa.core.domain.result.RtiqaResult.Error -> {
                     sendEvent(CourseDetailUiEvent.ShowToast(result.error.message))
                 }
                 is com.rtiqa.core.domain.result.RtiqaResult.Loading -> {
-                    sendEvent(CourseDetailUiEvent.ShowToast("Download initializing..."))
+                    sendEvent(CourseDetailUiEvent.ShowToast("جاري تهيئة التحميل..."))
                 }
             }
         }

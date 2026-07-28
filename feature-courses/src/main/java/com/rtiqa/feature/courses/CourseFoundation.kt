@@ -41,7 +41,7 @@ fun CourseItemFoundation(
                     modifier = Modifier.weight(1f)
                 )
                 if (course.isDownloaded) {
-                    RdsBadge(text = "Offline", type = RdsBadgeType.OFFLINE)
+                    RdsBadge(text = "بدون إنترنت", type = RdsBadgeType.OFFLINE)
                 }
             }
             Spacer(modifier = Modifier.height(4.dp))

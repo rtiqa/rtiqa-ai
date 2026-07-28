@@ -45,6 +45,9 @@ import androidx.compose.ui.unit.sp
 import com.rtiqa.core.ui.button.RdsPrimaryButton
 import com.rtiqa.core.ui.input.RdsTextField
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.feature.auth.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(
@@ -70,12 +73,12 @@ fun ForgotPasswordScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (isArabic) "استعادة كلمة المرور" else "Reset Password") },
+                title = { Text(stringResource(R.string.reset_password)) },
                 navigationIcon = {
                     IconButton(onClick = onBack, modifier = Modifier.testTag("forgot_password_back_button")) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -126,7 +129,7 @@ fun ForgotPasswordScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = if (isArabic) "نسيت كلمة المرور؟" else "Forgot Your Password?",
+                    text = stringResource(R.string.forgot_password_question),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp
@@ -138,7 +141,7 @@ fun ForgotPasswordScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = if (isArabic) "أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور" else "Enter your email address and we'll send you a password reset link",
+                    text = stringResource(R.string.reset_password_instruction),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -160,7 +163,7 @@ fun ForgotPasswordScreen(
                         RdsTextField(
                             value = uiState.email,
                             onValueChange = { viewModel.onAction(LoginUiAction.EmailChanged(it)) },
-                            label = if (isArabic) "البريد الإلكتروني" else "Email Address",
+                            label = stringResource(R.string.email),
                             placeholder = "user@example.com",
                             leadingIcon = Icons.Default.Email,
                             isError = uiState.emailError != null,
@@ -182,7 +185,7 @@ fun ForgotPasswordScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         RdsPrimaryButton(
-                            text = if (isArabic) "إرسال رابط التعيين" else "Send Reset Link",
+                            text = stringResource(R.string.send_reset_link),
                             onClick = { viewModel.onAction(LoginUiAction.RequestPasswordReset) },
                             isLoading = uiState.isLoading,
                             modifier = Modifier.fillMaxWidth(),

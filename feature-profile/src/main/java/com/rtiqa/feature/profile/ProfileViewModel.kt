@@ -78,7 +78,7 @@ class ProfileViewModel(
             when (val result = updateUserProfileUseCase(updated)) {
                 is RtiqaResult.Success -> {
                     setState { copy(isEditing = false, isLoading = false) }
-                    sendEvent(ProfileUiEvent.ShowToast("Profile updated!"))
+                    sendEvent(ProfileUiEvent.ShowToast("تم تحديث الملف الشخصي!"))
                 }
                 is RtiqaResult.Error -> {
                     setState { copy(isLoading = false, errorMessage = result.error.message) }

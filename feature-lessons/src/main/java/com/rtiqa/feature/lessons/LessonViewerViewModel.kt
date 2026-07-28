@@ -67,7 +67,7 @@ class LessonViewerViewModel(
             when (val result = completeLessonUseCase(lId, cId)) {
                 is RtiqaResult.Success -> {
                     setState { copy(isCompleted = true, isLoading = false) }
-                    sendEvent(LessonViewerUiEvent.ShowToast("Lesson Completed! +25 XP Earned 🎉"))
+                    sendEvent(LessonViewerUiEvent.ShowToast("تم إكمال الدرس! كسبت +25 XP 🎉"))
                 }
                 is RtiqaResult.Error -> {
                     setState { copy(isLoading = false, errorMessage = result.error.message) }

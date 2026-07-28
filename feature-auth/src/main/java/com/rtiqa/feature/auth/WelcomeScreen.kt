@@ -32,6 +32,9 @@ import com.rtiqa.core.ui.button.RdsOutlinedButton
 import com.rtiqa.core.ui.button.RdsPrimaryButton
 import com.rtiqa.core.ui.button.RdsTextButton
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.feature.auth.R
+
 @Composable
 fun WelcomeScreen(
     onNavigateToLogin: () -> Unit,
@@ -88,7 +91,7 @@ fun WelcomeScreen(
                     Spacer(modifier = Modifier.height(28.dp))
 
                     Text(
-                        text = "مرحباً بك في رتقاء",
+                        text = stringResource(R.string.welcome_title),
                         style = MaterialTheme.typography.headlineLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 30.sp
@@ -100,7 +103,7 @@ fun WelcomeScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "منصتك التفاعلية للتعلم الذكي المستمر والتطوير الشخصي بالذكاء الاصطناعي وبدون اتصال بالإنترنت",
+                        text = stringResource(R.string.welcome_subtitle),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -114,7 +117,7 @@ fun WelcomeScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     RdsPrimaryButton(
-                        text = "تسجيل الدخول",
+                        text = stringResource(R.string.login),
                         onClick = onNavigateToLogin,
                         leadingIcon = Icons.Default.Lock,
                         modifier = Modifier.fillMaxWidth(),
@@ -124,7 +127,7 @@ fun WelcomeScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     RdsOutlinedButton(
-                        text = "إنشاء حساب جديد",
+                        text = stringResource(R.string.create_account),
                         onClick = onNavigateToRegister,
                         leadingIcon = Icons.Default.AccountCircle,
                         modifier = Modifier.fillMaxWidth(),
@@ -134,7 +137,7 @@ fun WelcomeScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     RdsTextButton(
-                        text = "التصفح كزائر",
+                        text = stringResource(R.string.continue_as_guest),
                         onClick = onContinueAsGuest,
                         modifier = Modifier.fillMaxWidth(),
                         testTag = "welcome_guest_button"

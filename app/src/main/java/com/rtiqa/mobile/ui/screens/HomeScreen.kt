@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,7 +65,7 @@ fun HomeScreen(
     onToggleBookmark: (String, Boolean) -> Unit,
     onToggleDownload: (String, Boolean) -> Unit,
     onToggleLanguage: () -> Unit,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -100,12 +101,12 @@ fun HomeScreen(
 
                     Column {
                         Text(
-                            text = if (isArabic) "مرحباً بك، ${userProfile.name}" else "Welcome back, ${userProfile.name}",
+                            text = stringResource(R.string.welcome_user, userProfile.name),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (isArabic) "المستوى ${userProfile.level} • متعلم رتقاء" else "Level ${userProfile.level} • Rtiqa Learner",
+                            text = stringResource(R.string.user_level_subtitle, userProfile.level),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -193,7 +194,7 @@ fun HomeScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isArabic) "المعلم الذكي المباشر" else "Rtiqa AI Learning Engine",
+                                text = stringResource(R.string.ai_tutor_banner_title),
                                 color = Color(0xFF38BDF8),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
@@ -203,7 +204,7 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            text = if (isArabic) "اسأل معلم الذكاء الاصطناعي أي سؤال تعليمي في أي وقت" else "Ask AI Tutor anything & master any subject offline",
+                            text = stringResource(R.string.ai_tutor_banner_desc),
                             color = Color.White,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
@@ -221,25 +222,25 @@ fun HomeScreen(
             ) {
                 QuickActionItem(
                     icon = Icons.Default.AutoAwesome,
-                    label = if (isArabic) "المعلم الذكي" else "AI Tutor",
+                    label = stringResource(R.string.quick_action_ai_tutor),
                     bgColor = Color(0xFF312E81),
                     onClick = { onNavigate("ai_tutor") }
                 )
                 QuickActionItem(
                     icon = Icons.Default.Quiz,
-                    label = if (isArabic) "التقييمات" else "Quiz Hub",
+                    label = stringResource(R.string.quick_action_quiz),
                     bgColor = Color(0xFF831843),
                     onClick = { onNavigate("quiz") }
                 )
                 QuickActionItem(
                     icon = Icons.Default.Download,
-                    label = if (isArabic) "المحفوظات" else "Offline",
+                    label = stringResource(R.string.quick_action_downloads),
                     bgColor = Color(0xFF065F46),
                     onClick = { onNavigate("downloads") }
                 )
                 QuickActionItem(
                     icon = Icons.Default.MenuBook,
-                    label = if (isArabic) "الدورات" else "Catalog",
+                    label = stringResource(R.string.quick_action_catalog),
                     bgColor = Color(0xFF1E3A8A),
                     onClick = { onNavigate("courses") }
                 )
@@ -254,13 +255,13 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isArabic) "متابعة التعلم والدورات المقترحة" else "Continue & Recommended Courses",
+                    text = stringResource(R.string.section_continue_recommended),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
-                    text = if (isArabic) "عرض الكل" else "See All",
+                    text = stringResource(R.string.see_all),
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,

@@ -100,13 +100,13 @@ class CoursesListViewModel(
         viewModelScope.launch {
             when (val result = downloadCourseUseCase(courseId)) {
                 is com.rtiqa.core.domain.result.RtiqaResult.Success -> {
-                    sendEvent(CoursesListUiEvent.ShowMessage("Course package download started!"))
+                    sendEvent(CoursesListUiEvent.ShowMessage("بدأ تحميل حزمة الدورة بنجاح!"))
                 }
                 is com.rtiqa.core.domain.result.RtiqaResult.Error -> {
                     sendEvent(CoursesListUiEvent.ShowMessage(result.error.message))
                 }
                 is com.rtiqa.core.domain.result.RtiqaResult.Loading -> {
-                    sendEvent(CoursesListUiEvent.ShowMessage("Download initializing..."))
+                    sendEvent(CoursesListUiEvent.ShowMessage("جاري بدء التحميل..."))
                 }
             }
         }

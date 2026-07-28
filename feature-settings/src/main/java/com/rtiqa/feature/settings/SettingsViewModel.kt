@@ -49,7 +49,7 @@ class SettingsViewModel(
             when (val result = syncOfflineDataUseCase()) {
                 is RtiqaResult.Success -> {
                     setState { copy(isSyncing = false) }
-                    sendEvent(SettingsUiEvent.ShowToast("Data synchronization complete!"))
+                    sendEvent(SettingsUiEvent.ShowToast("تمت مزامنة البيانات بنجاح!"))
                 }
                 is RtiqaResult.Error -> {
                     setState { copy(isSyncing = false, errorMessage = result.error.message) }

@@ -36,6 +36,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,7 +50,7 @@ fun CourseCard(
     onClick: () -> Unit,
     onToggleBookmark: () -> Unit,
     onToggleDownload: () -> Unit,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -151,7 +152,7 @@ fun CourseCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "${(course.progressPercent * 100).toInt()}%",
+                            text = if (isArabic) "%${(course.progressPercent * 100).toInt()}" else "${(course.progressPercent * 100).toInt()}%",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
@@ -179,8 +180,9 @@ fun CourseCard(
                             fontSize = 12.sp
                         )
                         Spacer(modifier = Modifier.width(12.dp))
+
                         Text(
-                            text = "${course.durationMinutes} min • ${course.totalLessons} lessons",
+                            text = "${course.durationMinutes} ${stringResource(R.string.mins)} • ${course.totalLessons} ${stringResource(R.string.lessons)}",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

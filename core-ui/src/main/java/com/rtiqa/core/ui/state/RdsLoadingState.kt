@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun RdsLoadingState(
     modifier: Modifier = Modifier,
-    message: String? = "Loading...",
+    message: String? = "جاري التحميل...",
     testTag: String = "rds_loading_state"
 ) {
     Box(

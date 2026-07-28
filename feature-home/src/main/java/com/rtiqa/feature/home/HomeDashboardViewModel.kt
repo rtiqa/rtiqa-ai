@@ -80,7 +80,7 @@ class HomeDashboardViewModel(
         viewModelScope.launch {
             val result = updateUserStreakUseCase()
             if (result is com.rtiqa.core.domain.result.RtiqaResult.Success) {
-                sendEvent(HomeDashboardUiEvent.ShowNotification("Streak updated! Keep learning! 🔥"))
+                sendEvent(HomeDashboardUiEvent.ShowNotification("تم تحديث التتابع اليومي! واصل التعلم! 🔥"))
             }
         }
     }

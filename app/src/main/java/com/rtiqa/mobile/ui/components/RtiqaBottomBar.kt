@@ -36,13 +36,17 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-sealed class NavItem(val route: String, val title: String, val titleAr: String, val icon: ImageVector) {
-    object Home : NavItem("home", "Home", "الرئيسية", Icons.Default.Home)
-    object Courses : NavItem("courses", "Courses", "الدورات", Icons.Default.MenuBook)
-    object AiTutor : NavItem("ai_tutor", "AI Tutor", "المعلم الذكي", Icons.Default.AutoAwesome)
-    object Quiz : NavItem("quiz", "Quiz", "التقييم", Icons.Default.Quiz)
-    object Downloads : NavItem("downloads", "Offline", "المحفوظات", Icons.Default.Download)
-    object Profile : NavItem("profile", "Profile", "الملف", Icons.Default.Person)
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.mobile.R
+
+sealed class NavItem(val route: String, @StringRes val titleRes: Int, val icon: ImageVector) {
+    object Home : NavItem("home", R.string.nav_home, Icons.Default.Home)
+    object Courses : NavItem("courses", R.string.nav_courses, Icons.Default.MenuBook)
+    object AiTutor : NavItem("ai_tutor", R.string.nav_ai_tutor, Icons.Default.AutoAwesome)
+    object Quiz : NavItem("quiz", R.string.nav_quiz, Icons.Default.Quiz)
+    object Downloads : NavItem("downloads", R.string.nav_downloads, Icons.Default.Download)
+    object Profile : NavItem("profile", R.string.nav_profile, Icons.Default.Person)
 }
 
 @Composable
@@ -99,7 +103,7 @@ fun RtiqaBottomBar(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = item.icon,
-                                contentDescription = item.title,
+                                contentDescription = stringResource(item.titleRes),
                                 tint = animatedContentColor,
                                 modifier = Modifier.size(22.dp)
                             )

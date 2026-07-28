@@ -52,6 +52,9 @@ import com.rtiqa.core.ui.button.RdsPrimaryButton
 import com.rtiqa.core.ui.button.RdsTextButton
 import com.rtiqa.core.ui.input.RdsTextField
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.feature.auth.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
@@ -80,12 +83,12 @@ fun RegisterScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(if (isArabic) "إنشاء حساب جديد" else "Create Account") },
+                title = { Text(stringResource(R.string.create_account)) },
                 navigationIcon = {
                     IconButton(onClick = onBack, modifier = Modifier.testTag("register_back_button")) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -136,7 +139,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Text(
-                    text = if (isArabic) "انضم إلى منصة رتقاء" else "Join Rtiqa Platform",
+                    text = stringResource(R.string.create_account),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 26.sp
@@ -148,7 +151,7 @@ fun RegisterScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = if (isArabic) "أنشئ حسابك لبدء رحلة التعلم الذكي التفاعلي" else "Create your account to start your interactive learning journey",
+                    text = stringResource(R.string.welcome_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -170,8 +173,8 @@ fun RegisterScreen(
                         RdsTextField(
                             value = uiState.name,
                             onValueChange = { viewModel.onAction(RegisterUiAction.NameChanged(it)) },
-                            label = if (isArabic) "الاسم الكامل" else "Full Name",
-                            placeholder = if (isArabic) "مثال: أحمد علي" else "e.g. John Doe",
+                            label = stringResource(R.string.full_name),
+                            placeholder = "مثال: أحمد علي",
                             leadingIcon = Icons.Default.Person,
                             testTag = "register_name_input"
                         )
@@ -181,7 +184,7 @@ fun RegisterScreen(
                         RdsTextField(
                             value = uiState.email,
                             onValueChange = { viewModel.onAction(RegisterUiAction.EmailChanged(it)) },
-                            label = if (isArabic) "البريد الإلكتروني" else "Email Address",
+                            label = stringResource(R.string.email),
                             placeholder = "user@example.com",
                             leadingIcon = Icons.Default.Email,
                             testTag = "register_email_input"
@@ -192,7 +195,7 @@ fun RegisterScreen(
                         RdsTextField(
                             value = uiState.password,
                             onValueChange = { viewModel.onAction(RegisterUiAction.PasswordChanged(it)) },
-                            label = if (isArabic) "كلمة المرور" else "Password",
+                            label = stringResource(R.string.password),
                             leadingIcon = Icons.Default.Lock,
                             visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             testTag = "register_password_input"
@@ -212,7 +215,7 @@ fun RegisterScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         RdsPrimaryButton(
-                            text = if (isArabic) "إنشاء الحساب" else "Create Account",
+                            text = stringResource(R.string.create_account),
                             onClick = { viewModel.onAction(RegisterUiAction.SubmitRegister) },
                             isLoading = uiState.isLoading,
                             modifier = Modifier.fillMaxWidth(),
@@ -229,12 +232,12 @@ fun RegisterScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = if (isArabic) "لديك حساب بالفعل؟" else "Already have an account?",
+                        text = stringResource(R.string.already_have_account),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     RdsTextButton(
-                        text = if (isArabic) "تسجيل الدخول" else "Login",
+                        text = stringResource(R.string.login),
                         onClick = onNavigateToLogin,
                         testTag = "register_login_link"
                     )

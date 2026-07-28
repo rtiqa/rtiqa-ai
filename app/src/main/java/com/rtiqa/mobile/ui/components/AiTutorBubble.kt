@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.sp
 import com.rtiqa.mobile.R
 import com.rtiqa.mobile.ui.viewmodel.ChatMessage
 
+import androidx.compose.ui.res.stringResource
+
 @Composable
 fun AiTutorBubble(
     message: ChatMessage,
@@ -75,7 +77,7 @@ fun AiTutorBubble(
             Column(modifier = Modifier.padding(14.dp)) {
                 if (!isUser) {
                     Text(
-                        text = "Rtiqa AI Tutor",
+                        text = stringResource(R.string.ai_tutor_title),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary

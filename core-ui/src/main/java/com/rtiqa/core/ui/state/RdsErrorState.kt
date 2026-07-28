@@ -45,7 +45,7 @@ fun RdsErrorState(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Something went wrong",
+                text = "حدث خطأ ما",
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -59,7 +59,7 @@ fun RdsErrorState(
             if (onRetryClick != null) {
                 Spacer(modifier = Modifier.height(24.dp))
                 RdsPrimaryButton(
-                    text = "Try Again",
+                    text = "إعادة المحاولة",
                     onClick = onRetryClick
                 )
             }

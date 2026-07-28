@@ -70,7 +70,7 @@ class QuizPlayViewModel(
                         quiz = quiz,
                         totalQuestions = quiz?.questions?.size ?: 0,
                         isLoading = false,
-                        errorMessage = if (quiz == null) "Quiz not found for this course" else null
+                        errorMessage = if (quiz == null) "لم يتم العثور على تقييم لهذه الدورة" else null
                     )
                 }
             }

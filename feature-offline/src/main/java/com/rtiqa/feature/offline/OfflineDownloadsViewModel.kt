@@ -73,7 +73,7 @@ class OfflineDownloadsViewModel(
             when (val result = syncOfflineDataUseCase()) {
                 is RtiqaResult.Success -> {
                     setState { copy(isSyncing = false) }
-                    sendEvent(OfflineDownloadsUiEvent.ShowToast("Offline synchronization complete!"))
+                    sendEvent(OfflineDownloadsUiEvent.ShowToast("تمت المزامنة بدون إنترنت بنجاح!"))
                 }
                 is RtiqaResult.Error -> {
                     setState { copy(isSyncing = false, errorMessage = result.error.message) }

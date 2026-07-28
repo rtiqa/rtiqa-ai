@@ -34,6 +34,9 @@ import androidx.compose.ui.unit.sp
 import com.rtiqa.mobile.BuildConfig
 import com.rtiqa.mobile.domain.model.UserProfile
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.mobile.R
+
 @Composable
 fun SettingsScreen(
     userProfile: UserProfile,
@@ -67,13 +70,13 @@ fun SettingsScreen(
                 onClick = onBack,
                 modifier = Modifier.testTag("settings_back_button")
             ) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
             }
 
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
-                text = if (isArabic) "الإعدادات والخيارات" else "Settings & System",
+                text = stringResource(R.string.settings_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -99,8 +102,8 @@ fun SettingsScreen(
                     Icon(Icons.Default.Language, contentDescription = "Language", tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("App Language / اللغة", fontWeight = FontWeight.Bold)
-                        Text(if (isArabic) "العربية (الافتراضية)" else "English (Selected)", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.app_language), fontWeight = FontWeight.Bold)
+                        Text(if (isArabic) stringResource(R.string.arabic_default) else stringResource(R.string.english_selected), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -130,8 +133,8 @@ fun SettingsScreen(
                     Icon(Icons.Default.DarkMode, contentDescription = "Theme", tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text("Dark Theme", fontWeight = FontWeight.Bold)
-                        Text("High contrast dark canvas", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.dark_theme), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.dark_theme_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -161,8 +164,8 @@ fun SettingsScreen(
                     Icon(Icons.Default.CloudSync, contentDescription = "Sync", tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text(if (isArabic) "مزامنة تلقائية في الخلفية" else "Offline Auto-Sync", fontWeight = FontWeight.Bold)
-                        Text(if (isArabic) "مزامنة التقدم عند العثور على اتصال" else "Background sync when internet restores", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.offline_auto_sync), fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.auto_sync_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -191,9 +194,9 @@ fun SettingsScreen(
                 Icon(Icons.Default.Key, contentDescription = "API Key", tint = MaterialTheme.colorScheme.tertiary)
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text("Gemini API Status", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.gemini_status_title), fontWeight = FontWeight.Bold)
                     Text(
-                        text = if (apiKeyPresent) "Live Gemini API Active" else "Defaulting to Smart Offline AI Engine",
+                        text = if (apiKeyPresent) stringResource(R.string.gemini_live) else stringResource(R.string.gemini_offline),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -216,9 +219,9 @@ fun SettingsScreen(
                 Icon(Icons.Default.Wifi, contentDescription = "Network", tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text("Network State", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.network_status_title), fontWeight = FontWeight.Bold)
                     Text(
-                        text = if (isOnline) "Cloud Connected" else "Smart Offline Mode",
+                        text = if (isOnline) stringResource(R.string.network_online) else stringResource(R.string.network_offline),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

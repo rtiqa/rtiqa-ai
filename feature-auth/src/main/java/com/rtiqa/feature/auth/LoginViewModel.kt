@@ -76,7 +76,7 @@ class LoginViewModel(
             when (val result = loginUseCase(currentState.email, currentState.password)) {
                 is RtiqaResult.Success -> {
                     setState { copy(isLoading = false) }
-                    sendEvent(LoginUiEvent.ShowMessage("Welcome back, ${result.data.name}!"))
+                    sendEvent(LoginUiEvent.ShowMessage("مرحباً بك مجدداً، ${result.data.name}!"))
                     sendEvent(LoginUiEvent.NavigateToHome)
                 }
                 is RtiqaResult.Error -> {
@@ -93,7 +93,7 @@ class LoginViewModel(
 
     private fun requestPasswordReset() {
         if (currentState.email.isBlank()) {
-            setState { copy(emailError = "Please enter your email to reset password.") }
+            setState { copy(emailError = "يرجى إدخال البريد الإلكتروني لإعادة تعيين كلمة المرور.") }
             return
         }
 
@@ -104,7 +104,7 @@ class LoginViewModel(
                 when (val result = useCase(currentState.email)) {
                     is RtiqaResult.Success -> {
                         setState { copy(isLoading = false) }
-                        sendEvent(LoginUiEvent.ShowMessage("Password reset email sent to ${currentState.email}"))
+                        sendEvent(LoginUiEvent.ShowMessage("تم إرسال رابط إعادة تعيين كلمة المرور إلى ${currentState.email}"))
                     }
                     is RtiqaResult.Error -> {
                         val msg = result.error.message
@@ -117,7 +117,7 @@ class LoginViewModel(
                 }
             } else {
                 setState { copy(isLoading = false) }
-                sendEvent(LoginUiEvent.ShowMessage("Password reset request submitted for ${currentState.email}"))
+                sendEvent(LoginUiEvent.ShowMessage("تم تقديم طلب إعادة تعيين كلمة المرور لـ ${currentState.email}"))
             }
         }
     }

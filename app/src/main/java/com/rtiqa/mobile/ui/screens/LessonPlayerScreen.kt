@@ -43,6 +43,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rtiqa.mobile.domain.model.Lesson
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.mobile.R
+
 @Composable
 fun LessonPlayerScreen(
     lesson: Lesson?,
@@ -72,7 +75,7 @@ fun LessonPlayerScreen(
                 onClick = onBack,
                 modifier = Modifier.testTag("lesson_player_back_button")
             ) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -118,7 +121,7 @@ fun LessonPlayerScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = if (isPlaying) "Playing Stream (Offline Mode Active)" else "Tap to Play High-Res Audio/Video",
+                        text = if (isPlaying) stringResource(R.string.playing_stream_offline) else stringResource(R.string.tap_to_play),
                         color = Color.White,
                         fontSize = 12.sp
                     )
@@ -146,9 +149,9 @@ fun LessonPlayerScreen(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     if (lesson.isCompleted) 
-                        (if (isArabic) "مكتمل ✓" else "Completed ✓") 
+                        stringResource(R.string.completed_check)
                     else 
-                        (if (isArabic) "إكمال الدرس" else "Mark Complete")
+                        stringResource(R.string.mark_complete)
                 )
             }
 
@@ -166,14 +169,14 @@ fun LessonPlayerScreen(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(if (isArabic) "ملخص ذكي" else "AI Summary")
+                Text(stringResource(R.string.ai_summary))
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = if (isArabic) "المحتوى التعليمي والنصوص" else "Lesson Transcript & Notes",
+            text = stringResource(R.string.lesson_content_title),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold
         )

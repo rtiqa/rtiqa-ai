@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.sp
 import com.rtiqa.mobile.domain.model.Course
 import com.rtiqa.mobile.domain.model.Lesson
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.mobile.R
+
 @Composable
 fun DownloadsScreen(
     downloadedCourses: List<Course>,
@@ -54,12 +57,12 @@ fun DownloadsScreen(
         ) {
             Column {
                 Text(
-                    text = if (isArabic) "المحفوظات والتعلم بدون إنترنت" else "Offline Storage & Downloads",
+                    text = stringResource(R.string.downloads_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = if (isArabic) "مساحة التخزين المستقلة المستخدمة: 142 MB" else "Rtiqa Offline Storage Used: 142 MB",
+                    text = stringResource(R.string.storage_used),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -77,7 +80,7 @@ fun DownloadsScreen(
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             item {
                 Text(
-                    text = if (isArabic) "الدروس المحفوظة محلياً (${downloadedLessons.size})" else "Downloaded Lessons (${downloadedLessons.size})",
+                    text = stringResource(R.string.downloaded_lessons_count, downloadedLessons.size),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -112,7 +115,7 @@ fun DownloadsScreen(
                                 fontSize = 14.sp
                             )
                             Text(
-                                text = "Available 100% Offline • ${lesson.durationMinutes} min",
+                                text = stringResource(R.string.available_offline_text, lesson.durationMinutes),
                                 fontSize = 12.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

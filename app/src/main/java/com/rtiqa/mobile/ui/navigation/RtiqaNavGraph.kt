@@ -1,5 +1,8 @@
 package com.rtiqa.mobile.ui.navigation
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -70,8 +73,10 @@ fun RtiqaApp(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: "home"
     val isArabic = userProfile.language == "ar"
+    val layoutDirection = if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr
 
-    Scaffold(
+    CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+        Scaffold(
         topBar = {
             OfflineModeBanner(isOnline = isOnline, isArabic = isArabic)
         },
@@ -302,4 +307,5 @@ fun RtiqaApp(
             }
         }
     }
+}
 }

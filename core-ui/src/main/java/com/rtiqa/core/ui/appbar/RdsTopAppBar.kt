@@ -39,7 +39,7 @@ fun RdsTopAppBar(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = RdsIcons.Back,
-                        contentDescription = "Back"
+                        contentDescription = "رجوع"
                     )
                 }
             }

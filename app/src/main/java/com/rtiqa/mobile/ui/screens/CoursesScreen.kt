@@ -29,6 +29,9 @@ import com.rtiqa.mobile.domain.model.Course
 import com.rtiqa.mobile.domain.model.CourseCategory
 import com.rtiqa.mobile.ui.components.CourseCard
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.mobile.R
+
 @Composable
 fun CoursesScreen(
     courses: List<Course>,
@@ -50,7 +53,7 @@ fun CoursesScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = if (isArabic) "دليل الدورات والمسارات التعليمية" else "Course Catalog & Learning Paths",
+            text = stringResource(R.string.courses_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
@@ -61,7 +64,7 @@ fun CoursesScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
-            placeholder = { Text(if (isArabic) "بحث في المقررات والمواضيع..." else "Search courses, topics, AI...") },
+            placeholder = { Text(stringResource(R.string.search_placeholder)) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
             modifier = Modifier
                 .fillMaxWidth()

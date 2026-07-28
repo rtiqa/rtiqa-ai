@@ -42,7 +42,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleLanguage() {
         viewModelScope.launch {
             val current = userProfile.value.language
-            val newLang = if (current == "en") "ar" else "en"
+            val newLang = if (current == "ar") "en" else "ar"
             userRepository.updateLanguage(newLang)
         }
     }

@@ -22,8 +22,8 @@ fun RdsAlertDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
-    confirmText: String = "Confirm",
-    dismissText: String = "Cancel",
+    confirmText: String = "تأكيد",
+    dismissText: String = "إلغاء",
     icon: ImageVector? = null,
     testTag: String = "rds_alert_dialog"
 ) {

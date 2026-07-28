@@ -37,6 +37,9 @@ import androidx.compose.ui.unit.sp
 import com.rtiqa.mobile.ui.components.AiTutorBubble
 import com.rtiqa.mobile.ui.viewmodel.ChatMessage
 
+import androidx.compose.ui.res.stringResource
+import com.rtiqa.mobile.R
+
 @Composable
 fun AiTutorScreen(
     messages: List<ChatMessage>,
@@ -91,12 +94,12 @@ fun AiTutorScreen(
 
             Column {
                 Text(
-                    text = if (isArabic) "المعلم الذكي - رتقاء" else "Rtiqa AI Tutor Hub",
+                    text = stringResource(R.string.ai_tutor_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = if (isArabic) "محرك الذكاء الاصطناعي التفاعلي (المزدوج أوفلاين/أونلاين)" else "Gemini 3.5 Flash & Offline Synthesizer",
+                    text = stringResource(R.string.ai_tutor_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -155,7 +158,7 @@ fun AiTutorScreen(
             OutlinedTextField(
                 value = inputText,
                 onValueChange = onInputTextChange,
-                placeholder = { Text(if (isArabic) "اسأل المعلم الذكي..." else "Ask AI Tutor anything...") },
+                placeholder = { Text(stringResource(R.string.ask_ai_placeholder)) },
                 modifier = Modifier
                     .weight(1f)
                     .testTag("ai_chat_input"),
