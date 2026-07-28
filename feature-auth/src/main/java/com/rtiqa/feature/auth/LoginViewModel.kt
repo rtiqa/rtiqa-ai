@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.domain.usecase.LoginUseCase
 import com.rtiqa.core.domain.usecase.ObserveUserSessionUseCase
+import com.rtiqa.core.domain.usecase.ResetPasswordUseCase
 import com.rtiqa.core.ui.base.BaseViewModel
 import com.rtiqa.core.ui.base.ViewUiAction
 import com.rtiqa.core.ui.base.ViewUiEvent
@@ -26,6 +27,7 @@ sealed interface LoginUiAction : ViewUiAction {
     data class EmailChanged(val email: String) : LoginUiAction
     data class PasswordChanged(val password: String) : LoginUiAction
     object SubmitLogin : LoginUiAction
+    object RequestPasswordReset : LoginUiAction
     object ClearError : LoginUiAction
 }
 
@@ -36,7 +38,8 @@ sealed interface LoginUiEvent : ViewUiEvent {
 
 class LoginViewModel(
     private val loginUseCase: LoginUseCase,
-    private val observeUserSessionUseCase: ObserveUserSessionUseCase
+    private val observeUserSessionUseCase: ObserveUserSessionUseCase,
+    private val resetPasswordUseCase: ResetPasswordUseCase? = null
 ) : BaseViewModel<LoginUiState, LoginUiAction, LoginUiEvent>(LoginUiState()) {
 
     init {
@@ -58,6 +61,7 @@ class LoginViewModel(
                 setState { copy(password = action.password, passwordError = null, errorMessage = null) }
             }
             is LoginUiAction.SubmitLogin -> submitLogin()
+            is LoginUiAction.RequestPasswordReset -> requestPasswordReset()
             is LoginUiAction.ClearError -> {
                 setState { copy(errorMessage = null, emailError = null, passwordError = null) }
             }
@@ -83,6 +87,37 @@ class LoginViewModel(
                 is RtiqaResult.Loading -> {
                     setState { copy(isLoading = true) }
                 }
+            }
+        }
+    }
+
+    private fun requestPasswordReset() {
+        if (currentState.email.isBlank()) {
+            setState { copy(emailError = "Please enter your email to reset password.") }
+            return
+        }
+
+        setState { copy(isLoading = true, errorMessage = null) }
+        viewModelScope.launch {
+            val useCase = resetPasswordUseCase
+            if (useCase != null) {
+                when (val result = useCase(currentState.email)) {
+                    is RtiqaResult.Success -> {
+                        setState { copy(isLoading = false) }
+                        sendEvent(LoginUiEvent.ShowMessage("Password reset email sent to ${currentState.email}"))
+                    }
+                    is RtiqaResult.Error -> {
+                        val msg = result.error.message
+                        setState { copy(isLoading = false, errorMessage = msg) }
+                        sendEvent(LoginUiEvent.ShowMessage(msg))
+                    }
+                    is RtiqaResult.Loading -> {
+                        setState { copy(isLoading = true) }
+                    }
+                }
+            } else {
+                setState { copy(isLoading = false) }
+                sendEvent(LoginUiEvent.ShowMessage("Password reset request submitted for ${currentState.email}"))
             }
         }
     }

@@ -47,6 +47,8 @@ class LoginViewModelTest {
         }
 
         override suspend fun getCurrentUserId(): String? = session.value?.id
+
+        override suspend fun resetPassword(email: String): RtiqaResult<Unit> = RtiqaResult.Success(Unit)
     }
 
     @Before

@@ -23,6 +23,7 @@ import com.rtiqa.core.domain.usecase.LogoutUseCase
 import com.rtiqa.core.domain.usecase.ObserveSyncStatusUseCase
 import com.rtiqa.core.domain.usecase.ObserveUserSessionUseCase
 import com.rtiqa.core.domain.usecase.RegisterUseCase
+import com.rtiqa.core.domain.usecase.ResetPasswordUseCase
 import com.rtiqa.core.domain.usecase.SearchCoursesUseCase
 import com.rtiqa.core.domain.usecase.SubmitQuizResultUseCase
 import com.rtiqa.core.domain.usecase.SyncOfflineDataUseCase
@@ -43,6 +44,7 @@ class DomainUseCasesContainer(
 ) {
     val loginUseCase by lazy { LoginUseCase(authRepository) }
     val registerUseCase by lazy { RegisterUseCase(authRepository) }
+    val resetPasswordUseCase by lazy { ResetPasswordUseCase(authRepository) }
     val logoutUseCase by lazy { LogoutUseCase(authRepository) }
     val observeUserSessionUseCase by lazy { ObserveUserSessionUseCase(authRepository) }
 

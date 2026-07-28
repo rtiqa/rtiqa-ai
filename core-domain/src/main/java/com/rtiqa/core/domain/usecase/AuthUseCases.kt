@@ -53,6 +53,21 @@ class LogoutUseCase(
 }
 
 /**
+ * Use case for requesting a password reset email.
+ */
+class ResetPasswordUseCase(
+    private val authRepository: AuthRepositoryContract
+) {
+    suspend operator fun invoke(email: String): RtiqaResult<Unit> {
+        val validation = EmailValidator.validate(email)
+        if (!validation.isValid()) {
+            return RtiqaResult.Error(RtiqaError.ValidationError(validation.getErrorsOrEmpty()))
+        }
+        return authRepository.resetPassword(email.trim())
+    }
+}
+
+/**
  * Use case for observing reactive session status of the active user.
  */
 class ObserveUserSessionUseCase(

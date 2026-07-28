@@ -1,5 +1,6 @@
 package com.rtiqa.core.data.repository
 
+import com.rtiqa.core.data.firestore.FirestoreSyncManager
 import com.rtiqa.core.data.mapper.toDomain
 import com.rtiqa.core.database.dao.CourseDao
 import com.rtiqa.core.database.dao.LessonDao
@@ -14,7 +15,9 @@ import kotlinx.coroutines.flow.map
 
 class CourseRepositoryImpl(
     private val courseDao: CourseDao,
-    private val lessonDao: LessonDao
+    private val lessonDao: LessonDao,
+    private val firestoreSyncManager: FirestoreSyncManager? = null,
+    private val currentUserIdProvider: (suspend () -> String?)? = null
 ) : CourseRepositoryContract {
 
     override fun getCourses(): Flow<List<Course>> {
@@ -74,6 +77,22 @@ class CourseRepositoryImpl(
             if (lesson != null) {
                 lessonDao.insertLesson(lesson.copy(isCompleted = true))
             }
+
+            val userId = currentUserIdProvider?.invoke()
+            if (userId != null) {
+                val lessons = lessonDao.getLessonsForCourseList(courseId)
+                val completedCount = lessons.count { it.isCompleted }
+                val totalCount = lessons.size.coerceAtLeast(1)
+                val progressPercent = completedCount.toFloat() / totalCount.toFloat()
+
+                firestoreSyncManager?.syncCourseProgressToCloud(
+                    userId = userId,
+                    courseId = courseId,
+                    progressPercent = progressPercent,
+                    completedLessonsCount = completedCount
+                )
+            }
+
             RtiqaResult.Success(Unit)
         } catch (e: Exception) {
             RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to mark lesson complete", e))

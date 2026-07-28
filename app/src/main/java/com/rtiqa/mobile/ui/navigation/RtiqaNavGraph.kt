@@ -32,6 +32,13 @@ import com.rtiqa.mobile.ui.viewmodel.AiTutorViewModel
 import com.rtiqa.mobile.ui.viewmodel.CourseViewModel
 import com.rtiqa.mobile.ui.viewmodel.MainViewModel
 import com.rtiqa.mobile.ui.viewmodel.QuizViewModel
+import com.rtiqa.feature.auth.ForgotPasswordScreen
+import com.rtiqa.feature.auth.LoginScreen
+import com.rtiqa.feature.auth.LoginViewModel
+import com.rtiqa.feature.auth.LoginViewModelFactory
+import com.rtiqa.feature.auth.RegisterScreen
+import com.rtiqa.feature.auth.RegisterViewModel
+import com.rtiqa.feature.auth.RegisterViewModelFactory
 import com.rtiqa.feature.auth.SplashScreen
 import com.rtiqa.feature.auth.WelcomeScreen
 
@@ -102,20 +109,58 @@ fun RtiqaApp(
             composable("welcome") {
                 WelcomeScreen(
                     onNavigateToLogin = {
-                        navController.navigate("home") {
-                            popUpTo("welcome") { inclusive = true }
-                        }
+                        navController.navigate("login")
                     },
                     onNavigateToRegister = {
-                        navController.navigate("home") {
-                            popUpTo("welcome") { inclusive = true }
-                        }
+                        navController.navigate("register")
                     },
                     onContinueAsGuest = {
                         navController.navigate("home") {
                             popUpTo("welcome") { inclusive = true }
                         }
                     }
+                )
+            }
+
+            composable("login") {
+                val loginViewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory())
+                LoginScreen(
+                    viewModel = loginViewModel,
+                    onNavigateToHome = {
+                        navController.navigate("home") {
+                            popUpTo("welcome") { inclusive = true }
+                            popUpTo("login") { inclusive = true }
+                        }
+                    },
+                    onNavigateToRegister = { navController.navigate("register") },
+                    onNavigateToForgotPassword = { navController.navigate("forgot_password") },
+                    onBack = { navController.popBackStack() },
+                    isArabic = isArabic
+                )
+            }
+
+            composable("register") {
+                val registerViewModel: RegisterViewModel = viewModel(factory = RegisterViewModelFactory())
+                RegisterScreen(
+                    viewModel = registerViewModel,
+                    onNavigateToHome = {
+                        navController.navigate("home") {
+                            popUpTo("welcome") { inclusive = true }
+                            popUpTo("register") { inclusive = true }
+                        }
+                    },
+                    onNavigateToLogin = { navController.navigate("login") },
+                    onBack = { navController.popBackStack() },
+                    isArabic = isArabic
+                )
+            }
+
+            composable("forgot_password") {
+                val loginViewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory())
+                ForgotPasswordScreen(
+                    viewModel = loginViewModel,
+                    onBack = { navController.popBackStack() },
+                    isArabic = isArabic
                 )
             }
 

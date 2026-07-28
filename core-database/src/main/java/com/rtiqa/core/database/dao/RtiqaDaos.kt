@@ -30,6 +30,9 @@ interface LessonDao {
     @Query("SELECT * FROM lessons WHERE courseId = :courseId ORDER BY `order` ASC")
     fun getLessonsForCourse(courseId: String): Flow<List<LessonEntity>>
 
+    @Query("SELECT * FROM lessons WHERE courseId = :courseId ORDER BY `order` ASC")
+    suspend fun getLessonsForCourseList(courseId: String): List<LessonEntity>
+
     @Query("SELECT * FROM lessons WHERE id = :id LIMIT 1")
     suspend fun getLessonById(id: String): LessonEntity?
 

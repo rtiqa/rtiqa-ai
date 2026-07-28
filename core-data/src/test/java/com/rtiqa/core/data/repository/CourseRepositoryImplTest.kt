@@ -29,6 +29,7 @@ class CourseRepositoryImplTest {
 
     private class FakeLessonDao : LessonDao {
         override fun getLessonsForCourse(courseId: String) = flowOf(emptyList<com.rtiqa.core.database.entity.LessonEntity>())
+        override suspend fun getLessonsForCourseList(courseId: String) = emptyList<com.rtiqa.core.database.entity.LessonEntity>()
         override suspend fun getLessonById(id: String) = null
         override suspend fun insertLesson(lesson: com.rtiqa.core.database.entity.LessonEntity) {}
         override suspend fun insertLessons(lessons: List<com.rtiqa.core.database.entity.LessonEntity>) {}

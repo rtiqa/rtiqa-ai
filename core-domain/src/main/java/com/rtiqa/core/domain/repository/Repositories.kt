@@ -19,6 +19,7 @@ interface AuthRepositoryContract {
     suspend fun register(name: String, email: String, pass: String): RtiqaResult<UserProfile>
     suspend fun logout(): RtiqaResult<Unit>
     suspend fun getCurrentUserId(): String?
+    suspend fun resetPassword(email: String): RtiqaResult<Unit>
 }
 
 /**

@@ -3,6 +3,7 @@ package com.rtiqa.core.data.di
 import android.content.Context
 import com.rtiqa.core.ai.GeminiAiRepositoryImpl
 import com.rtiqa.core.data.datastore.RtiqaPreferencesDataStore
+import com.rtiqa.core.data.firestore.FirestoreSyncManager
 import com.rtiqa.core.data.repository.AuthRepositoryImpl
 import com.rtiqa.core.data.repository.CourseRepositoryImpl
 import com.rtiqa.core.data.repository.DownloadManagerImpl
@@ -59,6 +60,10 @@ class AppDiContainer(val context: Context) {
         ConnectivityManagerNetworkMonitor(context)
     }
 
+    val firestoreSyncManager: FirestoreSyncManager by lazy {
+        FirestoreSyncManager()
+    }
+
     val offlineSyncManager: OfflineSyncManager by lazy {
         OfflineSyncManager(
             apiService = apiService,
@@ -76,7 +81,8 @@ class AppDiContainer(val context: Context) {
             apiService = apiService,
             userProfileDao = database.userProfileDao(),
             preferencesDataStore = preferencesDataStore,
-            securityManager = coreDiContainer.securityManager
+            securityManager = coreDiContainer.securityManager,
+            firestoreSyncManager = firestoreSyncManager
         )
     }
 
@@ -95,19 +101,24 @@ class AppDiContainer(val context: Context) {
     val courseRepository: CourseRepositoryContract by lazy {
         CourseRepositoryImpl(
             courseDao = database.courseDao(),
-            lessonDao = database.lessonDao()
+            lessonDao = database.lessonDao(),
+            firestoreSyncManager = firestoreSyncManager,
+            currentUserIdProvider = { authRepository.getCurrentUserId() }
         )
     }
 
     val userRepository: UserRepositoryContract by lazy {
         UserRepositoryImpl(
-            userProfileDao = database.userProfileDao()
+            userProfileDao = database.userProfileDao(),
+            firestoreSyncManager = firestoreSyncManager
         )
     }
 
     val quizRepository: QuizRepositoryContract by lazy {
         QuizRepositoryImpl(
-            offlineSyncManager = offlineSyncManager
+            offlineSyncManager = offlineSyncManager,
+            firestoreSyncManager = firestoreSyncManager,
+            currentUserIdProvider = { authRepository.getCurrentUserId() }
         )
     }
 

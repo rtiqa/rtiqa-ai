@@ -1,5 +1,6 @@
 package com.rtiqa.core.data.repository
 
+import com.rtiqa.core.data.firestore.FirestoreSyncManager
 import com.rtiqa.core.data.sync.OfflineSyncManager
 import com.rtiqa.core.domain.error.RtiqaError
 import com.rtiqa.core.domain.model.Question
@@ -10,14 +11,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 /**
- * Production repository implementation for Quiz operations.
+ * Production repository implementation for Quiz operations with Firestore backup support.
  */
 class QuizRepositoryImpl(
-    private val offlineSyncManager: OfflineSyncManager
+    private val offlineSyncManager: OfflineSyncManager,
+    private val firestoreSyncManager: FirestoreSyncManager? = null,
+    private val currentUserIdProvider: (suspend () -> String?)? = null
 ) : QuizRepositoryContract {
 
     override fun getQuizForCourse(courseId: String): Flow<Quiz?> {
-        // Return structured quiz for the course
         return flowOf(
             Quiz(
                 id = "quiz_$courseId",
@@ -50,6 +52,12 @@ class QuizRepositoryImpl(
         return try {
             val payload = "{\"quizId\":\"$quizId\",\"score\":$score,\"total\":$total}"
             offlineSyncManager.enqueueOfflineAction(actionType = "SUBMIT_QUIZ_RESULT", payloadJson = payload)
+
+            val userId = currentUserIdProvider?.invoke()
+            if (userId != null) {
+                firestoreSyncManager?.syncQuizResultToCloud(userId, quizId, score, total)
+            }
+
             RtiqaResult.Success(Unit)
         } catch (e: Exception) {
             RtiqaResult.Error(RtiqaError.DatabaseError("Failed to enqueue quiz result", e))
