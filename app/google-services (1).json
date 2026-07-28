@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "510634204488",
+    "project_id": "rtiqa-mobile",
+    "storage_bucket": "rtiqa-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:510634204488:android:59eba4136a8c1a72b6e77d",
+        "android_client_info": {
+          "package_name": "com.rtiqa.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0TvsbwfYkObGcKwawjWGGM7WiFhF4f9U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
