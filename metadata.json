@@ -1,0 +1,6 @@
+{
+  "name": "Rtiqa",
+  "description": "AI-Native Educational Ecosystem - Advanced offline-first learning, AI tutor, interactive quizzes, and gamified courses.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
