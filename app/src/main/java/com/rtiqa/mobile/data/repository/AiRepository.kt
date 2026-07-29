@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 
 class AiRepository {
 
-    suspend fun askAiTutor(prompt: String, isArabic: Boolean = false): String = withContext(Dispatchers.IO) {
+    suspend fun askAiTutor(prompt: String, isArabic: Boolean = true): String = withContext(Dispatchers.IO) {
         val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Exception) { "" }
 
         if (apiKey.isNotEmpty() && apiKey != "MY_GEMINI_API_KEY" && apiKey != "null") {

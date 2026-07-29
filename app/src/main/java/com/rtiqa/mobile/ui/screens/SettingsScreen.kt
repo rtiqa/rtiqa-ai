@@ -45,7 +45,7 @@ fun SettingsScreen(
     onToggleLanguage: () -> Unit,
     onToggleTheme: () -> Unit,
     onToggleOfflineAutoSync: () -> Unit = {},
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val apiKeyPresent = try {

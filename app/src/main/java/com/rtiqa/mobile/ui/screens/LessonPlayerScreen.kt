@@ -52,7 +52,7 @@ fun LessonPlayerScreen(
     onBack: () -> Unit,
     onToggleComplete: (Boolean) -> Unit,
     onAskAiAboutLesson: (String) -> Unit,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     if (lesson == null) return

@@ -40,7 +40,7 @@ fun DownloadsScreen(
     downloadedCourses: List<Course>,
     downloadedLessons: List<Lesson>,
     onLessonClick: (String) -> Unit,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Column(

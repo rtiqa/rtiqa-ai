@@ -68,15 +68,15 @@ abstract class RtiqaDatabase : RoomDatabase() {
                 database.userProfileDao().saveUserProfile(
                     UserProfileEntity(
                         id = "user_001",
-                        name = "Tariq Al-Mansoor",
+                        name = "طارق المنصور",
                         email = "learner@rtiqa.edu",
                         avatarResName = "img_ai_tutor_avatar_1785095337393",
                         xp = 2450,
                         coins = 380,
                         level = 5,
                         streakDays = 12,
-                        currentGoal = "Master AI Neural Networks in 30 Days",
-                        language = "en",
+                        currentGoal = "إتقان الشبكات العصبية والذكاء الاصطناعي في 30 يوماً",
+                        language = "ar",
                         isOfflineAutoSyncEnabled = true,
                         isDarkMode = true
                     )

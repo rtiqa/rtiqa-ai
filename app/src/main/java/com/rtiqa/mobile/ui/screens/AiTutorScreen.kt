@@ -47,7 +47,7 @@ fun AiTutorScreen(
     isLoading: Boolean,
     onInputTextChange: (String) -> Unit,
     onSendMessage: (String) -> Unit,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()

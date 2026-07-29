@@ -60,7 +60,7 @@ class AdminDashboardViewModel(
         when (action) {
             is AdminDashboardUiAction.RefreshMetrics -> observeAdminMetrics()
             is AdminDashboardUiAction.DeleteCourseRequested -> {
-                sendEvent(AdminDashboardUiEvent.ShowToast("Admin action requested for course ${action.courseId}"))
+                sendEvent(AdminDashboardUiEvent.ShowToast("تم طلب إجراء الإدارة للدورة ${action.courseId}"))
             }
         }
     }

@@ -66,7 +66,7 @@ class RegisterViewModel(
             when (val result = registerUseCase(currentState.name, currentState.email, currentState.password)) {
                 is RtiqaResult.Success -> {
                     setState { copy(isLoading = false) }
-                    sendEvent(RegisterUiEvent.ShowMessage("Account created! Welcome, ${result.data.name}!"))
+                    sendEvent(RegisterUiEvent.ShowMessage("تم إنشاء الحساب بنجاح! أهلاً بك، ${result.data.name}!"))
                     sendEvent(RegisterUiEvent.NavigateToHome)
                 }
                 is RtiqaResult.Error -> {

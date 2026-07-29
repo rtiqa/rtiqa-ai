@@ -56,7 +56,7 @@ fun QuizScreen(
     onToggleHint: () -> Unit,
     onRestartQuiz: () -> Unit,
     onClaimRewards: (Int, Int) -> Unit,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -200,7 +200,7 @@ fun QuizScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "${'A' + index}.",
+                            text = if (isArabic) "${listOf("أ", "ب", "ج", "د", "هـ").getOrElse(index) { "${index + 1}" }}." else "${'A' + index}.",
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )

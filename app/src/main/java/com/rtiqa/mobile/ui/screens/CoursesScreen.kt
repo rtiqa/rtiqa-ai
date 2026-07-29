@@ -42,7 +42,7 @@ fun CoursesScreen(
     onCourseClick: (String) -> Unit,
     onToggleBookmark: (String, Boolean) -> Unit,
     onToggleDownload: (String, Boolean) -> Unit,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Column(

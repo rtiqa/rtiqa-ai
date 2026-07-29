@@ -72,7 +72,7 @@ class AiTutorViewModel(
             when (val result = askAiTutorUseCase(q, currentState.courseContext)) {
                 is RtiqaResult.Success -> {
                     setState { copy(isGenerating = false, queryInput = "") }
-                    sendEvent(AiTutorUiEvent.ShowToast("AI Tutor answered!"))
+                    sendEvent(AiTutorUiEvent.ShowToast("أجاب المعلم الذكي!"))
                 }
                 is RtiqaResult.Error -> {
                     setState { copy(isGenerating = false, errorMessage = result.error.message) }

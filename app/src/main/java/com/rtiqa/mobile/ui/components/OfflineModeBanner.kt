@@ -31,7 +31,7 @@ import com.rtiqa.mobile.R
 @Composable
 fun OfflineModeBanner(
     isOnline: Boolean,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(

@@ -53,7 +53,7 @@ sealed class NavItem(val route: String, @StringRes val titleRes: Int, val icon: 
 fun RtiqaBottomBar(
     currentRoute: String,
     onNavigate: (String) -> Unit,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val items = listOf(

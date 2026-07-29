@@ -30,11 +30,11 @@ fun AiResponseCardFoundation(
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Prompt: $prompt",
+                    text = "السؤال: $prompt",
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.weight(1f)
                 )
-                RdsBadge(text = "AI Generated", type = RdsBadgeType.AI)
+                RdsBadge(text = "مُنَشَأ بالذكاء الاصطناعي", type = RdsBadgeType.AI)
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(

@@ -60,7 +60,7 @@ fun CourseDetailScreen(
     onLessonClick: (String) -> Unit,
     onQuizClick: () -> Unit,
     onToggleDownloadLesson: (String, Boolean) -> Unit,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     if (course == null) return

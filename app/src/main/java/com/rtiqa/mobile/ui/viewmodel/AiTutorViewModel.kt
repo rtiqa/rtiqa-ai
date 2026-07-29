@@ -12,7 +12,7 @@ data class ChatMessage(
     val id: String,
     val sender: Sender,
     val text: String,
-    val timestamp: String = "Just now"
+    val timestamp: String = "الآن"
 ) {
     enum class Sender { USER, AI }
 }
@@ -26,7 +26,7 @@ class AiTutorViewModel(
             ChatMessage(
                 id = "1",
                 sender = ChatMessage.Sender.AI,
-                text = "Welcome to Rtiqa AI Tutor! 👋\n\nI can explain complex concepts in AI, Physics, Math, and Software Engineering, synthesize custom study guides, or answer questions offline or online. How can I assist your learning today?"
+                text = "مرحباً بك في المعلم الذكي لمنصة رتقاء! 👋\n\nأنا هنا لمساعدتك في تبسيط مفاهيم الذكاء الاصطناعي، والفيزياء، والرياضيات، وهندسة البرمجيات، وإعداد خطط الدراسة، والإجابة عن تساؤلاتك أوفلاين أو أونلاين. كيف يمكنني مساعدتك في رحلتك التعليمية اليوم؟"
             )
         )
     )
@@ -42,7 +42,7 @@ class AiTutorViewModel(
         _inputText.value = text
     }
 
-    fun sendMessage(prompt: String = _inputText.value, isArabic: Boolean = false) {
+    fun sendMessage(prompt: String = _inputText.value, isArabic: Boolean = true) {
         if (prompt.isBlank()) return
 
         val userMsg = ChatMessage(

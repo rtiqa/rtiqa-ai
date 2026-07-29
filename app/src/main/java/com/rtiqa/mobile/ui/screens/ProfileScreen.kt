@@ -45,7 +45,7 @@ import androidx.compose.ui.res.stringResource
 @Composable
 fun ProfileScreen(
     userProfile: UserProfile,
-    isArabic: Boolean = false,
+    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
