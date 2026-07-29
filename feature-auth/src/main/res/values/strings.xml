@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="welcome_title">Elevate Your Skills with Rtiqa</string>
-    <string name="welcome_subtitle">Smart platform combining AI courses, interactive learning, and offline/online assessments</string>
-    <string name="create_account">Create Account</string>
-    <string name="login">Login</string>
-    <string name="continue_as_guest">Continue as Guest</string>
-    <string name="welcome_back">Welcome Back</string>
-    <string name="login_subtitle">Sign in to continue your smart learning journey</string>
-    <string name="email">Email Address</string>
-    <string name="password">Password</string>
-    <string name="forgot_password_question">Forgot Password?</string>
-    <string name="no_account_question">Don\'t have an account?</string>
-    <string name="register_now">Register Now</string>
-    <string name="full_name">Full Name</string>
-    <string name="confirm_password">Confirm Password</string>
-    <string name="already_have_account">Already have an account?</string>
-    <string name="reset_password">Reset Password</string>
-    <string name="reset_password_instruction">Enter your email address and we\'ll send you a password reset link</string>
-    <string name="send_reset_link">Send Reset Link</string>
-    <string name="back">Back</string>
+    <string name="welcome_title">ارتق بمهاراتك مع رتقاء</string>
+    <string name="welcome_subtitle">منصة ذكية تجمع بين دورات الذكاء الاصطناعي، والتعلم التفاعلي، والتقييمات الذكية أوفلاين وأونلاين</string>
+    <string name="create_account">إنشاء حساب جديد</string>
+    <string name="login">تسجيل الدخول</string>
+    <string name="continue_as_guest">المتابعة كزائر</string>
+    <string name="welcome_back">مرحباً بعودتك</string>
+    <string name="login_subtitle">سجل دخولك لمتابعة رحلة التعلم الذكي</string>
+    <string name="email">البريد الإلكتروني</string>
+    <string name="password">كلمة المرور</string>
+    <string name="forgot_password_question">نسيت كلمة المرور؟</string>
+    <string name="no_account_question">ليس لديك حساب؟</string>
+    <string name="register_now">سجل الآن</string>
+    <string name="full_name">الاسم الكامل</string>
+    <string name="confirm_password">تأكيد كلمة المرور</string>
+    <string name="already_have_account">لديك حساب بالفعل؟</string>
+    <string name="reset_password">استعادة كلمة المرور</string>
+    <string name="reset_password_instruction">أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور</string>
+    <string name="send_reset_link">إرسال رابط التعيين</string>
+    <string name="back">رجوع</string>
 </resources>

@@ -32,6 +32,9 @@ interface CourseRepositoryContract {
     fun getPagedCourses(request: PageRequest): Flow<PagedData<Course>>
     suspend fun searchCourses(query: String): List<Course>
     suspend fun markLessonCompleted(lessonId: String, courseId: String): RtiqaResult<Unit>
+    suspend fun saveCourse(course: Course): RtiqaResult<Unit>
+    suspend fun deleteCourse(courseId: String): RtiqaResult<Unit>
+    suspend fun saveLesson(lesson: Lesson): RtiqaResult<Unit>
 }
 
 /**

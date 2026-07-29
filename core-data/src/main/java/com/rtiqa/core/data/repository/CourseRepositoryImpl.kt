@@ -13,6 +13,8 @@ import com.rtiqa.core.domain.result.RtiqaResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+import com.rtiqa.core.data.mapper.toEntity
+
 class CourseRepositoryImpl(
     private val courseDao: CourseDao,
     private val lessonDao: LessonDao,
@@ -96,6 +98,34 @@ class CourseRepositoryImpl(
             RtiqaResult.Success(Unit)
         } catch (e: Exception) {
             RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to mark lesson complete", e))
+        }
+    }
+
+    override suspend fun saveCourse(course: Course): RtiqaResult<Unit> {
+        return try {
+            courseDao.insertCourse(course.toEntity())
+            RtiqaResult.Success(Unit)
+        } catch (e: Exception) {
+            RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to save course", e))
+        }
+    }
+
+    override suspend fun deleteCourse(courseId: String): RtiqaResult<Unit> {
+        return try {
+            courseDao.deleteCourseById(courseId)
+            lessonDao.deleteLessonsForCourse(courseId)
+            RtiqaResult.Success(Unit)
+        } catch (e: Exception) {
+            RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to delete course", e))
+        }
+    }
+
+    override suspend fun saveLesson(lesson: Lesson): RtiqaResult<Unit> {
+        return try {
+            lessonDao.insertLesson(lesson.toEntity())
+            RtiqaResult.Success(Unit)
+        } catch (e: Exception) {
+            RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to save lesson", e))
         }
     }
 }

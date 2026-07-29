@@ -94,3 +94,31 @@ class DownloadCourseUseCase(
         return downloadManager.downloadCourse(courseId)
     }
 }
+
+/**
+ * Use case to save/create a course in the platform.
+ */
+class SaveCourseUseCase(
+    private val courseRepository: CourseRepositoryContract
+) {
+    suspend operator fun invoke(course: Course): RtiqaResult<Unit> {
+        if (course.title.isBlank()) {
+            return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Course title cannot be blank.")))
+        }
+        return courseRepository.saveCourse(course)
+    }
+}
+
+/**
+ * Use case to delete a course from the platform.
+ */
+class DeleteCourseUseCase(
+    private val courseRepository: CourseRepositoryContract
+) {
+    suspend operator fun invoke(courseId: String): RtiqaResult<Unit> {
+        if (courseId.isBlank()) {
+            return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Course ID cannot be blank.")))
+        }
+        return courseRepository.deleteCourse(courseId)
+    }
+}

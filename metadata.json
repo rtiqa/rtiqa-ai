@@ -1,6 +1,6 @@
 {
-  "name": "Rtiqa",
-  "description": "AI-Native Educational Ecosystem - Advanced offline-first learning, AI tutor, interactive quizzes, and gamified courses.",
+  "name": "رتقاء",
+  "description": "منصة التعلم الذكي والارتقاء والمعرفة - تعليم ذكي، معلم ذكاء اصطناعي، تقييمات تفاعلية ودورات متقدمة أوفلاين وأونلاين.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

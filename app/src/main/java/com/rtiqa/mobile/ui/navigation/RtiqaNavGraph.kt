@@ -45,6 +45,9 @@ import com.rtiqa.feature.auth.RegisterViewModelFactory
 import com.rtiqa.feature.auth.SplashScreen
 import com.rtiqa.feature.auth.WelcomeScreen
 
+import com.rtiqa.feature.admin.AdminDashboardViewModel
+import com.rtiqa.feature.admin.AdminScreen
+
 @Composable
 fun RtiqaApp(
     mainViewModel: MainViewModel = viewModel(),
@@ -290,7 +293,18 @@ fun RtiqaApp(
             composable("profile") {
                 ProfileScreen(
                     userProfile = userProfile,
+                    onNavigateToAdmin = { navController.navigate("admin_dashboard") },
                     isArabic = isArabic
+                )
+            }
+
+            composable("admin_dashboard") {
+                val adminViewModel: AdminDashboardViewModel = viewModel()
+                val adminUiState by adminViewModel.uiState.collectAsState()
+                AdminScreen(
+                    uiState = adminUiState,
+                    onAction = { action -> adminViewModel.onAction(action) },
+                    onBack = { navController.popBackStack() }
                 )
             }
 

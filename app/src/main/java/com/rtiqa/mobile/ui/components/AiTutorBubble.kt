@@ -55,7 +55,7 @@ fun AiTutorBubble(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.img_ai_tutor_avatar_1785095337393),
-                    contentDescription = "AI Tutor Avatar",
+                    contentDescription = "صورة المعلم الذكي",
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.matchParentSize()
                 )

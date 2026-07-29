@@ -108,7 +108,7 @@ fun CourseCard(
                 ) {
                     Icon(
                         imageVector = if (course.isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                        contentDescription = "Bookmark",
+                        contentDescription = "حفظ بمفضلة",
                         tint = if (course.isBookmarked) MaterialTheme.colorScheme.tertiary else Color.White
                     )
                 }
@@ -169,7 +169,7 @@ fun CourseCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.Star,
-                            contentDescription = "Rating",
+                            contentDescription = "التقييم",
                             tint = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.size(16.dp)
                         )
@@ -195,7 +195,7 @@ fun CourseCard(
                     ) {
                         Icon(
                             imageVector = if (course.isDownloaded) Icons.Default.DownloadDone else Icons.Default.DownloadForOffline,
-                            contentDescription = "Download Offline",
+                            contentDescription = "تحفيظ أوفلاين",
                             tint = if (course.isDownloaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )

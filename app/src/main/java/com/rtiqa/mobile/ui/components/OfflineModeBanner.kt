@@ -51,7 +51,7 @@ fun OfflineModeBanner(
             ) {
                 Icon(
                     imageVector = Icons.Default.WifiOff,
-                    contentDescription = "Offline",
+                    contentDescription = "وضع أوفلاين",
                     tint = Color.White,
                     modifier = Modifier.size(16.dp)
                 )

@@ -44,7 +44,7 @@ fun XpCoinChip(
         ) {
             Icon(
                 imageVector = Icons.Default.Whatshot,
-                contentDescription = "Streak",
+                contentDescription = "أيام التتابع",
                 tint = Color(0xFFF97316),
                 modifier = Modifier.size(16.dp)
             )
@@ -69,7 +69,7 @@ fun XpCoinChip(
         ) {
             Icon(
                 imageVector = Icons.Default.Star,
-                contentDescription = "XP",
+                contentDescription = "نقاط الخبرة",
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(16.dp)
             )
@@ -94,7 +94,7 @@ fun XpCoinChip(
         ) {
             Icon(
                 imageVector = Icons.Default.MonetizationOn,
-                contentDescription = "Coins",
+                contentDescription = "العملات",
                 tint = Color(0xFFF59E0B),
                 modifier = Modifier.size(16.dp)
             )

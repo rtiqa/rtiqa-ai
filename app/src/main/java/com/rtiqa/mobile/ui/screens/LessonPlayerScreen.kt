@@ -112,7 +112,7 @@ fun LessonPlayerScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "Play Lesson",
+                            contentDescription = "تشغيل الدرس",
                             tint = Color.White,
                             modifier = Modifier.size(36.dp)
                         )
@@ -143,7 +143,7 @@ fun LessonPlayerScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Complete",
+                    contentDescription = "إكمال",
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
@@ -157,7 +157,7 @@ fun LessonPlayerScreen(
 
             OutlinedButton(
                 onClick = {
-                    val prompt = "Explain lesson '${lesson.title}' key concepts clearly"
+                    val prompt = "اشرح المفاهيم الرئيسية لدرس '${if (isArabic) lesson.titleAr else lesson.title}' بوضوح"
                     onAskAiAboutLesson(prompt)
                 },
                 shape = RoundedCornerShape(12.dp),
@@ -165,7 +165,7 @@ fun LessonPlayerScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
-                    contentDescription = "AI Summary",
+                    contentDescription = "الملخص الذكي",
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))

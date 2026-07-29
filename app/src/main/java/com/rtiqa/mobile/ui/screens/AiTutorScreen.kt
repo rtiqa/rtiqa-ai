@@ -85,7 +85,7 @@ fun AiTutorScreen(
         ) {
             Icon(
                 imageVector = Icons.Default.AutoAwesome,
-                contentDescription = "AI",
+                contentDescription = "المعلم الذكي",
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)
             )
@@ -175,7 +175,7 @@ fun AiTutorScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Send,
-                    contentDescription = "Send",
+                    contentDescription = "إرسال",
                     tint = if (inputText.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

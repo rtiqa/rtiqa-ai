@@ -171,7 +171,7 @@ fun CourseDetailScreen(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.testTag("take_quiz_button")
                 ) {
-                    Icon(Icons.Default.Quiz, contentDescription = "Quiz", modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Quiz, contentDescription = "اختبار", modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(stringResource(R.string.course_quiz_button))
                 }
@@ -198,7 +198,7 @@ fun CourseDetailScreen(
                 ) {
                     Icon(
                         imageVector = if (lesson.isCompleted) Icons.Default.CheckCircle else Icons.Default.PlayCircleFilled,
-                        contentDescription = "Status",
+                        contentDescription = "حالة الدرس",
                         tint = if (lesson.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.size(28.dp)
                     )
@@ -223,7 +223,7 @@ fun CourseDetailScreen(
                     ) {
                         Icon(
                             imageVector = if (lesson.isDownloaded) Icons.Default.DownloadDone else Icons.Default.DownloadForOffline,
-                            contentDescription = "Download",
+                            contentDescription = "تحميل",
                             tint = if (lesson.isDownloaded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }

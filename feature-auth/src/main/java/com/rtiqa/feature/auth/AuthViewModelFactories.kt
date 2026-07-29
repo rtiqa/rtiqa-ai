@@ -20,7 +20,7 @@ class DefaultAuthRepository : AuthRepositoryContract {
     override suspend fun login(email: String, pass: String): RtiqaResult<UserProfile> {
         val profile = UserProfile(
             id = "user_001",
-            name = email.substringBefore("@").ifBlank { "User" },
+            name = email.substringBefore("@").ifBlank { "المتعلم" },
             email = email,
             levelXp = 150,
             streakDays = 3
@@ -32,7 +32,7 @@ class DefaultAuthRepository : AuthRepositoryContract {
     override suspend fun register(name: String, email: String, pass: String): RtiqaResult<UserProfile> {
         val profile = UserProfile(
             id = "user_001",
-            name = name.ifBlank { "User" },
+            name = name.ifBlank { "المتعلم" },
             email = email,
             levelXp = 50,
             streakDays = 1

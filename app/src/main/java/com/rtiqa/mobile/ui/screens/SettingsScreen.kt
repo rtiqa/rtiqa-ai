@@ -99,7 +99,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Language, contentDescription = "Language", tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Language, contentDescription = "اللغة", tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(stringResource(R.string.app_language), fontWeight = FontWeight.Bold)
@@ -130,7 +130,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.DarkMode, contentDescription = "Theme", tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.DarkMode, contentDescription = "المظهر", tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(stringResource(R.string.dark_theme), fontWeight = FontWeight.Bold)
@@ -161,7 +161,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.CloudSync, contentDescription = "Sync", tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.CloudSync, contentDescription = "المزامنة", tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(stringResource(R.string.offline_auto_sync), fontWeight = FontWeight.Bold)
@@ -191,7 +191,7 @@ fun SettingsScreen(
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Key, contentDescription = "API Key", tint = MaterialTheme.colorScheme.tertiary)
+                Icon(Icons.Default.Key, contentDescription = "مفتاح البرمجية", tint = MaterialTheme.colorScheme.tertiary)
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(stringResource(R.string.gemini_status_title), fontWeight = FontWeight.Bold)
@@ -216,7 +216,7 @@ fun SettingsScreen(
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Default.Wifi, contentDescription = "Network", tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Default.Wifi, contentDescription = "الشبكة", tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(stringResource(R.string.network_status_title), fontWeight = FontWeight.Bold)

@@ -130,7 +130,7 @@ fun RegisterScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Person,
-                        contentDescription = "Register",
+                        contentDescription = "تسجيل جديد",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(44.dp)
                     )
@@ -185,7 +185,7 @@ fun RegisterScreen(
                             value = uiState.email,
                             onValueChange = { viewModel.onAction(RegisterUiAction.EmailChanged(it)) },
                             label = stringResource(R.string.email),
-                            placeholder = "user@example.com",
+                            placeholder = "مثال: user@rtiqa.com",
                             leadingIcon = Icons.Default.Email,
                             testTag = "register_email_input"
                         )

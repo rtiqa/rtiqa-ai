@@ -56,6 +56,16 @@ import com.rtiqa.mobile.domain.model.UserProfile
 import com.rtiqa.mobile.ui.components.CourseCard
 import com.rtiqa.mobile.ui.components.XpCoinChip
 
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+
 @Composable
 fun HomeScreen(
     userProfile: UserProfile,
@@ -68,6 +78,8 @@ fun HomeScreen(
     isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    var showNotificationsDialog by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -91,7 +103,7 @@ fun HomeScreen(
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.img_ai_tutor_avatar_1785095337393),
-                            contentDescription = "Avatar",
+                            contentDescription = "الصورة الشخصية",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.matchParentSize()
                         )
@@ -115,12 +127,25 @@ fun HomeScreen(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
+                        onClick = { showNotificationsDialog = true },
+                        modifier = Modifier.testTag("notifications_button")
+                    ) {
+                        Box {
+                            Icon(
+                                imageVector = Icons.Default.NotificationsActive,
+                                contentDescription = "الإشعارات",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    IconButton(
                         onClick = onToggleLanguage,
                         modifier = Modifier.testTag("lang_toggle_button")
                     ) {
                         Icon(
                             imageVector = Icons.Default.Language,
-                            contentDescription = "Language Switch",
+                            contentDescription = "تغيير اللغة",
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -131,11 +156,58 @@ fun HomeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
+                            contentDescription = "الإعدادات",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
+            }
+
+            if (showNotificationsDialog) {
+                AlertDialog(
+                    onDismissRequest = { showNotificationsDialog = false },
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "الإشعارات",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "التنبيهات والإشعارات", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        }
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            NotificationCard(
+                                title = "تمت المزامنة أوتوماتيكياً 🔄",
+                                time = "منذ 5 دقائق",
+                                desc = "تم حفظ جميع تقدمك واختباراتك في قاعدة البيانات الملحية والسحابية بنجاح."
+                            )
+                            NotificationCard(
+                                title = "مستشار الذكاء الاصطناعي 🤖",
+                                time = "ساعة واحدة",
+                                desc = "قام المعلم الذكي بإعداد خطة مراجعة مخصصة لدرس المعالجة اللغوية."
+                            )
+                            NotificationCard(
+                                title = "إنجاز جديد في الانتظار! 🏆",
+                                time = "أمس",
+                                desc = "أكمل اختباراً واحداً إضافياً لفتح وسام \"خبير الاختبارات\" واستلام 300 XP."
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { showNotificationsDialog = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("تم القراءة")
+                        }
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -162,7 +234,7 @@ fun HomeScreen(
                 Box {
                     Image(
                         painter = painterResource(id = R.drawable.img_hero_banner_1785095314710),
-                        contentDescription = "Hero Banner",
+                        contentDescription = "الشعار الرئيسي",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.matchParentSize()
                     )
@@ -188,7 +260,7 @@ fun HomeScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = "AI",
+                                contentDescription = "المعلم الذكي",
                                 tint = Color(0xFF38BDF8),
                                 modifier = Modifier.size(20.dp)
                             )
@@ -323,5 +395,27 @@ fun QuickActionItem(
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold
         )
+    }
+}
+
+@Composable
+fun NotificationCard(title: String, time: String, desc: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                Text(text = time, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(text = desc, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }

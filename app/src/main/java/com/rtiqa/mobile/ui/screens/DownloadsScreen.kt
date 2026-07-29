@@ -70,7 +70,7 @@ fun DownloadsScreen(
 
             Icon(
                 imageVector = Icons.Default.Storage,
-                contentDescription = "Storage",
+                contentDescription = "مساحة التخزين",
                 tint = MaterialTheme.colorScheme.primary
             )
         }
@@ -104,7 +104,7 @@ fun DownloadsScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.DownloadDone,
-                            contentDescription = "Downloaded",
+                            contentDescription = "محفوظ محلياً",
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(12.dp))

@@ -22,7 +22,13 @@ interface CourseDao {
     fun getCourseById(id: String): Flow<CourseEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCourse(course: CourseEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCourses(courses: List<CourseEntity>)
+
+    @Query("DELETE FROM courses WHERE id = :id")
+    suspend fun deleteCourseById(id: String)
 }
 
 @Dao
@@ -41,6 +47,9 @@ interface LessonDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLessons(lessons: List<LessonEntity>)
+
+    @Query("DELETE FROM lessons WHERE courseId = :courseId")
+    suspend fun deleteLessonsForCourse(courseId: String)
 }
 
 @Dao

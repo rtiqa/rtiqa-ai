@@ -130,7 +130,7 @@ fun LoginScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Lock,
-                        contentDescription = "Lock",
+                        contentDescription = "قفل",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(44.dp)
                     )
@@ -174,7 +174,7 @@ fun LoginScreen(
                             value = uiState.email,
                             onValueChange = { viewModel.onAction(LoginUiAction.EmailChanged(it)) },
                             label = stringResource(R.string.email),
-                            placeholder = "user@example.com",
+                            placeholder = "مثال: user@rtiqa.com",
                             leadingIcon = Icons.Default.Email,
                             isError = uiState.emailError != null,
                             errorMessage = uiState.emailError,

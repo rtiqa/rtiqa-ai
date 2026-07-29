@@ -83,14 +83,14 @@ fun SplashScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Star,
-                    contentDescription = "Rtiqa Logo",
+                    contentDescription = "شعار رتقاء",
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(56.dp)
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "رتقاء | Rtiqa",
+                text = "منصة رتقاء",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 32.sp

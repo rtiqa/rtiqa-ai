@@ -65,7 +65,7 @@ fun CoursesScreen(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
             placeholder = { Text(stringResource(R.string.search_placeholder)) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "بحث") },
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag("course_search_input"),

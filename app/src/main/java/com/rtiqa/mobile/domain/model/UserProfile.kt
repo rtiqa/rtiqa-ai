@@ -12,5 +12,6 @@ data class UserProfile(
     val currentGoal: String = "إتقان الشبكات العصبية والذكاء الاصطناعي في 30 يوماً",
     val language: String = "ar", // "ar" or "en"
     val isOfflineAutoSyncEnabled: Boolean = true,
-    val isDarkMode: Boolean = true
+    val isDarkMode: Boolean = true,
+    val isAdmin: Boolean = true
 )

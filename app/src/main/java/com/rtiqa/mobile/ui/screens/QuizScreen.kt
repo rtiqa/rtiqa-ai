@@ -77,7 +77,7 @@ fun QuizScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.EmojiEvents,
-                    contentDescription = "Trophy",
+                    contentDescription = "كأس الإنجاز",
                     tint = Color(0xFFF59E0B),
                     modifier = Modifier.size(80.dp)
                 )
@@ -130,7 +130,7 @@ fun QuizScreen(
                 IconButton(onClick = onToggleHint) {
                     Icon(
                         imageVector = Icons.Default.Lightbulb,
-                        contentDescription = "Hint",
+                        contentDescription = "تلميح",
                         tint = if (uiState.showHint) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }

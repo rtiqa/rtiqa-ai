@@ -42,12 +42,31 @@ import com.rtiqa.mobile.R
 import com.rtiqa.mobile.domain.model.UserProfile
 import androidx.compose.ui.res.stringResource
 
+import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+
 @Composable
 fun ProfileScreen(
     userProfile: UserProfile,
+    onNavigateToAdmin: () -> Unit = {},
     isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    var showCertificateDialog by remember { mutableStateOf(false) }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -78,7 +97,7 @@ fun ProfileScreen(
                     ) {
                         Image(
                             painter = painterResource(id = R.drawable.img_ai_tutor_avatar_1785095337393),
-                            contentDescription = "Profile Avatar",
+                            contentDescription = "الصورة الشخصية",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.matchParentSize()
                         )
@@ -118,6 +137,26 @@ fun ProfileScreen(
                             Text("${userProfile.level}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
                     }
+
+                    if (userProfile.isAdmin) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = onNavigateToAdmin,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AdminPanelSettings,
+                                contentDescription = "Admin",
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "لوحة تحكم المسؤول", fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
 
@@ -135,6 +174,7 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clickable { showCertificateDialog = true }
                     .testTag("certificate_card"),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1B4B))
@@ -148,12 +188,12 @@ fun ProfileScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.CardMembership,
-                                contentDescription = "Certificate",
+                                contentDescription = "شهادة",
                                 tint = Color(0xFFF59E0B)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "RTIQA ACCREDITED CERTIFICATE",
+                                text = stringResource(R.string.accredited_cert),
                                 color = Color(0xFFF59E0B),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
@@ -162,7 +202,7 @@ fun ProfileScreen(
 
                         Icon(
                             imageVector = Icons.Default.Verified,
-                            contentDescription = "Verified",
+                            contentDescription = "موثق",
                             tint = Color(0xFF10B981)
                         )
                     }
@@ -170,7 +210,7 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "Artificial Intelligence & Neural Networks",
+                        text = stringResource(R.string.cert_ai_title),
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
@@ -178,12 +218,97 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    Text(
-                        text = "Issued to: ${userProfile.name} • Code: RTIQA-2026-X92",
-                        color = Color.White.copy(alpha = 0.7f),
-                        fontSize = 12.sp
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.cert_issued_to, userProfile.name),
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 12.sp
+                        )
+                        Text(
+                            text = "انقر للاستعراض 🔍",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
+            }
+
+            if (showCertificateDialog) {
+                AlertDialog(
+                    onDismissRequest = { showCertificateDialog = false },
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.CardMembership,
+                                contentDescription = "شهادة اعتماد",
+                                tint = Color(0xFFF59E0B)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "شهادة إتمام معتمدة", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        }
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF0F172A), shape = RoundedCornerShape(16.dp))
+                                .padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Verified",
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "منصة رتقاء للتعليم الذكي",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "تشهد أن المتعلم: ${userProfile.name}",
+                                color = Color(0xFF94A3B8),
+                                fontSize = 13.sp
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "قد أتم بنجاح كافة متطلبات الدورة التدريبية:\n\"تطوير تطبيقات الذكاء الاصطناعي بلغة كوتلن\"",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF1E293B), shape = RoundedCornerShape(8.dp))
+                                    .padding(8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = "رمز التوثيق:", color = Color(0xFF94A3B8), fontSize = 11.sp)
+                                Text(text = "RTQ-2026-AI-8891", color = Color(0xFF38BDF8), fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = { showCertificateDialog = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text("إغلاق")
+                        }
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -197,9 +322,9 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            AchievementItem("AI Pioneer", "Complete 5 AI lessons offline", "+200 XP", true)
-            AchievementItem("Consistent Scholar", "Maintain a 12-day study streak", "+150 XP", true)
-            AchievementItem("Master Quizzer", "Score 100% on 3 assessments", "+300 XP", false)
+            AchievementItem(stringResource(R.string.achievement_ai_pioneer), stringResource(R.string.achievement_ai_pioneer_desc), "+200 XP", true)
+            AchievementItem(stringResource(R.string.achievement_consistent), stringResource(R.string.achievement_consistent_desc), "+150 XP", true)
+            AchievementItem(stringResource(R.string.achievement_quiz_master), stringResource(R.string.achievement_quiz_master_desc), "+300 XP", false)
 
             Spacer(modifier = Modifier.height(80.dp))
         }
@@ -225,7 +350,7 @@ fun AchievementItem(title: String, desc: String, reward: String, unlocked: Boole
         ) {
             Icon(
                 imageVector = Icons.Default.EmojiEvents,
-                contentDescription = "Achievement",
+                contentDescription = "وسام الإنجاز",
                 tint = if (unlocked) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.width(12.dp))

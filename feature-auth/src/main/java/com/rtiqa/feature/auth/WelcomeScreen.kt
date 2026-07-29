@@ -82,7 +82,7 @@ fun WelcomeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Star,
-                            contentDescription = "Rtiqa Icon",
+                            contentDescription = "شعار رتقاء",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(64.dp)
                         )

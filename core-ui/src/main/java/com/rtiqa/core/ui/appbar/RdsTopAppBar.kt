@@ -74,7 +74,7 @@ fun RdsCenterTopAppBar(
                 IconButton(onClick = onNavigationClick) {
                     Icon(
                         imageVector = RdsIcons.Menu,
-                        contentDescription = "Menu"
+                        contentDescription = "القائمة"
                     )
                 }
             }
