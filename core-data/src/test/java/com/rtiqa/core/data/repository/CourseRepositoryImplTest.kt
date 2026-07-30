@@ -22,8 +22,14 @@ class CourseRepositoryImplTest {
         override fun getAllCourses() = flowOf(list.toList())
         override suspend fun getAllCoursesList() = list.toList()
         override fun getCourseById(id: String) = flowOf(list.find { it.id == id })
+        override suspend fun insertCourse(course: CourseEntity) {
+            list.add(course)
+        }
         override suspend fun insertCourses(courses: List<CourseEntity>) {
             list.addAll(courses)
+        }
+        override suspend fun deleteCourseById(id: String) {
+            list.removeAll { it.id == id }
         }
     }
 
@@ -33,6 +39,7 @@ class CourseRepositoryImplTest {
         override suspend fun getLessonById(id: String) = null
         override suspend fun insertLesson(lesson: com.rtiqa.core.database.entity.LessonEntity) {}
         override suspend fun insertLessons(lessons: List<com.rtiqa.core.database.entity.LessonEntity>) {}
+        override suspend fun deleteLessonsForCourse(courseId: String) {}
     }
 
     @Test
