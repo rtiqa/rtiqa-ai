@@ -58,10 +58,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+
 @Composable
 fun ProfileScreen(
     userProfile: UserProfile,
     onNavigateToAdmin: () -> Unit = {},
+    onLogout: () -> Unit = {},
     isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -156,6 +159,25 @@ fun ProfileScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = "لوحة تحكم المسؤول", fontWeight = FontWeight.Bold)
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = onLogout,
+                        modifier = Modifier.fillMaxWidth().testTag("profile_logout_button"),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "تسجيل الخروج",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(text = "تسجيل الخروج", fontWeight = FontWeight.Bold)
                     }
                 }
             }

@@ -13,11 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Leaderboard
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material3.Icon
@@ -42,7 +42,7 @@ import com.rtiqa.mobile.R
 
 sealed class NavItem(val route: String, @StringRes val titleRes: Int, val icon: ImageVector) {
     object Home : NavItem("home", R.string.nav_home, Icons.Default.Home)
-    object Courses : NavItem("courses", R.string.nav_courses, Icons.Default.MenuBook)
+    object Courses : NavItem("courses", R.string.nav_courses, Icons.AutoMirrored.Filled.MenuBook)
     object AiTutor : NavItem("ai_tutor", R.string.nav_ai_tutor, Icons.Default.AutoAwesome)
     object Quiz : NavItem("quiz", R.string.nav_quiz, Icons.Default.Quiz)
     object Downloads : NavItem("downloads", R.string.nav_downloads, Icons.Default.Download)

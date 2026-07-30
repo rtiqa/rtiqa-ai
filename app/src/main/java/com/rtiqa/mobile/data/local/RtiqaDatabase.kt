@@ -45,7 +45,7 @@ abstract class RtiqaDatabase : RoomDatabase() {
                     RtiqaDatabase::class.java,
                     "rtiqa_database"
                 )
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigration(dropAllTables = true)
                 .addCallback(DatabaseCallback(context))
                 .build()
                 INSTANCE = instance

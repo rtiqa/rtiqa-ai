@@ -54,7 +54,7 @@ class DefaultAuthRepository : AuthRepositoryContract {
 }
 
 class LoginViewModelFactory(
-    private val authRepository: AuthRepositoryContract = DefaultAuthRepository()
+    private val authRepository: AuthRepositoryContract
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -66,7 +66,7 @@ class LoginViewModelFactory(
 }
 
 class RegisterViewModelFactory(
-    private val authRepository: AuthRepositoryContract = DefaultAuthRepository()
+    private val authRepository: AuthRepositoryContract
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

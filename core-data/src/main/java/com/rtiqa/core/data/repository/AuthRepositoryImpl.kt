@@ -242,6 +242,7 @@ class AuthRepositoryImpl(
             securityManager.removeKey(KEY_AUTH_TOKEN)
             securityManager.removeKey(KEY_USER_ID)
             preferencesDataStore.setActiveUserId(null)
+            userProfileDao.clearUserProfile()
             RtiqaResult.Success(Unit)
         } catch (e: Exception) {
             RtiqaResult.Error(RtiqaError.UnknownError("Failed to logout cleanly.", e))

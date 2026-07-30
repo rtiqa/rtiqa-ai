@@ -19,6 +19,9 @@ class UserRepositoryImplTest {
         override suspend fun insertOrUpdateProfile(profile: UserProfileEntity) {
             profileEntity = profile
         }
+        override suspend fun clearUserProfile() {
+            profileEntity = null
+        }
     }
 
     @Test

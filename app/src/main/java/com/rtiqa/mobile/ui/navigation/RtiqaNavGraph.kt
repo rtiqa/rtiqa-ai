@@ -1,8 +1,13 @@
 package com.rtiqa.mobile.ui.navigation
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import com.rtiqa.core.data.di.AppDiContainer
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,6 +61,11 @@ fun RtiqaApp(
     quizViewModel: QuizViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
+    val context = LocalContext.current
+    val appDiContainer = remember(context) { AppDiContainer(context.applicationContext) }
+    val scope = rememberCoroutineScope()
+
+    val activeSession by appDiContainer.authRepository.observeUserSession().collectAsState(initial = null)
     val userProfile by mainViewModel.userProfile.collectAsState()
     val isOnline by mainViewModel.isOnline.collectAsState()
 
@@ -107,7 +117,8 @@ fun RtiqaApp(
             composable("splash") {
                 SplashScreen(
                     onSplashFinished = {
-                        navController.navigate("welcome") {
+                        val destination = if (activeSession != null) "home" else "welcome"
+                        navController.navigate(destination) {
                             popUpTo("splash") { inclusive = true }
                         }
                     }
@@ -131,7 +142,7 @@ fun RtiqaApp(
             }
 
             composable("login") {
-                val loginViewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory())
+                val loginViewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(appDiContainer.authRepository))
                 LoginScreen(
                     viewModel = loginViewModel,
                     onNavigateToHome = {
@@ -148,7 +159,7 @@ fun RtiqaApp(
             }
 
             composable("register") {
-                val registerViewModel: RegisterViewModel = viewModel(factory = RegisterViewModelFactory())
+                val registerViewModel: RegisterViewModel = viewModel(factory = RegisterViewModelFactory(appDiContainer.authRepository))
                 RegisterScreen(
                     viewModel = registerViewModel,
                     onNavigateToHome = {
@@ -164,7 +175,7 @@ fun RtiqaApp(
             }
 
             composable("forgot_password") {
-                val loginViewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory())
+                val loginViewModel: LoginViewModel = viewModel(factory = LoginViewModelFactory(appDiContainer.authRepository))
                 ForgotPasswordScreen(
                     viewModel = loginViewModel,
                     onBack = { navController.popBackStack() },
@@ -294,6 +305,14 @@ fun RtiqaApp(
                 ProfileScreen(
                     userProfile = userProfile,
                     onNavigateToAdmin = { navController.navigate("admin_dashboard") },
+                    onLogout = {
+                        scope.launch {
+                            appDiContainer.authRepository.logout()
+                            navController.navigate("welcome") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        }
+                    },
                     isArabic = isArabic
                 )
             }

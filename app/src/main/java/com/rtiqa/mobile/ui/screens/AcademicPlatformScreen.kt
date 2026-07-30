@@ -19,8 +19,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
@@ -29,7 +30,6 @@ import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Grade
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.Route
@@ -105,7 +105,7 @@ fun AcademicPlatformScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "رجوع")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
                     }
                 }
             )
@@ -141,7 +141,7 @@ fun AcademicPlatformScreen(
                     selected = uiState.selectedTab == 0,
                     onClick = { onAction(AcademicPlatformUiAction.SelectTab(0)) },
                     text = { Text("المناهج والدروس", fontWeight = FontWeight.Bold) },
-                    icon = { Icon(Icons.Default.MenuBook, contentDescription = null) }
+                    icon = { Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null) }
                 )
                 Tab(
                     selected = uiState.selectedTab == 1,
