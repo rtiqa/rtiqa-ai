@@ -57,7 +57,7 @@ class AuthRepositoryImpl(
                 val fbUser = authResult.user
                 if (fbUser != null) {
                     val uid = fbUser.uid
-                    val name = fbUser.displayName.takeIf { !it.isNull_or_empty() } ?: email.substringBefore("@")
+                    val name = fbUser.displayName.takeIf { !it.isNullOrEmpty() } ?: email.substringBefore("@")
                     
                     securityManager.putEncryptedString(KEY_AUTH_TOKEN, "firebase_token_$uid")
                     securityManager.putEncryptedString(KEY_USER_ID, uid)
@@ -253,8 +253,6 @@ class AuthRepositoryImpl(
         if (fbUid != null) return fbUid
         return securityManager.getEncryptedString(KEY_USER_ID)
     }
-
-    private fun String?.isNull_or_empty(): Boolean = this == null || this.isEmpty()
 
     companion object {
         private const val KEY_AUTH_TOKEN = "auth_token"

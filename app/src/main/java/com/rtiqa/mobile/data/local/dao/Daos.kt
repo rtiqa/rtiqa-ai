@@ -67,23 +67,26 @@ interface LessonDao {
 
 @Dao
 interface UserProfileDao {
-    @Query("SELECT * FROM user_profile WHERE id = :id")
-    fun getUserProfile(id: String = "user_001"): Flow<UserProfileEntity?>
+    @Query("SELECT * FROM user_profile LIMIT 1")
+    fun getUserProfile(): Flow<UserProfileEntity?>
+
+    @Query("SELECT * FROM user_profile WHERE id = :id LIMIT 1")
+    fun getUserProfileById(id: String): Flow<UserProfileEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun saveUserProfile(profile: UserProfileEntity)
 
-    @Query("UPDATE user_profile SET xp = xp + :xpGained, coins = coins + :coinsGained WHERE id = :id")
-    suspend fun addRewards(id: String = "user_001", xpGained: Int, coinsGained: Int)
+    @Query("UPDATE user_profile SET xp = xp + :xpGained, coins = coins + :coinsGained WHERE id = :id OR :id = ''")
+    suspend fun addRewards(id: String, xpGained: Int, coinsGained: Int)
 
-    @Query("UPDATE user_profile SET language = :lang WHERE id = :id")
-    suspend fun updateLanguage(id: String = "user_001", lang: String)
+    @Query("UPDATE user_profile SET language = :lang WHERE id = :id OR :id = ''")
+    suspend fun updateLanguage(id: String, lang: String)
 
-    @Query("UPDATE user_profile SET isDarkMode = :isDark WHERE id = :id")
-    suspend fun updateTheme(id: String = "user_001", isDark: Boolean)
+    @Query("UPDATE user_profile SET isDarkMode = :isDark WHERE id = :id OR :id = ''")
+    suspend fun updateTheme(id: String, isDark: Boolean)
 
-    @Query("UPDATE user_profile SET isOfflineAutoSyncEnabled = :enabled WHERE id = :id")
-    suspend fun updateOfflineAutoSync(id: String = "user_001", enabled: Boolean)
+    @Query("UPDATE user_profile SET isOfflineAutoSyncEnabled = :enabled WHERE id = :id OR :id = ''")
+    suspend fun updateOfflineAutoSync(id: String, enabled: Boolean)
 }
 
 @Dao

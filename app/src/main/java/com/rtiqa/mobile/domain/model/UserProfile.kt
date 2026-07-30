@@ -1,17 +1,17 @@
 package com.rtiqa.mobile.domain.model
 
 data class UserProfile(
-    val id: String = "user_001",
-    val name: String = "طارق المنصور",
-    val email: String = "learner@rtiqa.edu",
+    val id: String = "",
+    val name: String = "",
+    val email: String = "",
     val avatarResName: String = "img_ai_tutor_avatar_1785095337393",
-    val xp: Int = 2450,
-    val coins: Int = 380,
-    val level: Int = 5,
-    val streakDays: Int = 12,
-    val currentGoal: String = "إتقان الشبكات العصبية والذكاء الاصطناعي في 30 يوماً",
+    val xp: Int = 0,
+    val coins: Int = 0,
+    val level: Int = 1,
+    val streakDays: Int = 0,
+    val currentGoal: String = "",
     val language: String = "ar", // "ar" or "en"
     val isOfflineAutoSyncEnabled: Boolean = true,
     val isDarkMode: Boolean = true,
-    val isAdmin: Boolean = true
+    val isAdmin: Boolean = false
 )
