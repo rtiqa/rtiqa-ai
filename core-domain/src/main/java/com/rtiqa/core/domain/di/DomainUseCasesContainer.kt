@@ -76,6 +76,11 @@ import com.rtiqa.core.domain.usecase.GetLearningPathsUseCase
 import com.rtiqa.core.domain.usecase.GetSmartRecommendationsUseCase
 import com.rtiqa.core.domain.usecase.GetOfflineDownloadsUseCase
 import com.rtiqa.core.domain.usecase.SaveOfflineDownloadUseCase
+import com.rtiqa.core.domain.usecase.SaveGradebookRecordUseCase
+import com.rtiqa.core.domain.usecase.SaveLearningPathUseCase
+import com.rtiqa.core.domain.usecase.UnlockBadgeUseCase
+import com.rtiqa.core.domain.usecase.SavePrerequisiteUseCase
+import com.rtiqa.core.domain.usecase.SaveQuestionUseCase
 
 /**
  * Dependency container aggregating domain UseCases provided to presentation ViewModels.
@@ -165,4 +170,9 @@ class DomainUseCasesContainer(
     val getSmartRecommendationsUseCase by lazy { academicRepositoryInstance?.let { GetSmartRecommendationsUseCase(it) } }
     val getOfflineDownloadsUseCase by lazy { academicRepositoryInstance?.let { GetOfflineDownloadsUseCase(it) } }
     val saveOfflineDownloadUseCase by lazy { academicRepositoryInstance?.let { SaveOfflineDownloadUseCase(it) } }
+    val saveGradebookRecordUseCase by lazy { academicRepositoryInstance?.let { SaveGradebookRecordUseCase(it) } }
+    val saveLearningPathUseCase by lazy { academicRepositoryInstance?.let { SaveLearningPathUseCase(it) } }
+    val unlockBadgeUseCase by lazy { academicRepositoryInstance?.let { UnlockBadgeUseCase(it) } }
+    val savePrerequisiteUseCase by lazy { academicRepositoryInstance?.let { SavePrerequisiteUseCase(it) } }
+    val saveQuestionUseCase by lazy { academicRepositoryInstance?.let { SaveQuestionUseCase(it) } }
 }

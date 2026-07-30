@@ -304,6 +304,17 @@ fun RtiqaApp(
                 AdminScreen(
                     uiState = adminUiState,
                     onAction = { action -> adminViewModel.onAction(action) },
+                    onBack = { navController.popBackStack() },
+                    onNavigateToAcademicPlatform = { navController.navigate("academic_platform") }
+                )
+            }
+
+            composable("academic_platform") {
+                val academicViewModel: com.rtiqa.mobile.ui.viewmodel.AcademicPlatformViewModel = viewModel()
+                val academicUiState by academicViewModel.uiState.collectAsState()
+                com.rtiqa.mobile.ui.screens.AcademicPlatformScreen(
+                    uiState = academicUiState,
+                    onAction = { action -> academicViewModel.onAction(action) },
                     onBack = { navController.popBackStack() }
                 )
             }

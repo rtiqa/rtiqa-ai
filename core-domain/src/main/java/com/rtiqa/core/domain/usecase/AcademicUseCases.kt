@@ -91,3 +91,28 @@ class SaveOfflineDownloadUseCase(private val repository: AcademicRepository) {
     suspend operator fun invoke(download: OfflineContentDownload) =
         repository.saveOfflineDownload(download)
 }
+
+class SaveGradebookRecordUseCase(private val repository: AcademicRepository) {
+    suspend operator fun invoke(record: GradebookRecord) =
+        repository.saveGradebookRecord(record)
+}
+
+class SaveLearningPathUseCase(private val repository: AcademicRepository) {
+    suspend operator fun invoke(path: LearningPath) =
+        repository.saveLearningPath(path)
+}
+
+class UnlockBadgeUseCase(private val repository: AcademicRepository) {
+    suspend operator fun invoke(badge: AchievementBadge) =
+        repository.unlockBadge(badge)
+}
+
+class SavePrerequisiteUseCase(private val repository: AcademicRepository) {
+    suspend operator fun invoke(prerequisite: Prerequisite) =
+        repository.savePrerequisite(prerequisite)
+}
+
+class SaveQuestionUseCase(private val repository: AcademicRepository) {
+    suspend operator fun invoke(question: QuestionBankItem) =
+        repository.saveQuestion(question)
+}

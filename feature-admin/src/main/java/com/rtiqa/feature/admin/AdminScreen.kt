@@ -71,6 +71,7 @@ fun AdminScreen(
     uiState: AdminDashboardUiState,
     onAction: (AdminDashboardUiAction) -> Unit,
     onBack: () -> Unit,
+    onNavigateToAcademicPlatform: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -108,6 +109,9 @@ fun AdminScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToAcademicPlatform) {
+                        Icon(Icons.Default.School, contentDescription = "المنظومة الأكاديمية")
+                    }
                     IconButton(onClick = { onAction(AdminDashboardUiAction.RefreshMetrics) }) {
                         Icon(Icons.Default.Refresh, contentDescription = "تحديث")
                     }

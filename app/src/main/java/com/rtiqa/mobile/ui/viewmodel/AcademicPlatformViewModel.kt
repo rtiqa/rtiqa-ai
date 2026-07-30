@@ -26,6 +26,7 @@ import com.rtiqa.core.domain.model.SubmissionStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -72,7 +73,7 @@ sealed interface AcademicPlatformUiAction {
 
 class AcademicPlatformViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val container = AppDiContainer.getInstance(application)
+    private val container = AppDiContainer(application)
     private val useCases = container.domainUseCasesContainer
 
     private val _uiState = MutableStateFlow(AcademicPlatformUiState())
@@ -154,7 +155,7 @@ class AcademicPlatformViewModel(application: Application) : AndroidViewModel(app
 
         viewModelScope.launch {
             useCases.getSmartRecommendationsUseCase?.invoke(studentId)?.collect { list ->
-                _uiState.update { it.copy(recommendations = list), isLoading = false }
+                _uiState.update { it.copy(recommendations = list, isLoading = false) }
             }
         }
     }
