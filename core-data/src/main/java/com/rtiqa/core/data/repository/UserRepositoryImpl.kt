@@ -49,13 +49,13 @@ class UserRepositoryImpl(
     }
 
     override suspend fun addXp(amount: Int): RtiqaResult<Unit> {
-        val current = getUserProfile().firstOrNull() ?: UserProfile("1", "المتعلم", "user@rtiqa.com")
+        val current = getUserProfile().firstOrNull() ?: return RtiqaResult.Error(RtiqaError.DatabaseError("No authenticated user profile found"))
         val updated = current.addXp(amount)
         return updateUserProfile(updated)
     }
 
     override suspend fun incrementStreak(): RtiqaResult<Unit> {
-        val current = getUserProfile().firstOrNull() ?: UserProfile("1", "المتعلم", "user@rtiqa.com")
+        val current = getUserProfile().firstOrNull() ?: return RtiqaResult.Error(RtiqaError.DatabaseError("No authenticated user profile found"))
         val updated = current.incrementStreak()
         return updateUserProfile(updated)
     }

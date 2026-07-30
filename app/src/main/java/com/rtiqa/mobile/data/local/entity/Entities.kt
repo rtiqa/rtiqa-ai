@@ -42,7 +42,7 @@ data class LessonEntity(
 
 @Entity(tableName = "user_profile")
 data class UserProfileEntity(
-    @PrimaryKey val id: String = "user_001",
+    @PrimaryKey val id: String = "",
     val name: String,
     val email: String,
     val avatarResName: String,
