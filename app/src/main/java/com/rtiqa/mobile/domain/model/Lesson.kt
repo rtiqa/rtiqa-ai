@@ -12,5 +12,8 @@ data class Lesson(
     val contentMarkdown: String,
     val contentMarkdownAr: String,
     val isCompleted: Boolean = false,
-    val isDownloaded: Boolean = false
+    val isDownloaded: Boolean = false,
+    val hasQuiz: Boolean = false,
+    val quizId: String? = null,
+    val isQuizPassed: Boolean = false
 )

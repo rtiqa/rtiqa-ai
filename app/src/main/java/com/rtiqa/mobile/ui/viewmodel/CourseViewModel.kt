@@ -56,6 +56,24 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         initialValue = emptyList()
     )
 
+    val enrolledCourses: StateFlow<List<Course>> = courseRepository.enrolledCourses.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    val completedLessonsCount: StateFlow<Int> = courseRepository.completedLessonsCount.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
+    val passedQuizzesCount: StateFlow<Int> = courseRepository.passedQuizzesCount.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
     val downloadedCourses: StateFlow<List<Course>> = courseRepository.downloadedCourses.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -119,6 +137,12 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleLessonCompletion(lessonId: String, courseId: String, currentStatus: Boolean) {
         viewModelScope.launch {
             courseRepository.toggleLessonCompletion(lessonId, courseId, !currentStatus)
+        }
+    }
+
+    fun markLessonQuizPassed(lessonId: String, courseId: String, isPassed: Boolean = true) {
+        viewModelScope.launch {
+            courseRepository.updateQuizPassed(lessonId, courseId, isPassed)
         }
     }
 

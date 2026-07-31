@@ -38,7 +38,9 @@ data class LessonEntity(
     val contentMarkdown: String,
     val contentMarkdownAr: String,
     val isCompleted: Boolean = false,
-    val isDownloaded: Boolean = false
+    val isDownloaded: Boolean = false,
+    val hasQuiz: Boolean = false,
+    val isQuizPassed: Boolean = false
 )
 
 @Entity(tableName = "user_profile")

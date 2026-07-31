@@ -253,6 +253,8 @@ fun RtiqaApp(
                 val lessonId = backStack.arguments?.getString("lessonId") ?: "l_ai_1"
                 val courseLessons by courseViewModel.getLessonsForCourse(courseViewModel.selectedCourseId.value).collectAsState()
                 val selectedLesson = courseLessons.find { it.id == lessonId } ?: courseLessons.firstOrNull()
+                val currentIndex = courseLessons.indexOfFirst { it.id == lessonId }
+                val nextLesson = if (currentIndex != -1 && currentIndex + 1 < courseLessons.size) courseLessons[currentIndex + 1] else null
 
                 LessonPlayerScreen(
                     lesson = selectedLesson,
@@ -266,6 +268,11 @@ fun RtiqaApp(
                         aiTutorViewModel.sendMessage(prompt, isArabic)
                         navController.navigate("ai_tutor")
                     },
+                    onNextLesson = if (nextLesson != null) {
+                        { navController.navigate("lesson_player/${nextLesson.id}") }
+                    } else null,
+                    onStartQuiz = { navController.navigate("quiz") },
+                    hasNextLesson = nextLesson != null,
                     isArabic = isArabic
                 )
             }
@@ -282,6 +289,10 @@ fun RtiqaApp(
             }
 
             composable("quiz") {
+                val courseLessons by courseViewModel.getLessonsForCourse(courseViewModel.selectedCourseId.value).collectAsState()
+                val selectedLessonId by courseViewModel.selectedLessonId.collectAsState()
+                val selectedLesson = courseLessons.find { it.id == selectedLessonId } ?: courseLessons.firstOrNull()
+
                 QuizScreen(
                     uiState = quizUiState,
                     question = quizViewModel.currentQuestion,
@@ -290,7 +301,15 @@ fun RtiqaApp(
                     onNextQuestion = { quizViewModel.nextQuestion() },
                     onToggleHint = { quizViewModel.toggleHint() },
                     onRestartQuiz = { quizViewModel.restartQuiz() },
-                    onClaimRewards = { xp, coins -> mainViewModel.addRewards(xp, coins) },
+                    onClaimRewards = { xp, coins ->
+                        mainViewModel.addRewards(xp, coins)
+                        if (quizUiState.isPassed) {
+                            selectedLesson?.let {
+                                courseViewModel.markLessonQuizPassed(it.id, it.courseId, true)
+                            }
+                        }
+                        navController.popBackStack()
+                    },
                     isArabic = isArabic
                 )
             }

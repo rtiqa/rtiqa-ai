@@ -172,12 +172,35 @@ fun CourseDetailScreen(
 
             // Enrollment / Progress Header Section
             if (course.isEnrolled) {
+                val isFullyCompleted = course.progressPercent >= 1.0f || (lessons.isNotEmpty() && lessons.all { it.isCompleted })
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isFullyCompleted) Color(0xFF10B981).copy(alpha = 0.15f)
+                        else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                    ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
+                        if (isFullyCompleted) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = if (isArabic) "🎉 مكتمل بنجاح" else "🎉 Course Completed!",
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF059669),
+                                    fontSize = 16.sp
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = if (isArabic) "مبروك! لقد أتممت جميع دروس واختبارات هذا المقرر بنجاح."
+                                else "Congratulations! You have successfully completed all lessons and quizzes for this course.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                        }
+
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -191,18 +214,18 @@ fun CourseDetailScreen(
                             Text(
                                 text = if (isArabic) "%${(course.progressPercent * 100).toInt()}" else "${(course.progressPercent * 100).toInt()}%",
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = if (isFullyCompleted) Color(0xFF059669) else MaterialTheme.colorScheme.primary,
                                 fontSize = 14.sp
                             )
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         LinearProgressIndicator(
-                            progress = { course.progressPercent },
+                            progress = { course.progressPercent.coerceIn(0f, 1f) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(8.dp)
                                 .clip(RoundedCornerShape(4.dp)),
-                            color = MaterialTheme.colorScheme.primary
+                            color = if (isFullyCompleted) Color(0xFF10B981) else MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                         OutlinedButton(
@@ -328,7 +351,12 @@ fun CourseDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 10.dp)
-                    .clickable { onLessonClick(lesson.id) }
+                    .clickable {
+                        if (!course.isEnrolled) {
+                            onToggleEnrollment(course.id, false)
+                        }
+                        onLessonClick(lesson.id)
+                    }
                     .testTag("lesson_item_${lesson.id}"),
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)

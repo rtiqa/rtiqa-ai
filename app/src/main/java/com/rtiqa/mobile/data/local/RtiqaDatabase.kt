@@ -160,7 +160,9 @@ abstract class RtiqaDatabase : RoomDatabase() {
                         contentMarkdown = "تستقبل الخلية العصبية الاصطناعية عدة إشارات مدخلة، وتطبق عليها أوزاناً تشابكية، ثم تجمعها مع المنحاز وتمرر النتيجة عبر دالة تنشيط مثل ReLU أو Sigmoid.\n\n### النقاط الرئيسية:\n- الأوزان تتحكم في تضخيم الإشارة.\n- المنحاز يغير عتبة التنشيط.\n- دوال التنشيط غير الخطي تتيح تعلم النماذج المعقدة.",
                         contentMarkdownAr = "تستقبل الخلية العصبية الاصطناعية عدة إشارات مدخلة، وتطبق عليها أوزاناً تشابكية، ثم تجمعها مع المنحاز وتمرر النتيجة عبر دالة تنشيط.",
                         isCompleted = true,
-                        isDownloaded = true
+                        isDownloaded = true,
+                        hasQuiz = true,
+                        isQuizPassed = true
                     ),
                     LessonEntity(
                         id = "l_ai_2",

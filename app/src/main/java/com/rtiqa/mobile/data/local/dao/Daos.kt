@@ -22,6 +22,9 @@ interface CourseDao {
     @Query("SELECT * FROM courses WHERE isBookmarked = 1")
     fun getBookmarkedCourses(): Flow<List<CourseEntity>>
 
+    @Query("SELECT * FROM courses WHERE isEnrolled = 1")
+    fun getEnrolledCourses(): Flow<List<CourseEntity>>
+
     @Query("SELECT * FROM courses WHERE isDownloaded = 1")
     fun getDownloadedCourses(): Flow<List<CourseEntity>>
 
@@ -58,6 +61,9 @@ interface LessonDao {
     @Query("UPDATE lessons SET isCompleted = :isCompleted WHERE id = :lessonId")
     suspend fun updateCompletion(lessonId: String, isCompleted: Boolean)
 
+    @Query("UPDATE lessons SET isQuizPassed = :isPassed WHERE id = :lessonId")
+    suspend fun updateQuizPassed(lessonId: String, isPassed: Boolean)
+
     @Query("UPDATE lessons SET isDownloaded = :isDownloaded WHERE id = :lessonId")
     suspend fun updateLessonDownload(lessonId: String, isDownloaded: Boolean)
 
@@ -66,6 +72,12 @@ interface LessonDao {
 
     @Query("SELECT COUNT(*) FROM lessons WHERE courseId = :courseId")
     suspend fun getTotalLessonsCount(courseId: String): Int
+
+    @Query("SELECT COUNT(*) FROM lessons WHERE isCompleted = 1")
+    fun getCompletedLessonsCountAll(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM lessons WHERE isQuizPassed = 1")
+    fun getPassedQuizzesCountAll(): Flow<Int>
 }
 
 @Dao

@@ -62,7 +62,7 @@ class FakeAcademicDao : AcademicDao {
 
     override fun getQuestionsForCourse(courseId: String): Flow<List<QuestionBankEntity>> = flowOf(questions.filter { it.courseId == courseId })
     override suspend fun insertQuestion(question: QuestionBankEntity) { questions.add(question) }
-    override suspend fun insertQuestions(questionList: List<QuestionBankEntity>) { questions.addAll(questionList) }
+    override suspend fun insertQuestions(questions: List<QuestionBankEntity>) { this.questions.addAll(questions) }
 
     override fun getAssessmentsForCourse(courseId: String): Flow<List<AssessmentEntity>> = flowOf(assessments.filter { it.courseId == courseId })
     override fun getAssessmentById(id: String): Flow<AssessmentEntity?> = flowOf(assessments.find { it.id == id })

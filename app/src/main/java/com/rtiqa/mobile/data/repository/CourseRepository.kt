@@ -26,6 +26,13 @@ class CourseRepository(
         entities.map { it.toDomain() }
     }
 
+    val enrolledCourses: Flow<List<Course>> = courseDao.getEnrolledCourses().map { entities ->
+        entities.map { it.toDomain() }
+    }
+
+    val completedLessonsCount: Flow<Int> = lessonDao.getCompletedLessonsCountAll()
+    val passedQuizzesCount: Flow<Int> = lessonDao.getPassedQuizzesCountAll()
+
     val downloadedCourses: Flow<List<Course>> = courseDao.getDownloadedCourses().map { entities ->
         entities.map { it.toDomain() }
     }
@@ -74,6 +81,28 @@ class CourseRepository(
                 id = UUID.randomUUID().toString(),
                 actionType = "LESSON_COMPLETED",
                 payloadJson = "{\"lessonId\":\"$lessonId\", \"isCompleted\":$isCompleted}",
+                timestamp = System.currentTimeMillis(),
+                status = "PENDING"
+            )
+        )
+    }
+
+    suspend fun updateQuizPassed(lessonId: String, courseId: String, isPassed: Boolean) {
+        lessonDao.updateQuizPassed(lessonId, isPassed)
+        if (isPassed) {
+            lessonDao.updateCompletion(lessonId, true)
+            val totalCount = lessonDao.getTotalLessonsCount(courseId)
+            if (totalCount > 0) {
+                val completedCount = lessonDao.getCompletedLessonsCount(courseId)
+                val newProgress = completedCount.toFloat() / totalCount.toFloat()
+                courseDao.updateCourseProgress(courseId, newProgress)
+            }
+        }
+        syncQueueDao.enqueueItem(
+            SyncQueueEntity(
+                id = UUID.randomUUID().toString(),
+                actionType = "QUIZ_PASSED",
+                payloadJson = "{\"lessonId\":\"$lessonId\", \"isPassed\":$isPassed}",
                 timestamp = System.currentTimeMillis(),
                 status = "PENDING"
             )
@@ -134,6 +163,8 @@ class CourseRepository(
         contentMarkdown = contentMarkdown,
         contentMarkdownAr = contentMarkdownAr,
         isCompleted = isCompleted,
-        isDownloaded = isDownloaded
+        isDownloaded = isDownloaded,
+        hasQuiz = hasQuiz,
+        isQuizPassed = isQuizPassed
     )
 }
