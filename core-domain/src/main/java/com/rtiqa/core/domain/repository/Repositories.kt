@@ -6,6 +6,7 @@ import com.rtiqa.core.domain.model.Lesson
 import com.rtiqa.core.domain.model.PageRequest
 import com.rtiqa.core.domain.model.PagedData
 import com.rtiqa.core.domain.model.Quiz
+import com.rtiqa.core.domain.model.QuizResult
 import com.rtiqa.core.domain.model.UserProfile
 import com.rtiqa.core.domain.result.RtiqaResult
 import kotlinx.coroutines.flow.Flow
@@ -29,20 +30,31 @@ interface CourseRepositoryContract {
     fun getCourses(): Flow<List<Course>>
     fun getCourseById(courseId: String): Flow<Course?>
     fun getLessonsForCourse(courseId: String): Flow<List<Lesson>>
+    fun getLessonById(lessonId: String): Flow<Lesson?>
+    fun getNextLesson(courseId: String, currentLessonId: String): Flow<Lesson?>
     fun getPagedCourses(request: PageRequest): Flow<PagedData<Course>>
     suspend fun searchCourses(query: String): List<Course>
     suspend fun markLessonCompleted(lessonId: String, courseId: String): RtiqaResult<Unit>
+    suspend fun updateLessonProgress(lessonId: String, courseId: String, progressPercent: Float): RtiqaResult<Unit>
     suspend fun saveCourse(course: Course): RtiqaResult<Unit>
     suspend fun deleteCourse(courseId: String): RtiqaResult<Unit>
     suspend fun saveLesson(lesson: Lesson): RtiqaResult<Unit>
+    suspend fun enrollInCourse(courseId: String): RtiqaResult<Unit>
+    suspend fun toggleBookmark(courseId: String, isBookmarked: Boolean): RtiqaResult<Unit>
+    suspend fun toggleCourseDownload(courseId: String, isDownloaded: Boolean): RtiqaResult<Unit>
+    suspend fun syncCourses(): RtiqaResult<Unit>
 }
 
 /**
  * Contract for Assessment and Quiz evaluation.
  */
 interface QuizRepositoryContract {
+    fun getQuizzesForCourse(courseId: String): Flow<List<Quiz>>
     fun getQuizForCourse(courseId: String): Flow<Quiz?>
-    suspend fun submitQuizResult(quizId: String, score: Int, total: Int): RtiqaResult<Unit>
+    fun getQuizById(quizId: String): Flow<Quiz?>
+    suspend fun submitQuizResult(quizId: String, score: Int, total: Int): RtiqaResult<QuizResult>
+    fun getQuizResultsForUser(quizId: String, userId: String): Flow<List<QuizResult>>
+    suspend fun saveQuiz(quiz: Quiz): RtiqaResult<Unit>
 }
 
 /**

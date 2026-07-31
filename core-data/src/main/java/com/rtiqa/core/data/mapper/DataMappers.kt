@@ -18,7 +18,9 @@ fun CourseEntity.toDomain(): Course = Course(
     durationMinutes = durationMinutes,
     iconUrl = iconUrl,
     isDownloaded = isDownloaded,
-    progressPercent = progressPercent
+    progressPercent = progressPercent,
+    isEnrolled = isEnrolled,
+    isBookmarked = isBookmarked
 )
 
 fun Course.toEntity(): CourseEntity = CourseEntity(
@@ -30,7 +32,9 @@ fun Course.toEntity(): CourseEntity = CourseEntity(
     durationMinutes = durationMinutes,
     iconUrl = iconUrl,
     isDownloaded = isDownloaded,
-    progressPercent = progressPercent
+    progressPercent = progressPercent,
+    isEnrolled = isEnrolled,
+    isBookmarked = isBookmarked
 )
 
 fun CourseDto.toEntity(): CourseEntity = CourseEntity(
@@ -42,7 +46,9 @@ fun CourseDto.toEntity(): CourseEntity = CourseEntity(
     durationMinutes = durationMinutes,
     iconUrl = iconUrl,
     isDownloaded = false,
-    progressPercent = 0f
+    progressPercent = 0f,
+    isEnrolled = false,
+    isBookmarked = false
 )
 
 fun com.rtiqa.core.network.api.NetworkCourseDto.toEntity(): CourseEntity = CourseEntity(
@@ -54,7 +60,9 @@ fun com.rtiqa.core.network.api.NetworkCourseDto.toEntity(): CourseEntity = Cours
     durationMinutes = 30,
     iconUrl = null,
     isDownloaded = false,
-    progressPercent = progressPercent
+    progressPercent = progressPercent,
+    isEnrolled = false,
+    isBookmarked = false
 )
 
 fun LessonEntity.toDomain(): Lesson = Lesson(

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -52,6 +53,9 @@ fun LessonPlayerScreen(
     onBack: () -> Unit,
     onToggleComplete: (Boolean) -> Unit,
     onAskAiAboutLesson: (String) -> Unit,
+    onNextLesson: (() -> Unit)? = null,
+    onSaveProgress: ((Float) -> Unit)? = null,
+    hasNextLesson: Boolean = true,
     isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
@@ -104,7 +108,12 @@ fun LessonPlayerScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     IconButton(
-                        onClick = { isPlaying = !isPlaying },
+                        onClick = {
+                            isPlaying = !isPlaying
+                            if (isPlaying) {
+                                onSaveProgress?.invoke(0.75f)
+                            }
+                        },
                         modifier = Modifier
                             .size(64.dp)
                             .clip(RoundedCornerShape(32.dp))
@@ -137,7 +146,13 @@ fun LessonPlayerScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Button(
-                onClick = { onToggleComplete(!lesson.isCompleted) },
+                onClick = {
+                    val newStatus = !lesson.isCompleted
+                    onToggleComplete(newStatus)
+                    if (newStatus) {
+                        onSaveProgress?.invoke(1.0f)
+                    }
+                },
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.testTag("complete_lesson_button")
             ) {
@@ -153,6 +168,17 @@ fun LessonPlayerScreen(
                     else 
                         stringResource(R.string.mark_complete)
                 )
+            }
+
+            if (onNextLesson != null && hasNextLesson) {
+                Button(
+                    onClick = onNextLesson,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                    modifier = Modifier.testTag("next_lesson_button")
+                ) {
+                    Text(if (isArabic) "الدرس التالي ➔" else "Next Lesson ➔")
+                }
             }
 
             OutlinedButton(

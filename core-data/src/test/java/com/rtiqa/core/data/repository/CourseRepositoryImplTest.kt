@@ -31,15 +31,54 @@ class CourseRepositoryImplTest {
         override suspend fun deleteCourseById(id: String) {
             list.removeAll { it.id == id }
         }
+        override suspend fun updateEnrollmentStatus(id: String, isEnrolled: Boolean) {
+            val idx = list.indexOfFirst { it.id == id }
+            if (idx != -1) list[idx] = list[idx].copy(isEnrolled = isEnrolled)
+        }
+        override suspend fun updateBookmarkStatus(id: String, isBookmarked: Boolean) {
+            val idx = list.indexOfFirst { it.id == id }
+            if (idx != -1) list[idx] = list[idx].copy(isBookmarked = isBookmarked)
+        }
+        override suspend fun updateDownloadStatus(id: String, isDownloaded: Boolean) {
+            val idx = list.indexOfFirst { it.id == id }
+            if (idx != -1) list[idx] = list[idx].copy(isDownloaded = isDownloaded)
+        }
+        override suspend fun updateCourseProgress(id: String, progressPercent: Float) {
+            val idx = list.indexOfFirst { it.id == id }
+            if (idx != -1) list[idx] = list[idx].copy(progressPercent = progressPercent)
+        }
     }
 
     private class FakeLessonDao : LessonDao {
-        override fun getLessonsForCourse(courseId: String) = flowOf(emptyList<com.rtiqa.core.database.entity.LessonEntity>())
-        override suspend fun getLessonsForCourseList(courseId: String) = emptyList<com.rtiqa.core.database.entity.LessonEntity>()
-        override suspend fun getLessonById(id: String) = null
-        override suspend fun insertLesson(lesson: com.rtiqa.core.database.entity.LessonEntity) {}
-        override suspend fun insertLessons(lessons: List<com.rtiqa.core.database.entity.LessonEntity>) {}
-        override suspend fun deleteLessonsForCourse(courseId: String) {}
+        val lessonList = mutableListOf(
+            com.rtiqa.core.database.entity.LessonEntity("l1", "c1", "Lesson 1", "Content 1", 1, false, null),
+            com.rtiqa.core.database.entity.LessonEntity("l2", "c1", "Lesson 2", "Content 2", 2, false, null)
+        )
+        override fun getLessonsForCourse(courseId: String) = flowOf(lessonList.filter { it.courseId == courseId })
+        override suspend fun getLessonsForCourseList(courseId: String) = lessonList.filter { it.courseId == courseId }
+        override suspend fun getLessonById(id: String) = lessonList.find { it.id == id }
+        override fun observeLessonById(id: String) = flowOf(lessonList.find { it.id == id })
+        override fun getNextLessonEntity(courseId: String, currentLessonId: String): kotlinx.coroutines.flow.Flow<com.rtiqa.core.database.entity.LessonEntity?> {
+            val curr = lessonList.find { it.id == currentLessonId } ?: return flowOf(null)
+            val next = lessonList.filter { it.courseId == courseId && it.order > curr.order }.minByOrNull { it.order }
+            return flowOf(next)
+        }
+        override suspend fun insertLesson(lesson: com.rtiqa.core.database.entity.LessonEntity) {
+            val idx = lessonList.indexOfFirst { it.id == lesson.id }
+            if (idx != -1) lessonList[idx] = lesson else lessonList.add(lesson)
+        }
+        override suspend fun insertLessons(lessons: List<com.rtiqa.core.database.entity.LessonEntity>) {
+            lessonList.addAll(lessons)
+        }
+        override suspend fun deleteLessonsForCourse(courseId: String) {
+            lessonList.removeAll { it.courseId == courseId }
+        }
+        override suspend fun updateLessonCompletion(id: String, isCompleted: Boolean) {
+            val idx = lessonList.indexOfFirst { it.id == id }
+            if (idx != -1) lessonList[idx] = lessonList[idx].copy(isCompleted = isCompleted)
+        }
+        override suspend fun getTotalLessonsCount(courseId: String): Int = lessonList.count { it.courseId == courseId }
+        override suspend fun getCompletedLessonsCount(courseId: String): Int = lessonList.count { it.courseId == courseId && it.isCompleted }
     }
 
     @Test
@@ -67,5 +106,53 @@ class CourseRepositoryImplTest {
 
         assertEquals(1, searchResult.size)
         assertEquals("Compose Masterclass", searchResult[0].title)
+    }
+
+    @Test
+    fun enrollInCourse_updatesEnrollmentStatus() = runTest {
+        val fakeDao = FakeCourseDao()
+        val repository = CourseRepositoryImpl(fakeDao, FakeLessonDao())
+        
+        val result = repository.enrollInCourse("1")
+
+        assertEquals(com.rtiqa.core.domain.result.RtiqaResult.Success(Unit), result)
+        val course = repository.getCourseById("1").first()
+        assertNotNull(course)
+        assertEquals(true, course?.isEnrolled)
+    }
+
+    @Test
+    fun toggleBookmark_updatesBookmarkStatus() = runTest {
+        val fakeDao = FakeCourseDao()
+        val repository = CourseRepositoryImpl(fakeDao, FakeLessonDao())
+        
+        repository.toggleBookmark("1", true)
+
+        val course = repository.getCourseById("1").first()
+        assertEquals(true, course?.isBookmarked)
+    }
+
+    @Test
+    fun getLessonById_returnsCorrespondingLesson() = runTest {
+        val repository = CourseRepositoryImpl(FakeCourseDao(), FakeLessonDao())
+        val lesson = repository.getLessonById("l1").first()
+        assertNotNull(lesson)
+        assertEquals("Lesson 1", lesson?.title)
+    }
+
+    @Test
+    fun getNextLesson_returnsNextLessonInOrder() = runTest {
+        val repository = CourseRepositoryImpl(FakeCourseDao(), FakeLessonDao())
+        val nextLesson = repository.getNextLesson("c1", "l1").first()
+        assertNotNull(nextLesson)
+        assertEquals("l2", nextLesson?.id)
+        assertEquals("Lesson 2", nextLesson?.title)
+    }
+
+    @Test
+    fun updateLessonProgress_returnsSuccess() = runTest {
+        val repository = CourseRepositoryImpl(FakeCourseDao(), FakeLessonDao())
+        val result = repository.updateLessonProgress("l1", "c1", 0.8f)
+        assertEquals(com.rtiqa.core.domain.result.RtiqaResult.Success(Unit), result)
     }
 }

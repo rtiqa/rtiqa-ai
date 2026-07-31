@@ -9,7 +9,7 @@ enum class SubmissionStatus {
 }
 
 enum class QuestionType {
-    MCQ, TRUE_FALSE, CODE
+    MULTIPLE_CHOICE, MCQ, TRUE_FALSE, CODE
 }
 
 enum class AssessmentType {

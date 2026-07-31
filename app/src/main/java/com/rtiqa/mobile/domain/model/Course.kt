@@ -17,7 +17,10 @@ data class Course(
     val tags: List<String>,
     val progressPercent: Float = 0f,
     val isBookmarked: Boolean = false,
-    val isDownloaded: Boolean = false
+    val isDownloaded: Boolean = false,
+    val isEnrolled: Boolean = false,
+    val instructor: String = "أ.د. عبد الله الارتضاء",
+    val language: String = "العربية"
 )
 
 enum class CourseCategory(val displayName: String, val displayNameAr: String) {

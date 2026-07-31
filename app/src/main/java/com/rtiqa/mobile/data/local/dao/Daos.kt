@@ -31,6 +31,9 @@ interface CourseDao {
     @Query("UPDATE courses SET isBookmarked = :isBookmarked WHERE id = :courseId")
     suspend fun updateBookmarkStatus(courseId: String, isBookmarked: Boolean)
 
+    @Query("UPDATE courses SET isEnrolled = :isEnrolled WHERE id = :courseId")
+    suspend fun updateEnrollmentStatus(courseId: String, isEnrolled: Boolean)
+
     @Query("UPDATE courses SET isDownloaded = :isDownloaded WHERE id = :courseId")
     suspend fun updateDownloadStatus(courseId: String, isDownloaded: Boolean)
 

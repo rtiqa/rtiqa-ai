@@ -25,6 +25,9 @@ data class CourseDetailUiState(
 sealed interface CourseDetailUiAction : ViewUiAction {
     data class LoadCourseDetail(val id: String) : CourseDetailUiAction
     data class LessonClicked(val lessonId: String) : CourseDetailUiAction
+    data class MarkLessonCompleted(val lessonId: String) : CourseDetailUiAction
+    object EnrollClicked : CourseDetailUiAction
+    object BookmarkToggled : CourseDetailUiAction
     object StartQuizClicked : CourseDetailUiAction
     object DownloadCourseClicked : CourseDetailUiAction
 }
@@ -38,13 +41,19 @@ sealed interface CourseDetailUiEvent : ViewUiEvent {
 class CourseDetailViewModel(
     private val getCourseDetailUseCase: GetCourseDetailUseCase,
     private val getLessonsForCourseUseCase: GetLessonsForCourseUseCase,
-    private val downloadCourseUseCase: DownloadCourseUseCase
+    private val downloadCourseUseCase: DownloadCourseUseCase,
+    private val enrollCourseUseCase: com.rtiqa.core.domain.usecase.EnrollCourseUseCase? = null,
+    private val toggleBookmarkUseCase: com.rtiqa.core.domain.usecase.ToggleBookmarkUseCase? = null,
+    private val completeLessonUseCase: com.rtiqa.core.domain.usecase.CompleteLessonUseCase? = null
 ) : BaseViewModel<CourseDetailUiState, CourseDetailUiAction, CourseDetailUiEvent>(CourseDetailUiState()) {
 
     override fun onAction(action: CourseDetailUiAction) {
         when (action) {
             is CourseDetailUiAction.LoadCourseDetail -> observeCourse(action.id)
             is CourseDetailUiAction.LessonClicked -> sendEvent(CourseDetailUiEvent.NavigateToLessonViewer(action.lessonId))
+            is CourseDetailUiAction.MarkLessonCompleted -> markLessonCompleted(action.lessonId)
+            is CourseDetailUiAction.EnrollClicked -> enrollCourse()
+            is CourseDetailUiAction.BookmarkToggled -> toggleBookmark()
             is CourseDetailUiAction.StartQuizClicked -> {
                 if (currentState.courseId.isNotBlank()) {
                     sendEvent(CourseDetailUiEvent.NavigateToQuiz(currentState.courseId))
@@ -69,6 +78,45 @@ class CourseDetailViewModel(
                 )
             }
         }.launchIn(viewModelScope)
+    }
+
+    private fun enrollCourse() {
+        val id = currentState.courseId
+        if (id.isBlank()) return
+        viewModelScope.launch {
+            when (val result = enrollCourseUseCase?.invoke(id)) {
+                is com.rtiqa.core.domain.result.RtiqaResult.Success -> {
+                    sendEvent(CourseDetailUiEvent.ShowToast("تم التسجيل في المقرر بنجاح!"))
+                }
+                is com.rtiqa.core.domain.result.RtiqaResult.Error -> {
+                    sendEvent(CourseDetailUiEvent.ShowToast(result.error.message))
+                }
+                else -> {}
+            }
+        }
+    }
+
+    private fun toggleBookmark() {
+        val course = currentState.course ?: return
+        viewModelScope.launch {
+            toggleBookmarkUseCase?.invoke(course.id, !course.isBookmarked)
+        }
+    }
+
+    private fun markLessonCompleted(lessonId: String) {
+        val courseId = currentState.courseId
+        if (courseId.isBlank() || lessonId.isBlank()) return
+        viewModelScope.launch {
+            when (val result = completeLessonUseCase?.invoke(lessonId, courseId)) {
+                is com.rtiqa.core.domain.result.RtiqaResult.Success -> {
+                    sendEvent(CourseDetailUiEvent.ShowToast("تم إكمال الدرس! +25 XP 🎉"))
+                }
+                is com.rtiqa.core.domain.result.RtiqaResult.Error -> {
+                    sendEvent(CourseDetailUiEvent.ShowToast(result.error.message))
+                }
+                else -> {}
+            }
+        }
     }
 
     private fun downloadCourse() {

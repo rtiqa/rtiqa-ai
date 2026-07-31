@@ -30,7 +30,9 @@ sealed interface CoursesListUiAction : ViewUiAction {
     data class CategoryFilterSelected(val category: String?) : CoursesListUiAction
     data class SearchQueryChanged(val query: String) : CoursesListUiAction
     data class DownloadCourseRequested(val courseId: String) : CoursesListUiAction
+    data class BookmarkToggled(val courseId: String, val isBookmarked: Boolean) : CoursesListUiAction
     data class CourseClicked(val courseId: String) : CoursesListUiAction
+    object SyncRequested : CoursesListUiAction
     object LoadNextPage : CoursesListUiAction
 }
 
@@ -42,7 +44,9 @@ sealed interface CoursesListUiEvent : ViewUiEvent {
 class CoursesListViewModel(
     private val getPagedCoursesUseCase: GetPagedCoursesUseCase,
     private val searchCoursesUseCase: SearchCoursesUseCase,
-    private val downloadCourseUseCase: DownloadCourseUseCase
+    private val downloadCourseUseCase: DownloadCourseUseCase,
+    private val toggleBookmarkUseCase: com.rtiqa.core.domain.usecase.ToggleBookmarkUseCase? = null,
+    private val syncCoursesUseCase: com.rtiqa.core.domain.usecase.SyncCoursesUseCase? = null
 ) : BaseViewModel<CoursesListUiState, CoursesListUiAction, CoursesListUiEvent>(CoursesListUiState()) {
 
     private var searchJob: Job? = null
@@ -88,11 +92,28 @@ class CoursesListViewModel(
                 }
             }
             is CoursesListUiAction.DownloadCourseRequested -> downloadCourse(action.courseId)
+            is CoursesListUiAction.BookmarkToggled -> toggleBookmark(action.courseId, action.isBookmarked)
             is CoursesListUiAction.CourseClicked -> sendEvent(CoursesListUiEvent.NavigateToCourseDetail(action.courseId))
+            is CoursesListUiAction.SyncRequested -> syncCourses()
             is CoursesListUiAction.LoadNextPage -> {
                 setState { copy(currentPage = currentPage + 1) }
                 loadCourses()
             }
+        }
+    }
+
+    private fun toggleBookmark(courseId: String, isBookmarked: Boolean) {
+        viewModelScope.launch {
+            toggleBookmarkUseCase?.invoke(courseId, isBookmarked)
+        }
+    }
+
+    private fun syncCourses() {
+        viewModelScope.launch {
+            setState { copy(isLoading = true) }
+            syncCoursesUseCase?.invoke()
+            setState { copy(isLoading = false) }
+            sendEvent(CoursesListUiEvent.ShowMessage("تمت مزامنة المقررات بنجاح"))
         }
     }
 

@@ -233,6 +233,12 @@ fun RtiqaApp(
                         navController.navigate("lesson_player/$lessonId")
                     },
                     onQuizClick = { navController.navigate("quiz") },
+                    onToggleEnrollment = { id, status -> courseViewModel.toggleEnrollment(id, status) },
+                    onToggleBookmark = { id, status -> courseViewModel.toggleBookmark(id, status) },
+                    onToggleDownload = { id, status -> courseViewModel.toggleCourseDownload(id, status) },
+                    onToggleLessonCompletion = { lessonId, cId, status ->
+                        courseViewModel.toggleLessonCompletion(lessonId, cId, status)
+                    },
                     onToggleDownloadLesson = { lessonId, status ->
                         courseViewModel.toggleLessonDownload(lessonId, status)
                     },

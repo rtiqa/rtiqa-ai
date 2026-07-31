@@ -3,6 +3,8 @@ package com.rtiqa.mobile.data.repository
 import com.rtiqa.mobile.domain.model.Quiz
 import com.rtiqa.mobile.domain.model.QuizQuestion
 
+import com.rtiqa.mobile.domain.model.QuestionType
+
 class QuizRepository {
 
     fun getSampleQuiz(courseId: String): Quiz {
@@ -12,6 +14,8 @@ class QuizRepository {
             courseId = courseId,
             title = "Neural Network Fundamentals Assessment",
             titleAr = "تقييم أساسيات الشبكات العصبية",
+            timeLimitSeconds = 300,
+            passingScorePercent = 70,
             questions = listOf(
                 QuizQuestion(
                     id = "qq_1",
@@ -34,10 +38,25 @@ class QuizRepository {
                     explanationAr = "تسمح دوال التنشيط للشبكات العصبية بتمثيل حدود القرار غير الخطية المعقدة.",
                     hint = "Think about why linear regression alone cannot draw curved decision boundaries.",
                     hintAr = "فكر في سبب عدم قدرة الانحدار الخطي وحده على رسم منحنيات معقدة.",
-                    xpReward = 50
+                    xpReward = 50,
+                    type = QuestionType.MULTIPLE_CHOICE
                 ),
                 QuizQuestion(
                     id = "qq_2",
+                    questionText = "Gradient descent guarantees finding global minimum for non-convex functions.",
+                    questionTextAr = "الانحدار التدريجي يضمن دائماً الوصول للحد الأدنى العام في الدوال غير التحدبية.",
+                    options = listOf("True", "False"),
+                    optionsAr = listOf("صح", "خطأ"),
+                    correctAnswerIndex = 1,
+                    explanation = "Gradient descent can get stuck in local minima or saddle points in non-convex optimization.",
+                    explanationAr = "خطأ، قد يستقر الانحدار التدريجي في حد أدنى محلي دون الوصول للحد الأدنى العام.",
+                    hint = "Think about local minima vs global minima.",
+                    hintAr = "تذكر الفارق بين الحد الأدنى المحلي والعام.",
+                    xpReward = 50,
+                    type = QuestionType.TRUE_FALSE
+                ),
+                QuizQuestion(
+                    id = "qq_3",
                     questionText = "Which algorithm calculates partial derivatives of the loss function using the calculus chain rule?",
                     questionTextAr = "أي خوارزمية تحسب المشتقات الجزئية لدالة الخسارة باستخدام قاعدة السلسلة الرياضية؟",
                     options = listOf(
@@ -57,30 +76,8 @@ class QuizRepository {
                     explanationAr = "تمرر خوارزمية الانتشار العكسي تدرج الخطأ من طبقة المخرجات نحو المدخلات.",
                     hint = "It propagates errors backward through layers.",
                     hintAr = "إنها تنتشر بالخطأ عكسياً عبر الطبقات.",
-                    xpReward = 50
-                ),
-                QuizQuestion(
-                    id = "qq_3",
-                    questionText = "In Transformer architectures, what does Self-Attention calculate for each word token?",
-                    questionTextAr = "في نماذج المحولات، ماذا تحسب آلية الانتباه الذاتي لكل رمز كلمة؟",
-                    options = listOf(
-                        "Query (Q), Key (K), and Value (V) representations",
-                        "RGB Pixel Histogram",
-                        "Frequency Spectrogram",
-                        "Network IP Address"
-                    ),
-                    optionsAr = listOf(
-                        "تمثيلات الاستعلام (Q) والمفتاح (K) والقيمة (V)",
-                        "المدرج التكراري للبكسلات",
-                        "مخطط التردد الصوتي",
-                        "عنوان شبكة الإنترنت"
-                    ),
-                    correctAnswerIndex = 0,
-                    explanation = "Self-attention project token embeddings into Q, K, V space to compute weighted dynamic contexts.",
-                    explanationAr = "إسقاط التضمينات في فضاء الاستعلام والمفتاح والقيمة لحساب العلاقات السياقية.",
-                    hint = "Three fundamental matrices in Attention Is All You Need paper.",
-                    hintAr = "ثلاث مصفوفات أساسية في الورقة العلمية للمحولات.",
-                    xpReward = 50
+                    xpReward = 50,
+                    type = QuestionType.MULTIPLE_CHOICE
                 )
             )
         )

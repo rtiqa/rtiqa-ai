@@ -82,21 +82,42 @@ fun CourseCard(
                     modifier = Modifier.matchParentSize()
                 )
 
-                // Category Badge
-                Box(
+                // Category & Enrollment Badges
+                Row(
                     modifier = Modifier
                         .padding(12.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.Black.copy(alpha = 0.7f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .align(Alignment.TopStart)
+                        .align(Alignment.TopStart),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(
-                        text = if (isArabic) course.categoryAr else course.category,
-                        color = Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.Black.copy(alpha = 0.7f))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = if (isArabic) course.categoryAr else course.category,
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    if (course.isEnrolled) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (isArabic) "مُسجّل" else "Enrolled",
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
 
                 // Bookmark Icon

@@ -58,8 +58,14 @@ interface AcademicDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertQuestion(question: QuestionBankEntity)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertQuestions(questions: List<QuestionBankEntity>)
+
     @Query("SELECT * FROM assessments WHERE courseId = :courseId")
     fun getAssessmentsForCourse(courseId: String): Flow<List<AssessmentEntity>>
+
+    @Query("SELECT * FROM assessments WHERE id = :id LIMIT 1")
+    fun getAssessmentById(id: String): Flow<AssessmentEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAssessment(assessment: AssessmentEntity)

@@ -13,7 +13,9 @@ data class CourseEntity(
     val durationMinutes: Int,
     val iconUrl: String?,
     val isDownloaded: Boolean,
-    val progressPercent: Float
+    val progressPercent: Float,
+    val isEnrolled: Boolean = false,
+    val isBookmarked: Boolean = false
 )
 
 @Entity(tableName = "lessons")

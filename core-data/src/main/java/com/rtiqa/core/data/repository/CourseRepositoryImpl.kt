@@ -19,7 +19,8 @@ class CourseRepositoryImpl(
     private val courseDao: CourseDao,
     private val lessonDao: LessonDao,
     private val firestoreSyncManager: FirestoreSyncManager? = null,
-    private val currentUserIdProvider: (suspend () -> String?)? = null
+    private val currentUserIdProvider: (suspend () -> String?)? = null,
+    private val offlineSyncManager: com.rtiqa.core.domain.repository.OfflineSyncContract? = null
 ) : CourseRepositoryContract {
 
     override fun getCourses(): Flow<List<Course>> {
@@ -36,6 +37,14 @@ class CourseRepositoryImpl(
         return lessonDao.getLessonsForCourse(courseId).map { entities ->
             entities.map { it.toDomain() }
         }
+    }
+
+    override fun getLessonById(lessonId: String): Flow<Lesson?> {
+        return lessonDao.observeLessonById(lessonId).map { it?.toDomain() }
+    }
+
+    override fun getNextLesson(courseId: String, currentLessonId: String): Flow<Lesson?> {
+        return lessonDao.getNextLessonEntity(courseId, currentLessonId).map { it?.toDomain() }
     }
 
     override fun getPagedCourses(request: PageRequest): Flow<PagedData<Course>> {
@@ -80,13 +89,15 @@ class CourseRepositoryImpl(
                 lessonDao.insertLesson(lesson.copy(isCompleted = true))
             }
 
+            val lessons = lessonDao.getLessonsForCourseList(courseId)
+            val completedCount = lessons.count { it.isCompleted }
+            val totalCount = lessons.size.coerceAtLeast(1)
+            val progressPercent = completedCount.toFloat() / totalCount.toFloat()
+
+            courseDao.updateCourseProgress(courseId, progressPercent)
+
             val userId = currentUserIdProvider?.invoke()
             if (userId != null) {
-                val lessons = lessonDao.getLessonsForCourseList(courseId)
-                val completedCount = lessons.count { it.isCompleted }
-                val totalCount = lessons.size.coerceAtLeast(1)
-                val progressPercent = completedCount.toFloat() / totalCount.toFloat()
-
                 firestoreSyncManager?.syncCourseProgressToCloud(
                     userId = userId,
                     courseId = courseId,
@@ -98,6 +109,31 @@ class CourseRepositoryImpl(
             RtiqaResult.Success(Unit)
         } catch (e: Exception) {
             RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to mark lesson complete", e))
+        }
+    }
+
+    override suspend fun updateLessonProgress(
+        lessonId: String,
+        courseId: String,
+        progressPercent: Float
+    ): RtiqaResult<Unit> {
+        return try {
+            val userId = currentUserIdProvider?.invoke()
+            if (userId != null) {
+                firestoreSyncManager?.syncCourseProgressToCloud(
+                    userId = userId,
+                    courseId = courseId,
+                    progressPercent = progressPercent,
+                    completedLessonsCount = lessonDao.getCompletedLessonsCount(courseId)
+                )
+            }
+            offlineSyncManager?.enqueueOfflineAction(
+                actionType = "LESSON_PROGRESS_UPDATE",
+                payloadJson = "{\"lessonId\":\"$lessonId\",\"courseId\":\"$courseId\",\"progress\":$progressPercent}"
+            )
+            RtiqaResult.Success(Unit)
+        } catch (e: Exception) {
+            RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to update lesson progress", e))
         }
     }
 
@@ -126,6 +162,54 @@ class CourseRepositoryImpl(
             RtiqaResult.Success(Unit)
         } catch (e: Exception) {
             RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to save lesson", e))
+        }
+    }
+
+    override suspend fun enrollInCourse(courseId: String): RtiqaResult<Unit> {
+        return try {
+            courseDao.updateEnrollmentStatus(courseId, true)
+            val userId = currentUserIdProvider?.invoke()
+            if (userId != null) {
+                firestoreSyncManager?.syncCourseProgressToCloud(
+                    userId = userId,
+                    courseId = courseId,
+                    progressPercent = 0f,
+                    completedLessonsCount = 0
+                )
+            }
+            RtiqaResult.Success(Unit)
+        } catch (e: Exception) {
+            RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to enroll in course", e))
+        }
+    }
+
+    override suspend fun toggleBookmark(courseId: String, isBookmarked: Boolean): RtiqaResult<Unit> {
+        return try {
+            courseDao.updateBookmarkStatus(courseId, isBookmarked)
+            RtiqaResult.Success(Unit)
+        } catch (e: Exception) {
+            RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to update bookmark", e))
+        }
+    }
+
+    override suspend fun toggleCourseDownload(courseId: String, isDownloaded: Boolean): RtiqaResult<Unit> {
+        return try {
+            courseDao.updateDownloadStatus(courseId, isDownloaded)
+            RtiqaResult.Success(Unit)
+        } catch (e: Exception) {
+            RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to update download status", e))
+        }
+    }
+
+    override suspend fun syncCourses(): RtiqaResult<Unit> {
+        return try {
+            val userId = currentUserIdProvider?.invoke()
+            if (userId != null) {
+                firestoreSyncManager?.fetchUserProfileFromCloud(userId)
+            }
+            offlineSyncManager?.syncRemoteCourses() ?: RtiqaResult.Success(Unit)
+        } catch (e: Exception) {
+            RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.SyncError("Failed to sync courses with cloud", e))
         }
     }
 }

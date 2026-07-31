@@ -111,8 +111,18 @@ class DomainUseCasesContainer(
     val downloadCourseUseCase by lazy { DownloadCourseUseCase(downloadManager) }
     val saveCourseUseCase by lazy { SaveCourseUseCase(courseRepository) }
     val deleteCourseUseCase by lazy { DeleteCourseUseCase(courseRepository) }
+    val enrollCourseUseCase by lazy { com.rtiqa.core.domain.usecase.EnrollCourseUseCase(courseRepository) }
+    val toggleBookmarkUseCase by lazy { com.rtiqa.core.domain.usecase.ToggleBookmarkUseCase(courseRepository) }
+    val syncCoursesUseCase by lazy { com.rtiqa.core.domain.usecase.SyncCoursesUseCase(courseRepository) }
+    val getLessonDetailUseCase by lazy { com.rtiqa.core.domain.usecase.GetLessonDetailUseCase(courseRepository) }
+    val getNextLessonUseCase by lazy { com.rtiqa.core.domain.usecase.GetNextLessonUseCase(courseRepository) }
+    val saveLessonProgressUseCase by lazy { com.rtiqa.core.domain.usecase.SaveLessonProgressUseCase(courseRepository) }
 
+    val getQuizzesForCourseUseCase by lazy { com.rtiqa.core.domain.usecase.GetQuizzesForCourseUseCase(quizRepository) }
     val getQuizForCourseUseCase by lazy { GetQuizForCourseUseCase(quizRepository) }
+    val getQuizDetailUseCase by lazy { com.rtiqa.core.domain.usecase.GetQuizDetailUseCase(quizRepository) }
+    val getQuizHistoryUseCase by lazy { com.rtiqa.core.domain.usecase.GetQuizHistoryUseCase(quizRepository) }
+    val evaluateQuizAnswersUseCase by lazy { com.rtiqa.core.domain.usecase.EvaluateQuizAnswersUseCase() }
     val submitQuizResultUseCase by lazy { SubmitQuizResultUseCase(quizRepository, userRepository) }
 
     val askAiTutorUseCase by lazy { AskAiTutorUseCase(aiRepository) }

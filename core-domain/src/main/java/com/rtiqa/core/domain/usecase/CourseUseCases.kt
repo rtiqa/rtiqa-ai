@@ -122,3 +122,77 @@ class DeleteCourseUseCase(
         return courseRepository.deleteCourse(courseId)
     }
 }
+
+/**
+ * Use case to enroll in a course.
+ */
+class EnrollCourseUseCase(
+    private val courseRepository: CourseRepositoryContract
+) {
+    suspend operator fun invoke(courseId: String): RtiqaResult<Unit> {
+        if (courseId.isBlank()) {
+            return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Course ID cannot be blank.")))
+        }
+        return courseRepository.enrollInCourse(courseId)
+    }
+}
+
+/**
+ * Use case to toggle bookmark state for a course.
+ */
+class ToggleBookmarkUseCase(
+    private val courseRepository: CourseRepositoryContract
+) {
+    suspend operator fun invoke(courseId: String, isBookmarked: Boolean): RtiqaResult<Unit> {
+        if (courseId.isBlank()) {
+            return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Course ID cannot be blank.")))
+        }
+        return courseRepository.toggleBookmark(courseId, isBookmarked)
+    }
+}
+
+/**
+ * Use case to sync courses with cloud server.
+ */
+class SyncCoursesUseCase(
+    private val courseRepository: CourseRepositoryContract
+) {
+    suspend operator fun invoke(): RtiqaResult<Unit> {
+        return courseRepository.syncCourses()
+    }
+}
+
+/**
+ * Use case to retrieve lesson detail by ID.
+ */
+class GetLessonDetailUseCase(
+    private val courseRepository: CourseRepositoryContract
+) {
+    operator fun invoke(lessonId: String): Flow<Lesson?> = courseRepository.getLessonById(lessonId)
+}
+
+/**
+ * Use case to retrieve the next lesson in sequence for a course.
+ */
+class GetNextLessonUseCase(
+    private val courseRepository: CourseRepositoryContract
+) {
+    operator fun invoke(courseId: String, currentLessonId: String): Flow<Lesson?> =
+        courseRepository.getNextLesson(courseId, currentLessonId)
+}
+
+/**
+ * Use case to automatically save student playback or reading progress for a lesson.
+ */
+class SaveLessonProgressUseCase(
+    private val courseRepository: CourseRepositoryContract
+) {
+    suspend operator fun invoke(lessonId: String, courseId: String, progressPercent: Float): RtiqaResult<Unit> {
+        if (lessonId.isBlank() || courseId.isBlank()) {
+            return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Invalid lesson or course ID")))
+        }
+        val clampedProgress = progressPercent.coerceIn(0f, 1f)
+        return courseRepository.updateLessonProgress(lessonId, courseId, clampedProgress)
+    }
+}
+

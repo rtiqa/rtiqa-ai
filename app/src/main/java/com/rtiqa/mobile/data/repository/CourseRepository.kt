@@ -88,6 +88,19 @@ class CourseRepository(
         lessonDao.updateLessonDownload(lessonId, isDownloaded)
     }
 
+    suspend fun toggleEnrollment(courseId: String, isEnrolled: Boolean) {
+        courseDao.updateEnrollmentStatus(courseId, isEnrolled)
+        syncQueueDao.enqueueItem(
+            SyncQueueEntity(
+                id = UUID.randomUUID().toString(),
+                actionType = "TOGGLE_ENROLLMENT",
+                payloadJson = "{\"courseId\":\"$courseId\", \"isEnrolled\":$isEnrolled}",
+                timestamp = System.currentTimeMillis(),
+                status = "PENDING"
+            )
+        )
+    }
+
     private fun CourseEntity.toDomain() = Course(
         id = id,
         title = title,
@@ -105,7 +118,8 @@ class CourseRepository(
         tags = tagsCsv.split(",").map { it.trim() },
         progressPercent = progressPercent,
         isBookmarked = isBookmarked,
-        isDownloaded = isDownloaded
+        isDownloaded = isDownloaded,
+        isEnrolled = isEnrolled
     )
 
     private fun LessonEntity.toDomain() = Lesson(

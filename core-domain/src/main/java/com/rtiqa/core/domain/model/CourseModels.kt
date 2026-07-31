@@ -12,7 +12,13 @@ data class Course(
     val durationMinutes: Int,
     val iconUrl: String? = null,
     val isDownloaded: Boolean = false,
-    val progressPercent: Float = 0f
+    val progressPercent: Float = 0f,
+    val isEnrolled: Boolean = false,
+    val isBookmarked: Boolean = false,
+    val rating: Float = 4.8f,
+    val level: String = "مبتدئ",
+    val titleAr: String? = null,
+    val descriptionAr: String? = null
 ) {
     /**
      * Business rule: Checks whether the course is 100% completed.
@@ -50,7 +56,10 @@ data class Quiz(
     val courseId: String,
     val title: String,
     val questions: List<Question>,
-    val passingScorePercent: Int = 70
+    val passingScorePercent: Int = 70,
+    val durationMinutes: Int = 10,
+    val timeLimitSeconds: Int = 600,
+    val titleAr: String? = null
 ) {
     /**
      * Calculates the score percentage for a list of submitted user answer indices.
@@ -81,5 +90,27 @@ data class Question(
     val text: String,
     val options: List<String>,
     val correctAnswerIndex: Int,
-    val explanation: String? = null
+    val explanation: String? = null,
+    val type: QuestionType = QuestionType.MULTIPLE_CHOICE,
+    val textAr: String? = null,
+    val optionsAr: List<String>? = null,
+    val explanationAr: String? = null,
+    val hint: String? = null,
+    val hintAr: String? = null,
+    val xpReward: Int = 10
+)
+
+/**
+ * Domain entity representing a user's completed quiz attempt result.
+ */
+data class QuizResult(
+    val id: String,
+    val quizId: String,
+    val courseId: String,
+    val studentId: String,
+    val score: Int,
+    val totalQuestions: Int,
+    val scorePercent: Int,
+    val isPassed: Boolean,
+    val completedAt: Long = System.currentTimeMillis()
 )

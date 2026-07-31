@@ -98,6 +98,12 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         )
     }
 
+    fun toggleEnrollment(courseId: String, currentStatus: Boolean) {
+        viewModelScope.launch {
+            courseRepository.toggleEnrollment(courseId, !currentStatus)
+        }
+    }
+
     fun toggleBookmark(courseId: String, currentStatus: Boolean) {
         viewModelScope.launch {
             courseRepository.toggleBookmark(courseId, !currentStatus)

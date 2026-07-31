@@ -21,7 +21,8 @@ data class CourseEntity(
     val tagsCsv: String,
     val progressPercent: Float = 0f,
     val isBookmarked: Boolean = false,
-    val isDownloaded: Boolean = false
+    val isDownloaded: Boolean = false,
+    val isEnrolled: Boolean = false
 )
 
 @Entity(tableName = "lessons")

@@ -116,6 +116,7 @@ class AppDiContainer(val context: Context) {
 
     val quizRepository: QuizRepositoryContract by lazy {
         QuizRepositoryImpl(
+            academicDao = database.academicDao(),
             offlineSyncManager = offlineSyncManager,
             firestoreSyncManager = firestoreSyncManager,
             currentUserIdProvider = { authRepository.getCurrentUserId() }
