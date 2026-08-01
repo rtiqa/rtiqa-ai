@@ -184,12 +184,22 @@ fun RtiqaApp(
             }
 
             composable("home") {
+                val enrolledCourses by courseViewModel.enrolledCourses.collectAsState()
+                val completedLessonsCount by courseViewModel.completedLessonsCount.collectAsState()
+                val passedQuizzesCount by courseViewModel.passedQuizzesCount.collectAsState()
+
                 HomeScreen(
                     userProfile = userProfile,
                     courses = courses,
+                    enrolledCourses = enrolledCourses,
+                    completedLessonsCount = completedLessonsCount,
+                    passedQuizzesCount = passedQuizzesCount,
                     onCourseClick = { courseId ->
                         courseViewModel.selectCourse(courseId)
                         navController.navigate("course_detail/$courseId")
+                    },
+                    onLessonClick = { lessonId ->
+                        navController.navigate("lesson_viewer/$lessonId")
                     },
                     onNavigate = { route -> navController.navigate(route) },
                     onToggleBookmark = { id, status -> courseViewModel.toggleBookmark(id, status) },
