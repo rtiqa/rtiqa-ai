@@ -28,8 +28,6 @@ import androidx.navigation.navArgument
 import com.rtiqa.mobile.ui.components.OfflineModeBanner
 import com.rtiqa.mobile.ui.components.RtiqaBottomBar
 import com.rtiqa.mobile.ui.screens.AiTutorScreen
-import com.rtiqa.mobile.ui.screens.CourseDetailScreen
-import com.rtiqa.mobile.ui.screens.CoursesScreen
 import com.rtiqa.mobile.ui.screens.DownloadsScreen
 import com.rtiqa.mobile.ui.screens.HomeScreen
 import com.rtiqa.mobile.ui.screens.LessonPlayerScreen
@@ -40,6 +38,12 @@ import com.rtiqa.mobile.ui.viewmodel.AiTutorViewModel
 import com.rtiqa.mobile.ui.viewmodel.CourseViewModel
 import com.rtiqa.mobile.ui.viewmodel.MainViewModel
 import com.rtiqa.mobile.ui.viewmodel.QuizViewModel
+import com.rtiqa.feature.courses.CoursesListScreen
+import com.rtiqa.feature.courses.CourseDetailScreen as FeatureCourseDetailScreen
+import com.rtiqa.feature.courses.CoursesListViewModel
+import com.rtiqa.feature.courses.CourseDetailViewModel
+import com.rtiqa.feature.courses.CoursesListViewModelFactory
+import com.rtiqa.feature.courses.CourseDetailViewModelFactory
 import com.rtiqa.feature.auth.ForgotPasswordScreen
 import com.rtiqa.feature.auth.LoginScreen
 import com.rtiqa.feature.auth.LoginViewModel
@@ -210,19 +214,14 @@ fun RtiqaApp(
             }
 
             composable("courses") {
-                CoursesScreen(
-                    courses = courses,
-                    selectedCategory = selectedCategory,
-                    searchQuery = searchQuery,
-                    onCategorySelect = { cat -> courseViewModel.selectCategory(cat) },
-                    onSearchQueryChange = { q -> courseViewModel.updateSearchQuery(q) },
-                    onCourseClick = { courseId ->
-                        courseViewModel.selectCourse(courseId)
+                val coursesListViewModel: CoursesListViewModel = viewModel(
+                    factory = CoursesListViewModelFactory(appDiContainer)
+                )
+                CoursesListScreen(
+                    viewModel = coursesListViewModel,
+                    onNavigateToDetail = { courseId ->
                         navController.navigate("course_detail/$courseId")
-                    },
-                    onToggleBookmark = { id, status -> courseViewModel.toggleBookmark(id, status) },
-                    onToggleDownload = { id, status -> courseViewModel.toggleCourseDownload(id, status) },
-                    isArabic = isArabic
+                    }
                 )
             }
 
@@ -230,29 +229,21 @@ fun RtiqaApp(
                 route = "course_detail/{courseId}",
                 arguments = listOf(navArgument("courseId") { type = NavType.StringType })
             ) { backStack ->
-                val courseId = backStack.arguments?.getString("courseId") ?: "c_ai_101"
-                val selectedCourse = courses.find { it.id == courseId } ?: courses.firstOrNull()
-                val courseLessons by courseViewModel.getLessonsForCourse(courseId).collectAsState()
-
-                CourseDetailScreen(
-                    course = selectedCourse,
-                    lessons = courseLessons,
-                    onBack = { navController.popBackStack() },
-                    onLessonClick = { lessonId ->
-                        courseViewModel.selectLesson(lessonId)
+                val courseId = backStack.arguments?.getString("courseId") ?: ""
+                val courseDetailViewModel: CourseDetailViewModel = viewModel(
+                    key = "course_detail_$courseId",
+                    factory = CourseDetailViewModelFactory(appDiContainer)
+                )
+                FeatureCourseDetailScreen(
+                    courseId = courseId,
+                    viewModel = courseDetailViewModel,
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateToLesson = { lessonId ->
                         navController.navigate("lesson_player/$lessonId")
                     },
-                    onQuizClick = { navController.navigate("quiz") },
-                    onToggleEnrollment = { id, status -> courseViewModel.toggleEnrollment(id, status) },
-                    onToggleBookmark = { id, status -> courseViewModel.toggleBookmark(id, status) },
-                    onToggleDownload = { id, status -> courseViewModel.toggleCourseDownload(id, status) },
-                    onToggleLessonCompletion = { lessonId, cId, status ->
-                        courseViewModel.toggleLessonCompletion(lessonId, cId, status)
-                    },
-                    onToggleDownloadLesson = { lessonId, status ->
-                        courseViewModel.toggleLessonDownload(lessonId, status)
-                    },
-                    isArabic = isArabic
+                    onNavigateToQuiz = { cId ->
+                        navController.navigate("quiz")
+                    }
                 )
             }
 
