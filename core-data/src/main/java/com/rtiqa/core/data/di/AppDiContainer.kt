@@ -141,6 +141,12 @@ class AppDiContainer(val context: Context) {
         )
     }
 
+    val classRepository: com.rtiqa.core.domain.repository.ClassRepository by lazy {
+        com.rtiqa.core.data.repository.ClassRepositoryImpl(
+            classDao = database.schoolClassDao()
+        )
+    }
+
     val domainUseCasesContainer: DomainUseCasesContainer by lazy {
         DomainUseCasesContainer(
             authRepository = authRepository,
@@ -151,7 +157,8 @@ class AppDiContainer(val context: Context) {
             downloadManager = downloadManager,
             offlineSync = offlineSyncContract,
             enterpriseRepository = enterpriseRepository,
-            academicRepository = academicRepository
+            academicRepository = academicRepository,
+            classRepository = classRepository
         )
     }
 

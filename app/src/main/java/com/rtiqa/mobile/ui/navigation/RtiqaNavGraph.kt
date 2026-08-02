@@ -56,6 +56,9 @@ import com.rtiqa.feature.auth.WelcomeScreen
 
 import com.rtiqa.feature.admin.AdminDashboardViewModel
 import com.rtiqa.feature.admin.AdminScreen
+import com.rtiqa.feature.admin.classes.ClassesScreen
+import com.rtiqa.feature.admin.classes.ClassesViewModel
+import com.rtiqa.feature.admin.classes.ClassesViewModelFactory
 import com.rtiqa.feature.admin.school.SchoolsScreen
 import com.rtiqa.feature.admin.school.SchoolViewModel
 import com.rtiqa.feature.admin.school.SchoolViewModelFactory
@@ -358,7 +361,27 @@ fun RtiqaApp(
                     onBack = { navController.popBackStack() },
                     onNavigateToAcademicPlatform = { navController.navigate("academic_platform") },
                     onNavigateToSchools = { navController.navigate("schools_management") },
-                    onNavigateToUsers = { navController.navigate("users_management") }
+                    onNavigateToUsers = { navController.navigate("users_management") },
+                    onNavigateToClasses = { navController.navigate("classes_management") }
+                )
+            }
+
+            composable("classes_management") {
+                val classesViewModel: ClassesViewModel = viewModel(
+                    factory = ClassesViewModelFactory(
+                        getClassesForSchoolUseCase = appDiContainer.domainUseCasesContainer.getClassesForSchoolUseCase!!,
+                        saveClassUseCase = appDiContainer.domainUseCasesContainer.saveClassUseCase!!,
+                        deleteClassUseCase = appDiContainer.domainUseCasesContainer.deleteClassUseCase!!,
+                        reorderClassesUseCase = appDiContainer.domainUseCasesContainer.reorderClassesUseCase!!,
+                        getSchoolsUseCase = appDiContainer.domainUseCasesContainer.getSchoolsUseCase!!,
+                        preferencesDataStore = appDiContainer.preferencesDataStore
+                    )
+                )
+                val classesUiState by classesViewModel.uiState.collectAsState()
+                ClassesScreen(
+                    uiState = classesUiState,
+                    onAction = { action -> classesViewModel.onAction(action) },
+                    onBack = { navController.popBackStack() }
                 )
             }
 

@@ -70,6 +70,13 @@ import com.rtiqa.core.domain.usecase.GetSubjectsForSchoolUseCase
 import com.rtiqa.core.domain.usecase.GetCoursesForSchoolUseCase
 import com.rtiqa.core.domain.usecase.GetAssessmentsForSchoolUseCase
 
+import com.rtiqa.core.domain.repository.ClassRepository
+import com.rtiqa.core.domain.usecase.GetClassesForSchoolUseCase
+import com.rtiqa.core.domain.usecase.GetClassByIdUseCase
+import com.rtiqa.core.domain.usecase.SaveClassUseCase
+import com.rtiqa.core.domain.usecase.DeleteClassUseCase
+import com.rtiqa.core.domain.usecase.ValidateClassNameUniquenessUseCase
+import com.rtiqa.core.domain.usecase.ReorderClassesUseCase
 import com.rtiqa.core.domain.usecase.GetModulesUseCase
 import com.rtiqa.core.domain.usecase.SaveModuleUseCase
 import com.rtiqa.core.domain.usecase.GetAcademicLessonsUseCase
@@ -105,7 +112,8 @@ class DomainUseCasesContainer(
     downloadManager: DownloadManagerContract,
     offlineSync: OfflineSyncContract,
     enterpriseRepository: EnterpriseRepository? = null,
-    academicRepository: AcademicRepository? = null
+    academicRepository: AcademicRepository? = null,
+    classRepository: ClassRepository? = null
 ) {
     val loginUseCase by lazy { LoginUseCase(authRepository) }
     val registerUseCase by lazy { RegisterUseCase(authRepository) }
@@ -183,6 +191,15 @@ class DomainUseCasesContainer(
     val getSubjectsForSchoolUseCase by lazy { enterpriseRepositoryInstance?.let { GetSubjectsForSchoolUseCase(it) } }
     val getCoursesForSchoolUseCase by lazy { GetCoursesForSchoolUseCase(courseRepository) }
     val getAssessmentsForSchoolUseCase by lazy { academicRepositoryInstance?.let { GetAssessmentsForSchoolUseCase(it) } }
+
+    // Classes Management UseCases
+    val classRepositoryInstance: ClassRepository? = classRepository
+    val getClassesForSchoolUseCase by lazy { classRepositoryInstance?.let { GetClassesForSchoolUseCase(it) } }
+    val getClassByIdUseCase by lazy { classRepositoryInstance?.let { GetClassByIdUseCase(it) } }
+    val saveClassUseCase by lazy { classRepositoryInstance?.let { SaveClassUseCase(it) } }
+    val deleteClassUseCase by lazy { classRepositoryInstance?.let { DeleteClassUseCase(it) } }
+    val validateClassNameUniquenessUseCase by lazy { classRepositoryInstance?.let { ValidateClassNameUniquenessUseCase(it) } }
+    val reorderClassesUseCase by lazy { classRepositoryInstance?.let { ReorderClassesUseCase(it) } }
 
     // Academic Platform UseCases
     val academicRepositoryInstance: AcademicRepository? = academicRepository
