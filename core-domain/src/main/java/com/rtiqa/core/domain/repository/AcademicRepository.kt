@@ -34,6 +34,7 @@ interface AcademicRepository {
     fun getQuestionsForCourse(courseId: String): Flow<List<QuestionBankItem>>
     suspend fun saveQuestion(question: QuestionBankItem)
     fun getAssessmentsForCourse(courseId: String): Flow<List<Assessment>>
+    fun getAssessmentsForSchool(schoolId: String): Flow<List<Assessment>>
     suspend fun saveAssessment(assessment: Assessment)
     fun getAttempts(assessmentId: String, studentId: String): Flow<List<AssessmentAttempt>>
     suspend fun submitAssessmentAttempt(attempt: AssessmentAttempt)

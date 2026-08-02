@@ -3,6 +3,19 @@ package com.rtiqa.core.database.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+@Entity(tableName = "schools")
+data class SchoolEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val code: String,
+    val address: String,
+    val phone: String,
+    val logoUrl: String?,
+    val studentsCount: Int,
+    val teachersCount: Int,
+    val createdAt: Long
+)
+
 @Entity(tableName = "organizations")
 data class OrganizationEntity(
     @PrimaryKey val id: String,
@@ -72,7 +85,8 @@ data class SectionEntity(
     val branchId: String,
     val name: String,
     val capacity: Int,
-    val studentsCount: Int
+    val studentsCount: Int,
+    val schoolId: String = "school_001"
 )
 
 @Entity(tableName = "subjects")
@@ -81,7 +95,8 @@ data class SubjectEntity(
     val majorId: String,
     val code: String,
     val name: String,
-    val creditHours: Int
+    val creditHours: Int,
+    val schoolId: String = "school_001"
 )
 
 @Entity(tableName = "study_plans")
@@ -102,5 +117,6 @@ data class EnterpriseMemberEntity(
     val role: String,
     val department: String,
     val status: String,
-    val phone: String
+    val phone: String,
+    val schoolId: String = "school_001"
 )

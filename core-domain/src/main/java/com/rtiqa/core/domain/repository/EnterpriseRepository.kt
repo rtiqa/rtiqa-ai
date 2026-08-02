@@ -10,9 +10,20 @@ import com.rtiqa.core.domain.model.Section
 import com.rtiqa.core.domain.model.Semester
 import com.rtiqa.core.domain.model.StudyPlan
 import com.rtiqa.core.domain.model.Subject
+import com.rtiqa.core.domain.model.School
 import kotlinx.coroutines.flow.Flow
 
 interface EnterpriseRepository {
+    fun getSchools(): Flow<List<School>>
+    fun getSchoolById(id: String): Flow<School?>
+    suspend fun saveSchool(school: School)
+    suspend fun deleteSchool(id: String)
+    fun getStudentsForSchool(schoolId: String): Flow<List<EnterpriseMember>>
+    fun getTeachersForSchool(schoolId: String): Flow<List<EnterpriseMember>>
+    fun getUsersForSchool(schoolId: String): Flow<List<EnterpriseMember>>
+    fun getSectionsForSchool(schoolId: String): Flow<List<Section>>
+    fun getSubjectsForSchool(schoolId: String): Flow<List<Subject>>
+
     fun getOrganizations(): Flow<List<Organization>>
     fun getOrganizationById(id: String): Flow<Organization?>
     suspend fun saveOrganization(org: Organization)

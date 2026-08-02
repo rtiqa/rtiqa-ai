@@ -49,6 +49,10 @@ class GetAssessmentsUseCase(private val repository: AcademicRepository) {
     operator fun invoke(courseId: String): Flow<List<Assessment>> = repository.getAssessmentsForCourse(courseId)
 }
 
+class GetAssessmentsForSchoolUseCase(private val repository: AcademicRepository) {
+    operator fun invoke(schoolId: String): Flow<List<Assessment>> = repository.getAssessmentsForSchool(schoolId)
+}
+
 class SaveAssessmentUseCase(private val repository: AcademicRepository) {
     suspend operator fun invoke(assessment: Assessment) = repository.saveAssessment(assessment)
 }

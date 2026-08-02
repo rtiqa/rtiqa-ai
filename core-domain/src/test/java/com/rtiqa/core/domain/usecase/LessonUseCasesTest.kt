@@ -23,6 +23,7 @@ class FakeCourseRepository : CourseRepositoryContract {
     var markedCompletedId: String? = null
 
     override fun getCourses(): Flow<List<Course>> = flowOf(emptyList())
+    override fun getCoursesForSchool(schoolId: String): Flow<List<Course>> = flowOf(emptyList())
     override fun getCourseById(courseId: String): Flow<Course?> = flowOf(null)
     override fun getLessonsForCourse(courseId: String): Flow<List<Lesson>> = flowOf(lessonsMap.values.filter { it.courseId == courseId })
     

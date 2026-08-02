@@ -18,7 +18,8 @@ data class Course(
     val rating: Float = 4.8f,
     val level: String = "مبتدئ",
     val titleAr: String? = null,
-    val descriptionAr: String? = null
+    val descriptionAr: String? = null,
+    val schoolId: String = "school_001"
 ) {
     /**
      * Business rule: Checks whether the course is 100% completed.
@@ -45,7 +46,8 @@ data class Lesson(
     val content: String,
     val order: Int,
     val isCompleted: Boolean = false,
-    val audioUrl: String? = null
+    val audioUrl: String? = null,
+    val schoolId: String = "school_001"
 )
 
 /**
@@ -59,7 +61,8 @@ data class Quiz(
     val passingScorePercent: Int = 70,
     val durationMinutes: Int = 10,
     val timeLimitSeconds: Int = 600,
-    val titleAr: String? = null
+    val titleAr: String? = null,
+    val schoolId: String = "school_001"
 ) {
     /**
      * Calculates the score percentage for a list of submitted user answer indices.

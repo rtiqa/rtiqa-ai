@@ -64,6 +64,9 @@ interface AcademicDao {
     @Query("SELECT * FROM assessments WHERE courseId = :courseId")
     fun getAssessmentsForCourse(courseId: String): Flow<List<AssessmentEntity>>
 
+    @Query("SELECT * FROM assessments WHERE schoolId = :schoolId")
+    fun getAssessmentsForSchool(schoolId: String): Flow<List<AssessmentEntity>>
+
     @Query("SELECT * FROM assessments WHERE id = :id LIMIT 1")
     fun getAssessmentById(id: String): Flow<AssessmentEntity?>
 

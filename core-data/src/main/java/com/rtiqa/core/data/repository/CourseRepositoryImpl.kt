@@ -29,6 +29,12 @@ class CourseRepositoryImpl(
         }
     }
 
+    override fun getCoursesForSchool(schoolId: String): Flow<List<Course>> {
+        return courseDao.getCoursesForSchool(schoolId).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
     override fun getCourseById(courseId: String): Flow<Course?> {
         return courseDao.getCourseById(courseId).map { it?.toDomain() }
     }

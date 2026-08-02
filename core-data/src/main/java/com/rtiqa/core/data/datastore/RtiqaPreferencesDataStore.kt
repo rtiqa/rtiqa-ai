@@ -20,7 +20,8 @@ data class UserPreferences(
     val isDarkTheme: Boolean,
     val isOfflineModeEnabled: Boolean,
     val activeUserId: String?,
-    val lastSyncTimestamp: Long
+    val lastSyncTimestamp: Long,
+    val activeSchoolId: String = "school_001"
 )
 
 /**
@@ -45,9 +46,16 @@ open class RtiqaPreferencesDataStore(
                     isDarkTheme = preferences[KEY_DARK_THEME] ?: false,
                     isOfflineModeEnabled = preferences[KEY_OFFLINE_MODE] ?: false,
                     activeUserId = preferences[KEY_ACTIVE_USER_ID],
-                    lastSyncTimestamp = preferences[KEY_LAST_SYNC_TIMESTAMP] ?: 0L
+                    lastSyncTimestamp = preferences[KEY_LAST_SYNC_TIMESTAMP] ?: 0L,
+                    activeSchoolId = preferences[KEY_ACTIVE_SCHOOL_ID] ?: "school_001"
                 )
             }
+
+    open suspend fun setActiveSchoolId(schoolId: String) {
+        dataStore.edit { preferences ->
+            preferences[KEY_ACTIVE_SCHOOL_ID] = schoolId
+        }
+    }
 
     open suspend fun setDarkTheme(enabled: Boolean) {
         dataStore.edit { preferences ->
@@ -82,5 +90,6 @@ open class RtiqaPreferencesDataStore(
         private val KEY_OFFLINE_MODE = booleanPreferencesKey("key_offline_mode")
         private val KEY_ACTIVE_USER_ID = stringPreferencesKey("key_active_user_id")
         private val KEY_LAST_SYNC_TIMESTAMP = longPreferencesKey("key_last_sync_timestamp")
+        private val KEY_ACTIVE_SCHOOL_ID = stringPreferencesKey("key_active_school_id")
     }
 }

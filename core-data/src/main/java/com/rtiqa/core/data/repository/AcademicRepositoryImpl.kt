@@ -67,6 +67,9 @@ class AcademicRepositoryImpl(
     override fun getAssessmentsForCourse(courseId: String): Flow<List<Assessment>> =
         academicDao.getAssessmentsForCourse(courseId).map { list -> list.map { it.toDomain() } }
 
+    override fun getAssessmentsForSchool(schoolId: String): Flow<List<Assessment>> =
+        academicDao.getAssessmentsForSchool(schoolId).map { list -> list.map { it.toDomain() } }
+
     override suspend fun saveAssessment(assessment: Assessment) {
         academicDao.insertAssessment(assessment.toEntity())
     }

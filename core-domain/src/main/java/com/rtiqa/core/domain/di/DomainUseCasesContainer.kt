@@ -58,6 +58,17 @@ import com.rtiqa.core.domain.usecase.SaveStudyPlanUseCase
 import com.rtiqa.core.domain.usecase.GetEnterpriseMembersUseCase
 import com.rtiqa.core.domain.usecase.SaveEnterpriseMemberUseCase
 import com.rtiqa.core.domain.usecase.DeleteEnterpriseMemberUseCase
+import com.rtiqa.core.domain.usecase.GetSchoolsUseCase
+import com.rtiqa.core.domain.usecase.GetSchoolByIdUseCase
+import com.rtiqa.core.domain.usecase.SaveSchoolUseCase
+import com.rtiqa.core.domain.usecase.DeleteSchoolUseCase
+import com.rtiqa.core.domain.usecase.GetStudentsForSchoolUseCase
+import com.rtiqa.core.domain.usecase.GetTeachersForSchoolUseCase
+import com.rtiqa.core.domain.usecase.GetUsersForSchoolUseCase
+import com.rtiqa.core.domain.usecase.GetSectionsForSchoolUseCase
+import com.rtiqa.core.domain.usecase.GetSubjectsForSchoolUseCase
+import com.rtiqa.core.domain.usecase.GetCoursesForSchoolUseCase
+import com.rtiqa.core.domain.usecase.GetAssessmentsForSchoolUseCase
 
 import com.rtiqa.core.domain.usecase.GetModulesUseCase
 import com.rtiqa.core.domain.usecase.SaveModuleUseCase
@@ -160,6 +171,18 @@ class DomainUseCasesContainer(
     val getEnterpriseMembersUseCase by lazy { enterpriseRepositoryInstance?.let { GetEnterpriseMembersUseCase(it) } }
     val saveEnterpriseMemberUseCase by lazy { enterpriseRepositoryInstance?.let { SaveEnterpriseMemberUseCase(it) } }
     val deleteEnterpriseMemberUseCase by lazy { enterpriseRepositoryInstance?.let { DeleteEnterpriseMemberUseCase(it) } }
+
+    val getSchoolsUseCase by lazy { enterpriseRepositoryInstance?.let { GetSchoolsUseCase(it) } }
+    val getSchoolByIdUseCase by lazy { enterpriseRepositoryInstance?.let { GetSchoolByIdUseCase(it) } }
+    val saveSchoolUseCase by lazy { enterpriseRepositoryInstance?.let { SaveSchoolUseCase(it) } }
+    val deleteSchoolUseCase by lazy { enterpriseRepositoryInstance?.let { DeleteSchoolUseCase(it) } }
+    val getStudentsForSchoolUseCase by lazy { enterpriseRepositoryInstance?.let { GetStudentsForSchoolUseCase(it) } }
+    val getTeachersForSchoolUseCase by lazy { enterpriseRepositoryInstance?.let { GetTeachersForSchoolUseCase(it) } }
+    val getUsersForSchoolUseCase by lazy { enterpriseRepositoryInstance?.let { GetUsersForSchoolUseCase(it) } }
+    val getSectionsForSchoolUseCase by lazy { enterpriseRepositoryInstance?.let { GetSectionsForSchoolUseCase(it) } }
+    val getSubjectsForSchoolUseCase by lazy { enterpriseRepositoryInstance?.let { GetSubjectsForSchoolUseCase(it) } }
+    val getCoursesForSchoolUseCase by lazy { GetCoursesForSchoolUseCase(courseRepository) }
+    val getAssessmentsForSchoolUseCase by lazy { academicRepositoryInstance?.let { GetAssessmentsForSchoolUseCase(it) } }
 
     // Academic Platform UseCases
     val academicRepositoryInstance: AcademicRepository? = academicRepository

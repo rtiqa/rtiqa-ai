@@ -20,6 +20,12 @@ class GetCoursesUseCase(
     operator fun invoke(): Flow<List<Course>> = courseRepository.getCourses()
 }
 
+class GetCoursesForSchoolUseCase(
+    private val courseRepository: CourseRepositoryContract
+) {
+    operator fun invoke(schoolId: String): Flow<List<Course>> = courseRepository.getCoursesForSchool(schoolId)
+}
+
 /**
  * Use case to retrieve paged courses with optional filter.
  */

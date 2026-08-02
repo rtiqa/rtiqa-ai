@@ -20,6 +20,7 @@ class CourseRepositoryImplTest {
         )
 
         override fun getAllCourses() = flowOf(list.toList())
+        override fun getCoursesForSchool(schoolId: String) = flowOf(list.filter { it.schoolId == schoolId })
         override suspend fun getAllCoursesList() = list.toList()
         override fun getCourseById(id: String) = flowOf(list.find { it.id == id })
         override suspend fun insertCourse(course: CourseEntity) {

@@ -10,8 +10,45 @@ import com.rtiqa.core.domain.model.Section
 import com.rtiqa.core.domain.model.Semester
 import com.rtiqa.core.domain.model.StudyPlan
 import com.rtiqa.core.domain.model.Subject
+import com.rtiqa.core.domain.model.School
 import com.rtiqa.core.domain.repository.EnterpriseRepository
 import kotlinx.coroutines.flow.Flow
+
+class GetSchoolsUseCase(private val repository: EnterpriseRepository) {
+    operator fun invoke(): Flow<List<School>> = repository.getSchools()
+}
+
+class GetSchoolByIdUseCase(private val repository: EnterpriseRepository) {
+    operator fun invoke(id: String): Flow<School?> = repository.getSchoolById(id)
+}
+
+class SaveSchoolUseCase(private val repository: EnterpriseRepository) {
+    suspend operator fun invoke(school: School) = repository.saveSchool(school)
+}
+
+class DeleteSchoolUseCase(private val repository: EnterpriseRepository) {
+    suspend operator fun invoke(id: String) = repository.deleteSchool(id)
+}
+
+class GetStudentsForSchoolUseCase(private val repository: EnterpriseRepository) {
+    operator fun invoke(schoolId: String): Flow<List<EnterpriseMember>> = repository.getStudentsForSchool(schoolId)
+}
+
+class GetTeachersForSchoolUseCase(private val repository: EnterpriseRepository) {
+    operator fun invoke(schoolId: String): Flow<List<EnterpriseMember>> = repository.getTeachersForSchool(schoolId)
+}
+
+class GetUsersForSchoolUseCase(private val repository: EnterpriseRepository) {
+    operator fun invoke(schoolId: String): Flow<List<EnterpriseMember>> = repository.getUsersForSchool(schoolId)
+}
+
+class GetSectionsForSchoolUseCase(private val repository: EnterpriseRepository) {
+    operator fun invoke(schoolId: String): Flow<List<Section>> = repository.getSectionsForSchool(schoolId)
+}
+
+class GetSubjectsForSchoolUseCase(private val repository: EnterpriseRepository) {
+    operator fun invoke(schoolId: String): Flow<List<Subject>> = repository.getSubjectsForSchool(schoolId)
+}
 
 class GetOrganizationsUseCase(private val repository: EnterpriseRepository) {
     operator fun invoke(): Flow<List<Organization>> = repository.getOrganizations()

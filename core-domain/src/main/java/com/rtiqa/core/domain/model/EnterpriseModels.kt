@@ -1,5 +1,17 @@
 package com.rtiqa.core.domain.model
 
+data class School(
+    val id: String,
+    val name: String,
+    val code: String,
+    val address: String = "",
+    val phone: String = "",
+    val logoUrl: String? = null,
+    val studentsCount: Int = 0,
+    val teachersCount: Int = 0,
+    val createdAt: Long = System.currentTimeMillis()
+)
+
 enum class OrgType(val labelAr: String) {
     SCHOOL("مدرسة"),
     UNIVERSITY("جامعة"),
@@ -75,7 +87,8 @@ data class Section(
     val branchId: String,
     val name: String,
     val capacity: Int,
-    val studentsCount: Int = 0
+    val studentsCount: Int = 0,
+    val schoolId: String = "school_001"
 )
 
 data class Subject(
@@ -83,7 +96,8 @@ data class Subject(
     val majorId: String,
     val code: String,
     val name: String,
-    val creditHours: Int
+    val creditHours: Int,
+    val schoolId: String = "school_001"
 )
 
 data class StudyPlan(
@@ -97,7 +111,9 @@ data class StudyPlan(
 enum class EnterpriseRole(val labelAr: String) {
     SUPER_ADMIN("مسؤول النظام الشامل"),
     ORG_ADMIN("مدير المؤسسة"),
-    TEACHER("معلم / أستاذ"),
+    PRINCIPAL("مدير المدرسة"),
+    VICE_PRINCIPAL("وكيل المدرسة"),
+    TEACHER("معلم"),
     STUDENT("طالب"),
     PARENT("ولي أمر"),
     STAFF("موظف إداري")
@@ -117,5 +133,6 @@ data class EnterpriseMember(
     val role: EnterpriseRole,
     val department: String,
     val status: MemberStatus = MemberStatus.ACTIVE,
-    val phone: String = ""
+    val phone: String = "",
+    val schoolId: String = "school_001"
 )

@@ -20,7 +20,8 @@ fun CourseEntity.toDomain(): Course = Course(
     isDownloaded = isDownloaded,
     progressPercent = progressPercent,
     isEnrolled = isEnrolled,
-    isBookmarked = isBookmarked
+    isBookmarked = isBookmarked,
+    schoolId = schoolId
 )
 
 fun Course.toEntity(): CourseEntity = CourseEntity(
@@ -34,7 +35,8 @@ fun Course.toEntity(): CourseEntity = CourseEntity(
     isDownloaded = isDownloaded,
     progressPercent = progressPercent,
     isEnrolled = isEnrolled,
-    isBookmarked = isBookmarked
+    isBookmarked = isBookmarked,
+    schoolId = schoolId
 )
 
 fun CourseDto.toEntity(): CourseEntity = CourseEntity(
@@ -48,7 +50,8 @@ fun CourseDto.toEntity(): CourseEntity = CourseEntity(
     isDownloaded = false,
     progressPercent = 0f,
     isEnrolled = false,
-    isBookmarked = false
+    isBookmarked = false,
+    schoolId = "school_001"
 )
 
 fun com.rtiqa.core.network.api.NetworkCourseDto.toEntity(): CourseEntity = CourseEntity(
@@ -62,7 +65,8 @@ fun com.rtiqa.core.network.api.NetworkCourseDto.toEntity(): CourseEntity = Cours
     isDownloaded = false,
     progressPercent = progressPercent,
     isEnrolled = false,
-    isBookmarked = false
+    isBookmarked = false,
+    schoolId = "school_001"
 )
 
 fun LessonEntity.toDomain(): Lesson = Lesson(
@@ -72,7 +76,8 @@ fun LessonEntity.toDomain(): Lesson = Lesson(
     content = content,
     order = order,
     isCompleted = isCompleted,
-    audioUrl = audioUrl
+    audioUrl = audioUrl,
+    schoolId = schoolId
 )
 
 fun Lesson.toEntity(): LessonEntity = LessonEntity(
@@ -82,7 +87,8 @@ fun Lesson.toEntity(): LessonEntity = LessonEntity(
     content = content,
     order = order,
     isCompleted = isCompleted,
-    audioUrl = audioUrl
+    audioUrl = audioUrl,
+    schoolId = schoolId
 )
 
 fun UserProfileEntity.toDomain(): UserProfile = UserProfile(
@@ -93,10 +99,35 @@ fun UserProfileEntity.toDomain(): UserProfile = UserProfile(
     levelXp = levelXp,
     streakDays = streakDays,
     isAdmin = isAdmin,
-    isOfflineModeEnabled = isOfflineModeEnabled
+    isOfflineModeEnabled = isOfflineModeEnabled,
+    schoolId = schoolId
 )
 
 // Enterprise Mappers
+fun com.rtiqa.core.database.entity.SchoolEntity.toDomain(): com.rtiqa.core.domain.model.School = com.rtiqa.core.domain.model.School(
+    id = id,
+    name = name,
+    code = code,
+    address = address,
+    phone = phone,
+    logoUrl = logoUrl,
+    studentsCount = studentsCount,
+    teachersCount = teachersCount,
+    createdAt = createdAt
+)
+
+fun com.rtiqa.core.domain.model.School.toEntity(): com.rtiqa.core.database.entity.SchoolEntity = com.rtiqa.core.database.entity.SchoolEntity(
+    id = id,
+    name = name,
+    code = code,
+    address = address,
+    phone = phone,
+    logoUrl = logoUrl,
+    studentsCount = studentsCount,
+    teachersCount = teachersCount,
+    createdAt = createdAt
+)
+
 fun com.rtiqa.core.database.entity.OrganizationEntity.toDomain(): com.rtiqa.core.domain.model.Organization = com.rtiqa.core.domain.model.Organization(
     id = id,
     name = name,
@@ -214,7 +245,8 @@ fun com.rtiqa.core.database.entity.SectionEntity.toDomain(): com.rtiqa.core.doma
     branchId = branchId,
     name = name,
     capacity = capacity,
-    studentsCount = studentsCount
+    studentsCount = studentsCount,
+    schoolId = schoolId
 )
 
 fun com.rtiqa.core.domain.model.Section.toEntity(): com.rtiqa.core.database.entity.SectionEntity = com.rtiqa.core.database.entity.SectionEntity(
@@ -224,7 +256,8 @@ fun com.rtiqa.core.domain.model.Section.toEntity(): com.rtiqa.core.database.enti
     branchId = branchId,
     name = name,
     capacity = capacity,
-    studentsCount = studentsCount
+    studentsCount = studentsCount,
+    schoolId = schoolId
 )
 
 fun com.rtiqa.core.database.entity.SubjectEntity.toDomain(): com.rtiqa.core.domain.model.Subject = com.rtiqa.core.domain.model.Subject(
@@ -232,7 +265,8 @@ fun com.rtiqa.core.database.entity.SubjectEntity.toDomain(): com.rtiqa.core.doma
     majorId = majorId,
     code = code,
     name = name,
-    creditHours = creditHours
+    creditHours = creditHours,
+    schoolId = schoolId
 )
 
 fun com.rtiqa.core.domain.model.Subject.toEntity(): com.rtiqa.core.database.entity.SubjectEntity = com.rtiqa.core.database.entity.SubjectEntity(
@@ -240,7 +274,8 @@ fun com.rtiqa.core.domain.model.Subject.toEntity(): com.rtiqa.core.database.enti
     majorId = majorId,
     code = code,
     name = name,
-    creditHours = creditHours
+    creditHours = creditHours,
+    schoolId = schoolId
 )
 
 fun com.rtiqa.core.database.entity.StudyPlanEntity.toDomain(): com.rtiqa.core.domain.model.StudyPlan = com.rtiqa.core.domain.model.StudyPlan(
@@ -267,7 +302,8 @@ fun com.rtiqa.core.database.entity.EnterpriseMemberEntity.toDomain(): com.rtiqa.
     role = com.rtiqa.core.domain.model.EnterpriseRole.valueOf(role),
     department = department,
     status = com.rtiqa.core.domain.model.MemberStatus.valueOf(status),
-    phone = phone
+    phone = phone,
+    schoolId = schoolId
 )
 
 fun com.rtiqa.core.domain.model.EnterpriseMember.toEntity(): com.rtiqa.core.database.entity.EnterpriseMemberEntity = com.rtiqa.core.database.entity.EnterpriseMemberEntity(
@@ -278,7 +314,8 @@ fun com.rtiqa.core.domain.model.EnterpriseMember.toEntity(): com.rtiqa.core.data
     role = role.name,
     department = department,
     status = status.name,
-    phone = phone
+    phone = phone,
+    schoolId = schoolId
 )
 
 // Academic Platform Mappers
@@ -289,10 +326,10 @@ fun com.rtiqa.core.domain.model.CurriculumModule.toEntity(): com.rtiqa.core.data
     com.rtiqa.core.database.entity.CurriculumModuleEntity(id, courseId, orgId, title, description, orderIndex, durationHours)
 
 fun com.rtiqa.core.database.entity.AcademicLessonEntity.toDomain(): com.rtiqa.core.domain.model.AcademicLesson =
-    com.rtiqa.core.domain.model.AcademicLesson(id, moduleId, courseId, title, content, videoUrl, pdfAttachmentUrl, durationMinutes, orderIndex, isCompleted)
+    com.rtiqa.core.domain.model.AcademicLesson(id, moduleId, courseId, title, content, videoUrl, pdfAttachmentUrl, durationMinutes, orderIndex, isCompleted, schoolId)
 
 fun com.rtiqa.core.domain.model.AcademicLesson.toEntity(): com.rtiqa.core.database.entity.AcademicLessonEntity =
-    com.rtiqa.core.database.entity.AcademicLessonEntity(id, moduleId, courseId, title, content, videoUrl, pdfAttachmentUrl, durationMinutes, orderIndex, isCompleted)
+    com.rtiqa.core.database.entity.AcademicLessonEntity(id, moduleId, courseId, title, content, videoUrl, pdfAttachmentUrl, durationMinutes, orderIndex, isCompleted, schoolId)
 
 fun com.rtiqa.core.database.entity.AssignmentEntity.toDomain(): com.rtiqa.core.domain.model.Assignment =
     com.rtiqa.core.domain.model.Assignment(id, lessonId, courseId, title, prompt, maxScore, dueDate, com.rtiqa.core.domain.model.AssignmentType.valueOf(type))
@@ -313,10 +350,10 @@ fun com.rtiqa.core.domain.model.QuestionBankItem.toEntity(): com.rtiqa.core.data
     com.rtiqa.core.database.entity.QuestionBankEntity(id, courseId, orgId, questionText, optionA, optionB, optionC, optionD, correctAnswerIndex, explanation, difficultyLevel, questionType.name)
 
 fun com.rtiqa.core.database.entity.AssessmentEntity.toDomain(): com.rtiqa.core.domain.model.Assessment =
-    com.rtiqa.core.domain.model.Assessment(id, courseId, orgId, title, com.rtiqa.core.domain.model.AssessmentType.valueOf(type), passingScore, timeLimitMinutes, totalQuestions)
+    com.rtiqa.core.domain.model.Assessment(id, courseId, orgId, title, com.rtiqa.core.domain.model.AssessmentType.valueOf(type), passingScore, timeLimitMinutes, totalQuestions, schoolId)
 
 fun com.rtiqa.core.domain.model.Assessment.toEntity(): com.rtiqa.core.database.entity.AssessmentEntity =
-    com.rtiqa.core.database.entity.AssessmentEntity(id, courseId, orgId, title, type.name, passingScore, timeLimitMinutes, totalQuestions)
+    com.rtiqa.core.database.entity.AssessmentEntity(id, courseId, orgId, title, type.name, passingScore, timeLimitMinutes, totalQuestions, schoolId)
 
 fun com.rtiqa.core.database.entity.AssessmentAttemptEntity.toDomain(): com.rtiqa.core.domain.model.AssessmentAttempt =
     com.rtiqa.core.domain.model.AssessmentAttempt(id, assessmentId, studentId, scorePercent, isPassed, autoGradedFeedback, completedAt)
@@ -331,10 +368,10 @@ fun com.rtiqa.core.domain.model.GradebookRecord.toEntity(): com.rtiqa.core.datab
     com.rtiqa.core.database.entity.GradebookRecordEntity(id, studentId, courseId, orgId, courseName, totalScore, gradeLetter, gpaValue, isPassed)
 
 fun com.rtiqa.core.database.entity.StudentProgressEntity.toDomain(): com.rtiqa.core.domain.model.StudentProgress =
-    com.rtiqa.core.domain.model.StudentProgress(id, studentId, courseId, completedLessonsCount, totalLessonsCount, progressPercent, lastAccessedAt)
+    com.rtiqa.core.domain.model.StudentProgress(id, studentId, courseId, completedLessonsCount, totalLessonsCount, progressPercent, lastAccessedAt, schoolId)
 
 fun com.rtiqa.core.domain.model.StudentProgress.toEntity(): com.rtiqa.core.database.entity.StudentProgressEntity =
-    com.rtiqa.core.database.entity.StudentProgressEntity(id, studentId, courseId, completedLessonsCount, totalLessonsCount, progressPercent, lastAccessedAt)
+    com.rtiqa.core.database.entity.StudentProgressEntity(id, studentId, courseId, completedLessonsCount, totalLessonsCount, progressPercent, lastAccessedAt, schoolId)
 
 fun com.rtiqa.core.database.entity.AchievementBadgeEntity.toDomain(): com.rtiqa.core.domain.model.AchievementBadge =
     com.rtiqa.core.domain.model.AchievementBadge(id, studentId, badgeName, badgeDescription, iconName, unlockedAt)

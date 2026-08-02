@@ -34,6 +34,7 @@ import com.rtiqa.core.database.entity.OfflineContentDownloadEntity
 import com.rtiqa.core.database.entity.OrganizationEntity
 import com.rtiqa.core.database.entity.PrerequisiteEntity
 import com.rtiqa.core.database.entity.QuestionBankEntity
+import com.rtiqa.core.database.entity.SchoolEntity
 import com.rtiqa.core.database.entity.SectionEntity
 import com.rtiqa.core.database.entity.SemesterEntity
 import com.rtiqa.core.database.entity.SmartRecommendationEntity
@@ -45,6 +46,7 @@ import com.rtiqa.core.database.entity.UserProfileEntity
 
 @Database(
     entities = [
+        SchoolEntity::class,
         CourseEntity::class,
         LessonEntity::class,
         UserProfileEntity::class,

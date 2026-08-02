@@ -25,7 +25,8 @@ data class AcademicLessonEntity(
     val pdfAttachmentUrl: String?,
     val durationMinutes: Int,
     val orderIndex: Int,
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    val schoolId: String = "school_001"
 )
 
 @Entity(tableName = "assignments")
@@ -78,7 +79,8 @@ data class AssessmentEntity(
     val type: String,
     val passingScore: Int,
     val timeLimitMinutes: Int,
-    val totalQuestions: Int
+    val totalQuestions: Int,
+    val schoolId: String = "school_001"
 )
 
 @Entity(tableName = "assessment_attempts")
@@ -113,7 +115,8 @@ data class StudentProgressEntity(
     val completedLessonsCount: Int,
     val totalLessonsCount: Int,
     val progressPercent: Float,
-    val lastAccessedAt: Long
+    val lastAccessedAt: Long,
+    val schoolId: String = "school_001"
 )
 
 @Entity(tableName = "achievement_badges")

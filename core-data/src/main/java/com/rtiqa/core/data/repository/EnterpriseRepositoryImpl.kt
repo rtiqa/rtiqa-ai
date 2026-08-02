@@ -17,9 +17,40 @@ import com.rtiqa.core.domain.repository.EnterpriseRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+import com.rtiqa.core.domain.model.School
+
 class EnterpriseRepositoryImpl(
     private val enterpriseDao: EnterpriseDao
 ) : EnterpriseRepository {
+
+    override fun getSchools(): Flow<List<School>> =
+        enterpriseDao.getAllSchools().map { list -> list.map { it.toDomain() } }
+
+    override fun getSchoolById(id: String): Flow<School?> =
+        enterpriseDao.getSchoolById(id).map { it?.toDomain() }
+
+    override suspend fun saveSchool(school: School) {
+        enterpriseDao.insertSchool(school.toEntity())
+    }
+
+    override suspend fun deleteSchool(id: String) {
+        enterpriseDao.deleteSchool(id)
+    }
+
+    override fun getStudentsForSchool(schoolId: String): Flow<List<EnterpriseMember>> =
+        enterpriseDao.getStudentsForSchool(schoolId).map { list -> list.map { it.toDomain() } }
+
+    override fun getTeachersForSchool(schoolId: String): Flow<List<EnterpriseMember>> =
+        enterpriseDao.getTeachersForSchool(schoolId).map { list -> list.map { it.toDomain() } }
+
+    override fun getUsersForSchool(schoolId: String): Flow<List<EnterpriseMember>> =
+        enterpriseDao.getUsersForSchool(schoolId).map { list -> list.map { it.toDomain() } }
+
+    override fun getSectionsForSchool(schoolId: String): Flow<List<Section>> =
+        enterpriseDao.getSectionsForSchool(schoolId).map { list -> list.map { it.toDomain() } }
+
+    override fun getSubjectsForSchool(schoolId: String): Flow<List<Subject>> =
+        enterpriseDao.getSubjectsForSchool(schoolId).map { list -> list.map { it.toDomain() } }
 
     override fun getOrganizations(): Flow<List<Organization>> =
         enterpriseDao.getAllOrganizations().map { list -> list.map { it.toDomain() } }

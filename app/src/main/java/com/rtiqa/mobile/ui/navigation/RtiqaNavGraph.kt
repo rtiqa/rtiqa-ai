@@ -56,6 +56,12 @@ import com.rtiqa.feature.auth.WelcomeScreen
 
 import com.rtiqa.feature.admin.AdminDashboardViewModel
 import com.rtiqa.feature.admin.AdminScreen
+import com.rtiqa.feature.admin.school.SchoolsScreen
+import com.rtiqa.feature.admin.school.SchoolViewModel
+import com.rtiqa.feature.admin.school.SchoolViewModelFactory
+import com.rtiqa.feature.admin.users.UsersScreen
+import com.rtiqa.feature.admin.users.UserManagementViewModel
+import com.rtiqa.feature.admin.users.UserViewModelFactory
 
 @Composable
 fun RtiqaApp(
@@ -350,7 +356,53 @@ fun RtiqaApp(
                     uiState = adminUiState,
                     onAction = { action -> adminViewModel.onAction(action) },
                     onBack = { navController.popBackStack() },
-                    onNavigateToAcademicPlatform = { navController.navigate("academic_platform") }
+                    onNavigateToAcademicPlatform = { navController.navigate("academic_platform") },
+                    onNavigateToSchools = { navController.navigate("schools_management") },
+                    onNavigateToUsers = { navController.navigate("users_management") }
+                )
+            }
+
+            composable("users_management") {
+                val userViewModel: UserManagementViewModel = viewModel(
+                    factory = UserViewModelFactory(
+                        getUsersForSchoolUseCase = appDiContainer.domainUseCasesContainer.getUsersForSchoolUseCase!!,
+                        saveEnterpriseMemberUseCase = appDiContainer.domainUseCasesContainer.saveEnterpriseMemberUseCase!!,
+                        deleteEnterpriseMemberUseCase = appDiContainer.domainUseCasesContainer.deleteEnterpriseMemberUseCase!!,
+                        getSchoolsUseCase = appDiContainer.domainUseCasesContainer.getSchoolsUseCase!!,
+                        preferencesDataStore = appDiContainer.preferencesDataStore
+                    )
+                )
+                val userUiState by userViewModel.uiState.collectAsState()
+                UsersScreen(
+                    uiState = userUiState,
+                    onAction = { action -> userViewModel.onAction(action) },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("schools_management") {
+                val schoolViewModel: SchoolViewModel = viewModel(
+                    factory = SchoolViewModelFactory(
+                        getSchoolsUseCase = appDiContainer.domainUseCasesContainer.getSchoolsUseCase!!,
+                        saveSchoolUseCase = appDiContainer.domainUseCasesContainer.saveSchoolUseCase!!,
+                        deleteSchoolUseCase = appDiContainer.domainUseCasesContainer.deleteSchoolUseCase!!,
+                        getStudentsForSchoolUseCase = appDiContainer.domainUseCasesContainer.getStudentsForSchoolUseCase!!,
+                        getTeachersForSchoolUseCase = appDiContainer.domainUseCasesContainer.getTeachersForSchoolUseCase!!,
+                        getSectionsForSchoolUseCase = appDiContainer.domainUseCasesContainer.getSectionsForSchoolUseCase!!,
+                        getSubjectsForSchoolUseCase = appDiContainer.domainUseCasesContainer.getSubjectsForSchoolUseCase!!,
+                        getCoursesForSchoolUseCase = appDiContainer.domainUseCasesContainer.getCoursesForSchoolUseCase,
+                        getAssessmentsForSchoolUseCase = appDiContainer.domainUseCasesContainer.getAssessmentsForSchoolUseCase,
+                        saveEnterpriseMemberUseCase = appDiContainer.domainUseCasesContainer.saveEnterpriseMemberUseCase,
+                        saveCourseUseCase = appDiContainer.domainUseCasesContainer.saveCourseUseCase,
+                        saveAssessmentUseCase = appDiContainer.domainUseCasesContainer.saveAssessmentUseCase,
+                        preferencesDataStore = appDiContainer.preferencesDataStore
+                    )
+                )
+                val schoolUiState by schoolViewModel.uiState.collectAsState()
+                SchoolsScreen(
+                    uiState = schoolUiState,
+                    onAction = { action -> schoolViewModel.onAction(action) },
+                    onBack = { navController.popBackStack() }
                 )
             }
 

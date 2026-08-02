@@ -14,10 +14,38 @@ import com.rtiqa.core.database.entity.SectionEntity
 import com.rtiqa.core.database.entity.SemesterEntity
 import com.rtiqa.core.database.entity.StudyPlanEntity
 import com.rtiqa.core.database.entity.SubjectEntity
+import com.rtiqa.core.database.entity.SchoolEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EnterpriseDao {
+    @Query("SELECT * FROM schools ORDER BY createdAt DESC")
+    fun getAllSchools(): Flow<List<SchoolEntity>>
+
+    @Query("SELECT * FROM schools WHERE id = :id LIMIT 1")
+    fun getSchoolById(id: String): Flow<SchoolEntity?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSchool(school: SchoolEntity)
+
+    @Query("DELETE FROM schools WHERE id = :id")
+    suspend fun deleteSchool(id: String)
+
+    @Query("SELECT * FROM enterprise_members WHERE schoolId = :schoolId AND role = 'STUDENT'")
+    fun getStudentsForSchool(schoolId: String): Flow<List<EnterpriseMemberEntity>>
+
+    @Query("SELECT * FROM enterprise_members WHERE schoolId = :schoolId AND role = 'TEACHER'")
+    fun getTeachersForSchool(schoolId: String): Flow<List<EnterpriseMemberEntity>>
+
+    @Query("SELECT * FROM enterprise_members WHERE schoolId = :schoolId")
+    fun getUsersForSchool(schoolId: String): Flow<List<EnterpriseMemberEntity>>
+
+    @Query("SELECT * FROM sections WHERE schoolId = :schoolId")
+    fun getSectionsForSchool(schoolId: String): Flow<List<SectionEntity>>
+
+    @Query("SELECT * FROM subjects WHERE schoolId = :schoolId")
+    fun getSubjectsForSchool(schoolId: String): Flow<List<SubjectEntity>>
+
     @Query("SELECT * FROM organizations ORDER BY createdAt DESC")
     fun getAllOrganizations(): Flow<List<OrganizationEntity>>
 

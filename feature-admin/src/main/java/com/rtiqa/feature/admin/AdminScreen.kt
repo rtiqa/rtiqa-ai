@@ -72,6 +72,8 @@ fun AdminScreen(
     onAction: (AdminDashboardUiAction) -> Unit,
     onBack: () -> Unit,
     onNavigateToAcademicPlatform: () -> Unit = {},
+    onNavigateToSchools: () -> Unit = {},
+    onNavigateToUsers: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -109,6 +111,9 @@ fun AdminScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToSchools) {
+                        Icon(Icons.Default.Business, contentDescription = "إدارة المدارس")
+                    }
                     IconButton(onClick = onNavigateToAcademicPlatform) {
                         Icon(Icons.Default.School, contentDescription = "المنظومة الأكاديمية")
                     }
@@ -185,7 +190,13 @@ fun AdminScreen(
                 }
             } else {
                 when (uiState.selectedTab) {
-                    0 -> OverviewTabContent(uiState, onAction)
+                    0 -> OverviewTabContent(
+                        uiState = uiState,
+                        onAction = onAction,
+                        onNavigateToAcademicPlatform = onNavigateToAcademicPlatform,
+                        onNavigateToSchools = onNavigateToSchools,
+                        onNavigateToUsers = onNavigateToUsers
+                    )
                     1 -> OrganizationsTabContent(uiState, onAction) { showAddOrgDialog = true }
                     2 -> AcademicStructureTabContent(uiState, onAction)
                     3 -> MembersTabContent(uiState, onAction) { showAddMemberDialog = true }
@@ -348,6 +359,8 @@ fun AdminScreen(
                                     text = when (role) {
                                         EnterpriseRole.SUPER_ADMIN -> "مدير عام"
                                         EnterpriseRole.ORG_ADMIN -> "مدير مؤسسة"
+                                        EnterpriseRole.PRINCIPAL -> "مدير مدرسة"
+                                        EnterpriseRole.VICE_PRINCIPAL -> "وكيل مدرسة"
                                         EnterpriseRole.TEACHER -> "معلم"
                                         EnterpriseRole.STUDENT -> "طالب"
                                         EnterpriseRole.PARENT -> "ولي أمر"
@@ -382,7 +395,10 @@ fun AdminScreen(
 @Composable
 private fun OverviewTabContent(
     uiState: AdminDashboardUiState,
-    onAction: (AdminDashboardUiAction) -> Unit
+    onAction: (AdminDashboardUiAction) -> Unit,
+    onNavigateToAcademicPlatform: () -> Unit = {},
+    onNavigateToSchools: () -> Unit = {},
+    onNavigateToUsers: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier
@@ -393,11 +409,48 @@ private fun OverviewTabContent(
         item {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "إحصائيات المنصة والمؤسسات",
+                text = "الوصول السريع والإدارة",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Card(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onNavigateToSchools() },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Icon(Icons.Default.School, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("إدارة المدارس", fontWeight = FontWeight.Bold)
+                        Text("التحكم بالمدارس النشطة", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                Card(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onNavigateToUsers() },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Icon(Icons.Default.People, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text("مستخدمو المدرسة", fontWeight = FontWeight.Bold)
+                        Text("مدير، وكيل، معلم، طالب، ولي أمر", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
         }
 
         item {

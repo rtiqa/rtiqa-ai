@@ -11,7 +11,8 @@ data class UserProfile(
     val levelXp: Int = 0,
     val streakDays: Int = 0,
     val isAdmin: Boolean = false,
-    val isOfflineModeEnabled: Boolean = true
+    val isOfflineModeEnabled: Boolean = true,
+    val schoolId: String = "school_001"
 ) {
     /**
      * Business rule: Calculates user level based on accumulated XP (100 XP per level).

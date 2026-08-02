@@ -40,7 +40,8 @@ data class AcademicLesson(
     val pdfAttachmentUrl: String? = null,
     val durationMinutes: Int = 15,
     val orderIndex: Int = 1,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val schoolId: String = "school_001"
 )
 
 data class Assignment(
@@ -89,7 +90,8 @@ data class Assessment(
     val type: AssessmentType = AssessmentType.QUIZ,
     val passingScore: Int = 70,
     val timeLimitMinutes: Int = 30,
-    val totalQuestions: Int = 10
+    val totalQuestions: Int = 10,
+    val schoolId: String = "school_001"
 )
 
 data class AssessmentAttempt(
@@ -121,7 +123,8 @@ data class StudentProgress(
     val completedLessonsCount: Int,
     val totalLessonsCount: Int,
     val progressPercent: Float,
-    val lastAccessedAt: Long = System.currentTimeMillis()
+    val lastAccessedAt: Long = System.currentTimeMillis(),
+    val schoolId: String = "school_001"
 )
 
 data class AchievementBadge(

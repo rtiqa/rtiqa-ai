@@ -28,6 +28,7 @@ interface AuthRepositoryContract {
  */
 interface CourseRepositoryContract {
     fun getCourses(): Flow<List<Course>>
+    fun getCoursesForSchool(schoolId: String): Flow<List<Course>>
     fun getCourseById(courseId: String): Flow<Course?>
     fun getLessonsForCourse(courseId: String): Flow<List<Lesson>>
     fun getLessonById(lessonId: String): Flow<Lesson?>
