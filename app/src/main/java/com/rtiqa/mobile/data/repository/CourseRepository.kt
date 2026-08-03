@@ -37,6 +37,10 @@ class CourseRepository(
         entities.map { it.toDomain() }
     }
 
+    val allLessons: Flow<List<Lesson>> = lessonDao.getAllLessons().map { entities ->
+        entities.map { it.toDomain() }
+    }
+
     fun getLessonsForCourse(courseId: String): Flow<List<Lesson>> {
         return lessonDao.getLessonsForCourse(courseId).map { entities ->
             entities.map { it.toDomain() }

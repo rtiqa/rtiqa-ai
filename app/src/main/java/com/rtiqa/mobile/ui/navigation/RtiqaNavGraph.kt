@@ -261,9 +261,22 @@ fun RtiqaApp(
                 arguments = listOf(navArgument("lessonId") { type = NavType.StringType })
             ) { backStack ->
                 val lessonId = backStack.arguments?.getString("lessonId") ?: "l_ai_1"
-                val courseLessons by courseViewModel.getLessonsForCourse(courseViewModel.selectedCourseId.value).collectAsState()
-                val selectedLesson = courseLessons.find { it.id == lessonId } ?: courseLessons.firstOrNull()
-                val currentIndex = courseLessons.indexOfFirst { it.id == lessonId }
+                val allLessons by courseViewModel.allLessons.collectAsState()
+                
+                val selectedLesson = allLessons.find { it.id == lessonId } ?: allLessons.firstOrNull()
+                
+                // Keep selected course and lesson IDs updated in ViewModel
+                selectedLesson?.let { lesson ->
+                    courseViewModel.selectCourse(lesson.courseId)
+                    courseViewModel.selectLesson(lesson.id)
+                }
+
+                val courseLessons = if (selectedLesson != null) {
+                    allLessons.filter { it.courseId == selectedLesson.courseId }
+                } else {
+                    emptyList()
+                }
+                val currentIndex = courseLessons.indexOfFirst { it.id == selectedLesson?.id }
                 val nextLesson = if (currentIndex != -1 && currentIndex + 1 < courseLessons.size) courseLessons[currentIndex + 1] else null
 
                 LessonPlayerScreen(

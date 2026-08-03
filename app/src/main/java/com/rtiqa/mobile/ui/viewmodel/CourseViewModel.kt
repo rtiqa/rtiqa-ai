@@ -86,6 +86,12 @@ class CourseViewModel(application: Application) : AndroidViewModel(application) 
         initialValue = emptyList()
     )
 
+    val allLessons: StateFlow<List<Lesson>> = courseRepository.allLessons.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
     private val _selectedCourseId = MutableStateFlow("c_ai_101")
     val selectedCourseId: StateFlow<String> = _selectedCourseId.asStateFlow()
 
