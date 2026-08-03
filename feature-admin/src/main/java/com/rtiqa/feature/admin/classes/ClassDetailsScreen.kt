@@ -67,7 +67,7 @@ fun ClassDetailsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Class,
+                            imageVector = Icons.Default.School,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
@@ -121,17 +121,17 @@ fun ClassDetailsScreen(
                     value = "${schoolClass.studentsCount} طالب / السعة: ${schoolClass.capacity}"
                 )
                 DetailItem(
-                    icon = Icons.Default.Class,
+                    icon = Icons.Default.Numbers,
                     label = "ترتيب العرض",
                     value = "#${schoolClass.displayOrder}"
                 )
                 DetailItem(
-                    icon = Icons.Default.Class,
+                    icon = Icons.Default.School,
                     label = "معرف المدرسة",
                     value = schoolClass.schoolId
                 )
                 DetailItem(
-                    icon = Icons.Default.Class,
+                    icon = Icons.Default.School,
                     label = "تاريخ الإنشاء",
                     value = createdDateStr
                 )

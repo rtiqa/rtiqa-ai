@@ -212,7 +212,7 @@ fun RtiqaApp(
                         navController.navigate("course_detail/$courseId")
                     },
                     onLessonClick = { lessonId ->
-                        navController.navigate("lesson_viewer/$lessonId")
+                        navController.navigate("lesson_player/$lessonId")
                     },
                     onNavigate = { route -> navController.navigate(route) },
                     onToggleBookmark = { id, status -> courseViewModel.toggleBookmark(id, status) },
