@@ -56,4 +56,4 @@ jobs:
           cache: 'gradle'
 
       - name: Build Ktor Microservice Gateway
-        run: gradle :deploy:ktor-starter:build --stacktrace
+        run: gradle -p deploy/ktor-starter build --stacktrace
