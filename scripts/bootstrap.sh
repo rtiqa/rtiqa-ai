@@ -8,7 +8,8 @@ echo "======================================================================"
 echo "🚀 Initializing RTIQA Development Environment Bootstrap..."
 echo "======================================================================"
 
-# Step 1: Initialize Environment File
+# Step 1: Initialize Environment File & Script Permissions
+chmod +x gradlew scripts/*.sh 2>/dev/null || true
 if [ ! -f .env ]; then
     echo "📋 Creating .env file from .env.example..."
     cp .env.example .env

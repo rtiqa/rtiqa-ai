@@ -18,12 +18,12 @@ This guide provides instructions for setting up your local environment, building
 ### Command Line
 To build the debug APK from the root directory:
 ```bash
-gradle assembleDebug
+./gradlew assembleDebug
 ```
 
 To run a clean build (only if necessary):
 ```bash
-gradle clean assembleDebug
+./gradlew clean assembleDebug
 ```
 
 ---
@@ -34,13 +34,13 @@ RTIQA uses fast JVM-based local testing for ViewModels, Repositories, DAOs, and 
 
 ### Run All Unit Tests
 ```bash
-gradle testDebugUnitTest
+./gradlew testDebugUnitTest
 ```
 
 ### Run Tests for a Specific Module
 ```bash
-gradle :app:testDebugUnitTest
-gradle :core-data:testDebugUnitTest
+./gradlew :app:testDebugUnitTest
+./gradlew :core-data:testDebugUnitTest
 ```
 
 ---

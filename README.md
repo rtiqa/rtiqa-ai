@@ -145,10 +145,10 @@ chmod +x scripts/bootstrap.sh
 ### 2. Build & Test Android App
 ```bash
 # Run unit tests
-gradle testDebugUnitTest
+./gradlew testDebugUnitTest
 
 # Build debug APK
-gradle assembleDebug
+./gradlew assembleDebug
 ```
 
 ### 3. Launch Docker Microservice Stack (Optional)

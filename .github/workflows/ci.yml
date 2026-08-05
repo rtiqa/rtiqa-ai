@@ -24,7 +24,7 @@ jobs:
           cache: 'gradle'
 
       - name: Validate Gradle Wrapper & Environment
-        run: chmod +x scripts/bootstrap.sh && ./scripts/bootstrap.sh
+        run: chmod +x gradlew scripts/bootstrap.sh && ./scripts/bootstrap.sh
 
       - name: Run JVM Unit Tests
         run: gradle testDebugUnitTest --stacktrace
