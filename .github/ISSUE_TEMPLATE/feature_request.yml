@@ -1,38 +1,44 @@
-name: 🚀 Feature Request
-description: Suggest an idea or new feature for RTIQA
+name: "💡 Feature Request"
+description: "Suggest an idea or improvement for RTIQA"
 title: "[FEAT]: "
 labels: ["enhancement", "triage"]
 body:
   - type: markdown
     attributes:
-      value: Thank you for suggesting a feature! Please provide details about your proposal.
+      value: |
+        Thank you for suggesting a feature for RTIQA!
   - type: textarea
-    id: feature-description
+    id: problem
     attributes:
-      label: Feature Description
-      description: Describe the feature you would like to see added.
-      placeholder: Describe the desired feature...
+      label: "Problem Statement / User Need"
+      description: "Is your feature request related to a problem or limitation?"
+      placeholder: "I'm always frustrated when..."
     validations:
       required: true
   - type: textarea
-    id: problem-statement
+    id: solution
     attributes:
-      label: Problem or Use Case
-      description: Is your feature request related to a problem or specific user need?
-      placeholder: I'm always frustrated when...
+      label: "Proposed Solution"
+      description: "Describe the solution or feature you'd like to see added."
+      placeholder: "Add a button/view that allows..."
     validations:
       required: true
-  - type: textarea
-    id: proposed-solution
-    attributes:
-      label: Proposed Solution & Design
-      description: Describe how you envision this working within RTIQA's architecture.
-    validations:
-      required: false
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternative Solutions
-      description: Any alternative solutions or features you've considered.
+      label: "Alternatives Considered"
+      description: "Describe any alternative solutions or features you've considered."
+  - type: dropdown
+    id: component
+    attributes:
+      label: "Target Component / Module"
+      options:
+        - "Android App (:app)"
+        - "AI Tutor Engine (:feature-ai / core-ai)"
+        - "Course & Lesson Engine (:feature-courses)"
+        - "Offline Persistence (:core-database)"
+        - "Backend Gateway (deploy/ktor-starter)"
+        - "Docker Infrastructure (docker/)"
+        - "Helm Kubernetes Charts (helm/)"
     validations:
-      required: false
+      required: true

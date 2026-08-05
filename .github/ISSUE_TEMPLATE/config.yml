@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: 💬 GitHub Discussions
     url: https://github.com/rtiqa/mobile/discussions
-    about: Ask questions, share ideas, or connect with the RTIQA maintainers.
-  - name: 🔒 Security Vulnerability
+    about: Ask questions, share ideas, and engage with the RTIQA community.
+  - name: 🔒 Security Vulnerability Report
     url: https://github.com/rtiqa/mobile/security/policy
-    about: Report security issues privately.
+    about: Report sensitive security vulnerabilities directly to the maintainers.

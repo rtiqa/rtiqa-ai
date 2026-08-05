@@ -1,0 +1,23 @@
+# RTIQA Code Ownership & Review Routing Rules
+
+# Global Maintainers
+*       @rtiqa/maintainers @rtiqa/core-team
+
+# Android Mobile Core & Architecture
+/app/                   @rtiqa/android-leads
+/core/                  @rtiqa/android-leads
+/core-*/                @rtiqa/android-leads
+/feature-*/             @rtiqa/android-leads
+
+# Backend Gateway & Services
+/deploy/ktor-starter/   @rtiqa/backend-team
+
+# Infrastructure & DevOps
+/docker/                @rtiqa/devops-team
+/helm/                  @rtiqa/devops-team
+/.github/               @rtiqa/devops-team @rtiqa/maintainers
+/scripts/               @rtiqa/devops-team
+
+# Documentation & Governance
+/docs/                  @rtiqa/documentation-team
+/*.md                   @rtiqa/documentation-team
