@@ -84,6 +84,10 @@ class EnterpriseRepositoryImpl(
         enterpriseDao.insertAcademicYear(academicYear.toEntity())
     }
 
+    override suspend fun deleteAcademicYear(id: String) {
+        enterpriseDao.deleteAcademicYear(id)
+    }
+
     override fun getSemesters(academicYearId: String): Flow<List<Semester>> =
         enterpriseDao.getSemestersForYear(academicYearId).map { list -> list.map { it.toDomain() } }
 
@@ -112,11 +116,19 @@ class EnterpriseRepositoryImpl(
         enterpriseDao.insertSection(section.toEntity())
     }
 
+    override suspend fun deleteSection(id: String) {
+        enterpriseDao.deleteSection(id)
+    }
+
     override fun getSubjects(majorId: String): Flow<List<Subject>> =
         enterpriseDao.getSubjectsForMajor(majorId).map { list -> list.map { it.toDomain() } }
 
     override suspend fun saveSubject(subject: Subject) {
         enterpriseDao.insertSubject(subject.toEntity())
+    }
+
+    override suspend fun deleteSubject(id: String) {
+        enterpriseDao.deleteSubject(id)
     }
 
     override fun getStudyPlans(majorId: String): Flow<List<StudyPlan>> =

@@ -73,6 +73,9 @@ interface EnterpriseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAcademicYear(year: AcademicYearEntity)
 
+    @Query("DELETE FROM academic_years WHERE id = :id")
+    suspend fun deleteAcademicYear(id: String)
+
     @Query("SELECT * FROM semesters WHERE academicYearId = :yearId ORDER BY `order` ASC")
     fun getSemestersForYear(yearId: String): Flow<List<SemesterEntity>>
 
@@ -97,11 +100,17 @@ interface EnterpriseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSection(section: SectionEntity)
 
+    @Query("DELETE FROM sections WHERE id = :id")
+    suspend fun deleteSection(id: String)
+
     @Query("SELECT * FROM subjects WHERE majorId = :majorId")
     fun getSubjectsForMajor(majorId: String): Flow<List<SubjectEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSubject(subject: SubjectEntity)
+
+    @Query("DELETE FROM subjects WHERE id = :id")
+    suspend fun deleteSubject(id: String)
 
     @Query("SELECT * FROM study_plans WHERE majorId = :majorId")
     fun getStudyPlansForMajor(majorId: String): Flow<List<StudyPlanEntity>>

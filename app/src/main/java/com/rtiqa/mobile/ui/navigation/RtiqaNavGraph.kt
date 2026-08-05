@@ -431,6 +431,19 @@ fun RtiqaApp(
                         saveEnterpriseMemberUseCase = appDiContainer.domainUseCasesContainer.saveEnterpriseMemberUseCase,
                         saveCourseUseCase = appDiContainer.domainUseCasesContainer.saveCourseUseCase,
                         saveAssessmentUseCase = appDiContainer.domainUseCasesContainer.saveAssessmentUseCase,
+                        getGradeLevelsForSchoolUseCase = appDiContainer.domainUseCasesContainer.getGradeLevelsForSchoolUseCase,
+                        saveGradeLevelUseCase = appDiContainer.domainUseCasesContainer.saveGradeLevelUseCase,
+                        deleteGradeLevelUseCase = appDiContainer.domainUseCasesContainer.deleteGradeLevelUseCase,
+                        getClassesForSchoolUseCase = appDiContainer.domainUseCasesContainer.getClassesForSchoolUseCase,
+                        saveClassUseCase = appDiContainer.domainUseCasesContainer.saveClassUseCase,
+                        deleteClassUseCase = appDiContainer.domainUseCasesContainer.deleteClassUseCase,
+                        getAcademicYearsUseCase = appDiContainer.domainUseCasesContainer.getAcademicYearsUseCase,
+                        saveAcademicYearUseCase = appDiContainer.domainUseCasesContainer.saveAcademicYearUseCase,
+                        deleteAcademicYearUseCase = appDiContainer.domainUseCasesContainer.deleteAcademicYearUseCase,
+                        saveSectionUseCase = appDiContainer.domainUseCasesContainer.saveSectionUseCase,
+                        deleteSectionUseCase = appDiContainer.domainUseCasesContainer.deleteSectionUseCase,
+                        saveSubjectUseCase = appDiContainer.domainUseCasesContainer.saveSubjectUseCase,
+                        deleteSubjectUseCase = appDiContainer.domainUseCasesContainer.deleteSubjectUseCase,
                         preferencesDataStore = appDiContainer.preferencesDataStore
                     )
                 )

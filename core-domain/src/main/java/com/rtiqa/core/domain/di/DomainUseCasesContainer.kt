@@ -35,6 +35,22 @@ import com.rtiqa.core.domain.usecase.SaveCourseUseCase
 
 import com.rtiqa.core.domain.repository.EnterpriseRepository
 import com.rtiqa.core.domain.repository.AcademicRepository
+import com.rtiqa.core.domain.repository.ClassRepository
+import com.rtiqa.core.domain.repository.SchoolManagementCoreRepository
+
+import com.rtiqa.core.domain.usecase.GetGradeLevelsForSchoolUseCase
+import com.rtiqa.core.domain.usecase.SaveGradeLevelUseCase
+import com.rtiqa.core.domain.usecase.DeleteGradeLevelUseCase
+import com.rtiqa.core.domain.usecase.GetTeacherAssignmentsForSchoolUseCase
+import com.rtiqa.core.domain.usecase.GetTeacherAssignmentsForTeacherUseCase
+import com.rtiqa.core.domain.usecase.SaveTeacherAssignmentUseCase
+import com.rtiqa.core.domain.usecase.DeleteTeacherAssignmentUseCase
+import com.rtiqa.core.domain.usecase.GetEnrollmentsForSchoolUseCase
+import com.rtiqa.core.domain.usecase.GetEnrollmentsForClassUseCase
+import com.rtiqa.core.domain.usecase.SaveStudentEnrollmentUseCase
+import com.rtiqa.core.domain.usecase.DeleteStudentEnrollmentUseCase
+import com.rtiqa.core.domain.usecase.EvaluateUserPermissionUseCase
+import com.rtiqa.core.domain.usecase.CheckSchoolAccessUseCase
 
 import com.rtiqa.core.domain.usecase.GetOrganizationsUseCase
 import com.rtiqa.core.domain.usecase.SaveOrganizationUseCase
@@ -43,6 +59,7 @@ import com.rtiqa.core.domain.usecase.GetBranchesUseCase
 import com.rtiqa.core.domain.usecase.SaveBranchUseCase
 import com.rtiqa.core.domain.usecase.GetAcademicYearsUseCase
 import com.rtiqa.core.domain.usecase.SaveAcademicYearUseCase
+import com.rtiqa.core.domain.usecase.DeleteAcademicYearUseCase
 import com.rtiqa.core.domain.usecase.GetSemestersUseCase
 import com.rtiqa.core.domain.usecase.SaveSemesterUseCase
 import com.rtiqa.core.domain.usecase.GetDepartmentsUseCase
@@ -51,8 +68,10 @@ import com.rtiqa.core.domain.usecase.GetMajorsUseCase
 import com.rtiqa.core.domain.usecase.SaveMajorUseCase
 import com.rtiqa.core.domain.usecase.GetSectionsUseCase
 import com.rtiqa.core.domain.usecase.SaveSectionUseCase
+import com.rtiqa.core.domain.usecase.DeleteSectionUseCase
 import com.rtiqa.core.domain.usecase.GetSubjectsUseCase
 import com.rtiqa.core.domain.usecase.SaveSubjectUseCase
+import com.rtiqa.core.domain.usecase.DeleteSubjectUseCase
 import com.rtiqa.core.domain.usecase.GetStudyPlansUseCase
 import com.rtiqa.core.domain.usecase.SaveStudyPlanUseCase
 import com.rtiqa.core.domain.usecase.GetEnterpriseMembersUseCase
@@ -70,7 +89,6 @@ import com.rtiqa.core.domain.usecase.GetSubjectsForSchoolUseCase
 import com.rtiqa.core.domain.usecase.GetCoursesForSchoolUseCase
 import com.rtiqa.core.domain.usecase.GetAssessmentsForSchoolUseCase
 
-import com.rtiqa.core.domain.repository.ClassRepository
 import com.rtiqa.core.domain.usecase.GetClassesForSchoolUseCase
 import com.rtiqa.core.domain.usecase.GetClassByIdUseCase
 import com.rtiqa.core.domain.usecase.SaveClassUseCase
@@ -113,7 +131,8 @@ class DomainUseCasesContainer(
     offlineSync: OfflineSyncContract,
     enterpriseRepository: EnterpriseRepository? = null,
     academicRepository: AcademicRepository? = null,
-    classRepository: ClassRepository? = null
+    classRepository: ClassRepository? = null,
+    schoolManagementCoreRepository: SchoolManagementCoreRepository? = null
 ) {
     val loginUseCase by lazy { LoginUseCase(authRepository) }
     val registerUseCase by lazy { RegisterUseCase(authRepository) }
@@ -164,6 +183,7 @@ class DomainUseCasesContainer(
     val saveBranchUseCase by lazy { enterpriseRepositoryInstance?.let { SaveBranchUseCase(it) } }
     val getAcademicYearsUseCase by lazy { enterpriseRepositoryInstance?.let { GetAcademicYearsUseCase(it) } }
     val saveAcademicYearUseCase by lazy { enterpriseRepositoryInstance?.let { SaveAcademicYearUseCase(it) } }
+    val deleteAcademicYearUseCase by lazy { enterpriseRepositoryInstance?.let { DeleteAcademicYearUseCase(it) } }
     val getSemestersUseCase by lazy { enterpriseRepositoryInstance?.let { GetSemestersUseCase(it) } }
     val saveSemesterUseCase by lazy { enterpriseRepositoryInstance?.let { SaveSemesterUseCase(it) } }
     val getDepartmentsUseCase by lazy { enterpriseRepositoryInstance?.let { GetDepartmentsUseCase(it) } }
@@ -172,8 +192,10 @@ class DomainUseCasesContainer(
     val saveMajorUseCase by lazy { enterpriseRepositoryInstance?.let { SaveMajorUseCase(it) } }
     val getSectionsUseCase by lazy { enterpriseRepositoryInstance?.let { GetSectionsUseCase(it) } }
     val saveSectionUseCase by lazy { enterpriseRepositoryInstance?.let { SaveSectionUseCase(it) } }
+    val deleteSectionUseCase by lazy { enterpriseRepositoryInstance?.let { DeleteSectionUseCase(it) } }
     val getSubjectsUseCase by lazy { enterpriseRepositoryInstance?.let { GetSubjectsUseCase(it) } }
     val saveSubjectUseCase by lazy { enterpriseRepositoryInstance?.let { SaveSubjectUseCase(it) } }
+    val deleteSubjectUseCase by lazy { enterpriseRepositoryInstance?.let { DeleteSubjectUseCase(it) } }
     val getStudyPlansUseCase by lazy { enterpriseRepositoryInstance?.let { GetStudyPlansUseCase(it) } }
     val saveStudyPlanUseCase by lazy { enterpriseRepositoryInstance?.let { SaveStudyPlanUseCase(it) } }
     val getEnterpriseMembersUseCase by lazy { enterpriseRepositoryInstance?.let { GetEnterpriseMembersUseCase(it) } }
@@ -225,4 +247,20 @@ class DomainUseCasesContainer(
     val unlockBadgeUseCase by lazy { academicRepositoryInstance?.let { UnlockBadgeUseCase(it) } }
     val savePrerequisiteUseCase by lazy { academicRepositoryInstance?.let { SavePrerequisiteUseCase(it) } }
     val saveQuestionUseCase by lazy { academicRepositoryInstance?.let { SaveQuestionUseCase(it) } }
+
+    // School Management Core UseCases
+    val schoolManagementCoreRepositoryInstance: SchoolManagementCoreRepository? = schoolManagementCoreRepository
+    val getGradeLevelsForSchoolUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { GetGradeLevelsForSchoolUseCase(it) } }
+    val saveGradeLevelUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { SaveGradeLevelUseCase(it) } }
+    val deleteGradeLevelUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { DeleteGradeLevelUseCase(it) } }
+    val getTeacherAssignmentsForSchoolUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { GetTeacherAssignmentsForSchoolUseCase(it) } }
+    val getTeacherAssignmentsForTeacherUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { GetTeacherAssignmentsForTeacherUseCase(it) } }
+    val saveTeacherAssignmentUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { SaveTeacherAssignmentUseCase(it) } }
+    val deleteTeacherAssignmentUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { DeleteTeacherAssignmentUseCase(it) } }
+    val getEnrollmentsForSchoolUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { GetEnrollmentsForSchoolUseCase(it) } }
+    val getEnrollmentsForClassUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { GetEnrollmentsForClassUseCase(it) } }
+    val saveStudentEnrollmentUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { SaveStudentEnrollmentUseCase(it) } }
+    val deleteStudentEnrollmentUseCase by lazy { schoolManagementCoreRepositoryInstance?.let { DeleteStudentEnrollmentUseCase(it) } }
+    val evaluateUserPermissionUseCase by lazy { EvaluateUserPermissionUseCase() }
+    val checkSchoolAccessUseCase by lazy { CheckSchoolAccessUseCase() }
 }

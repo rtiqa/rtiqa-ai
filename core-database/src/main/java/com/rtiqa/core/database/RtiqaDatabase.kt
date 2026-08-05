@@ -43,7 +43,11 @@ import com.rtiqa.core.database.entity.StudyPlanEntity
 import com.rtiqa.core.database.entity.SubjectEntity
 import com.rtiqa.core.database.entity.SyncQueueEntity
 import com.rtiqa.core.database.dao.SchoolClassDao
+import com.rtiqa.core.database.dao.SchoolManagementCoreDao
+import com.rtiqa.core.database.entity.GradeLevelEntity
 import com.rtiqa.core.database.entity.SchoolClassEntity
+import com.rtiqa.core.database.entity.StudentEnrollmentEntity
+import com.rtiqa.core.database.entity.TeacherAssignmentEntity
 import com.rtiqa.core.database.entity.UserProfileEntity
 
 @Database(
@@ -78,9 +82,12 @@ import com.rtiqa.core.database.entity.UserProfileEntity
         LearningPathEntity::class,
         PrerequisiteEntity::class,
         SmartRecommendationEntity::class,
-        OfflineContentDownloadEntity::class
+        OfflineContentDownloadEntity::class,
+        GradeLevelEntity::class,
+        TeacherAssignmentEntity::class,
+        StudentEnrollmentEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class RtiqaDatabase : RoomDatabase() {
@@ -92,6 +99,7 @@ abstract class RtiqaDatabase : RoomDatabase() {
     abstract fun enterpriseDao(): EnterpriseDao
     abstract fun academicDao(): AcademicDao
     abstract fun schoolClassDao(): SchoolClassDao
+    abstract fun schoolManagementCoreDao(): SchoolManagementCoreDao
 
     companion object {
         @Volatile

@@ -78,6 +78,10 @@ class SaveAcademicYearUseCase(private val repository: EnterpriseRepository) {
     suspend operator fun invoke(academicYear: AcademicYear) = repository.saveAcademicYear(academicYear)
 }
 
+class DeleteAcademicYearUseCase(private val repository: EnterpriseRepository) {
+    suspend operator fun invoke(id: String) = repository.deleteAcademicYear(id)
+}
+
 class GetSemestersUseCase(private val repository: EnterpriseRepository) {
     operator fun invoke(academicYearId: String): Flow<List<Semester>> = repository.getSemesters(academicYearId)
 }
@@ -110,12 +114,20 @@ class SaveSectionUseCase(private val repository: EnterpriseRepository) {
     suspend operator fun invoke(section: Section) = repository.saveSection(section)
 }
 
+class DeleteSectionUseCase(private val repository: EnterpriseRepository) {
+    suspend operator fun invoke(id: String) = repository.deleteSection(id)
+}
+
 class GetSubjectsUseCase(private val repository: EnterpriseRepository) {
     operator fun invoke(majorId: String): Flow<List<Subject>> = repository.getSubjects(majorId)
 }
 
 class SaveSubjectUseCase(private val repository: EnterpriseRepository) {
     suspend operator fun invoke(subject: Subject) = repository.saveSubject(subject)
+}
+
+class DeleteSubjectUseCase(private val repository: EnterpriseRepository) {
+    suspend operator fun invoke(id: String) = repository.deleteSubject(id)
 }
 
 class GetStudyPlansUseCase(private val repository: EnterpriseRepository) {

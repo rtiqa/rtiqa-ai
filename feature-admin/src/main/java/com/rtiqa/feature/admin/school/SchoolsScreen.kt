@@ -2,7 +2,6 @@ package com.rtiqa.feature.admin.school
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,22 +23,28 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Class
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Grade
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Quiz
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Room
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,16 +68,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rtiqa.core.domain.model.AcademicYear
 import com.rtiqa.core.domain.model.Assessment
 import com.rtiqa.core.domain.model.Course
+import com.rtiqa.core.domain.model.EducationStage
 import com.rtiqa.core.domain.model.EnterpriseMember
+import com.rtiqa.core.domain.model.GradeLevel
 import com.rtiqa.core.domain.model.School
+import com.rtiqa.core.domain.model.SchoolClass
 import com.rtiqa.core.domain.model.Section
 import com.rtiqa.core.domain.model.Subject
 
@@ -86,12 +94,39 @@ fun SchoolsScreen(
 ) {
     val context = LocalContext.current
 
+    var deleteConfirmSchoolId by remember { mutableStateOf<String?>(null) }
+    var showAddAcademicYearDialog by remember { mutableStateOf(false) }
+    var showAddGradeLevelDialog by remember { mutableStateOf(false) }
+    var showAddClassDialog by remember { mutableStateOf(false) }
+    var showAddSectionDialog by remember { mutableStateOf(false) }
+    var showAddSubjectDialog by remember { mutableStateOf(false) }
     var showAddStudentDialog by remember { mutableStateOf(false) }
     var showAddTeacherDialog by remember { mutableStateOf(false) }
     var showAddCourseDialog by remember { mutableStateOf(false) }
     var showAddAssessmentDialog by remember { mutableStateOf(false) }
 
-    // Dialog state holders
+    // Dialog Input States
+    var ayName by remember { mutableStateOf("") }
+    var ayStartDate by remember { mutableStateOf("2024-09-01") }
+    var ayEndDate by remember { mutableStateOf("2025-06-30") }
+
+    var gradeName by remember { mutableStateOf("") }
+    var gradeCode by remember { mutableStateOf("") }
+    var gradeSeq by remember { mutableStateOf("1") }
+    var selectedStage by remember { mutableStateOf(EducationStage.SECONDARY) }
+
+    var className by remember { mutableStateOf("") }
+    var classGradeLevel by remember { mutableStateOf("") }
+    var classRoom by remember { mutableStateOf("") }
+    var classCapacity by remember { mutableStateOf("30") }
+
+    var sectionName by remember { mutableStateOf("") }
+    var sectionCapacity by remember { mutableStateOf("25") }
+
+    var subjectName by remember { mutableStateOf("") }
+    var subjectCode by remember { mutableStateOf("") }
+    var subjectCreditHours by remember { mutableStateOf("3") }
+
     var studentName by remember { mutableStateOf("") }
     var studentEmail by remember { mutableStateOf("") }
     var studentDept by remember { mutableStateOf("علوم الحاسب") }
@@ -164,24 +199,60 @@ fun SchoolsScreen(
                 schoolsCount = uiState.schools.size
             )
 
-            // Main Tabs: 0 -> Schools List, 1 -> Active School Scope Data
-            TabRow(
+            // Main Module Navigation Tabs
+            ScrollableTabRow(
                 selectedTabIndex = uiState.selectedTab,
+                edgePadding = 12.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Tab(
                     selected = uiState.selectedTab == 0,
                     onClick = { onAction(SchoolUiAction.SelectTab(0)) },
-                    text = { Text("قائمة المدارس (${uiState.schools.size})") },
+                    text = { Text("المدارس (${uiState.schools.size})") },
                     icon = { Icon(Icons.Default.School, contentDescription = null) },
                     modifier = Modifier.testTag("tab_schools_list")
                 )
                 Tab(
                     selected = uiState.selectedTab == 1,
                     onClick = { onAction(SchoolUiAction.SelectTab(1)) },
-                    text = { Text("بيانات المدرسة النشطة") },
+                    text = { Text("نظرة عامة والتفاصيل") },
                     icon = { Icon(Icons.Default.Business, contentDescription = null) },
                     modifier = Modifier.testTag("tab_active_school_data")
+                )
+                Tab(
+                    selected = uiState.selectedTab == 2,
+                    onClick = { onAction(SchoolUiAction.SelectTab(2)) },
+                    text = { Text("الأعوام الدراسية (${uiState.academicYears.size})") },
+                    icon = { Icon(Icons.Default.DateRange, contentDescription = null) },
+                    modifier = Modifier.testTag("tab_academic_years")
+                )
+                Tab(
+                    selected = uiState.selectedTab == 3,
+                    onClick = { onAction(SchoolUiAction.SelectTab(3)) },
+                    text = { Text("المراحل (${uiState.gradeLevels.size})") },
+                    icon = { Icon(Icons.Default.Grade, contentDescription = null) },
+                    modifier = Modifier.testTag("tab_grade_levels")
+                )
+                Tab(
+                    selected = uiState.selectedTab == 4,
+                    onClick = { onAction(SchoolUiAction.SelectTab(4)) },
+                    text = { Text("الصفوف (${uiState.schoolClasses.size})") },
+                    icon = { Icon(Icons.Default.Class, contentDescription = null) },
+                    modifier = Modifier.testTag("tab_classes")
+                )
+                Tab(
+                    selected = uiState.selectedTab == 5,
+                    onClick = { onAction(SchoolUiAction.SelectTab(5)) },
+                    text = { Text("الشعب (${uiState.sections.size})") },
+                    icon = { Icon(Icons.Default.Room, contentDescription = null) },
+                    modifier = Modifier.testTag("tab_sections")
+                )
+                Tab(
+                    selected = uiState.selectedTab == 6,
+                    onClick = { onAction(SchoolUiAction.SelectTab(6)) },
+                    text = { Text("المواد (${uiState.subjects.size})") },
+                    icon = { Icon(Icons.Default.Book, contentDescription = null) },
+                    modifier = Modifier.testTag("tab_subjects")
                 )
             }
 
@@ -191,9 +262,9 @@ fun SchoolsScreen(
                     activeSchoolId = uiState.activeSchoolId,
                     onSelectActive = { schoolId -> onAction(SchoolUiAction.SelectActiveSchool(schoolId)) },
                     onEditSchool = { school -> onAction(SchoolUiAction.OpenFormDialog(school)) },
-                    onDeleteSchool = { schoolId -> onAction(SchoolUiAction.DeleteSchool(schoolId)) }
+                    onDeleteSchool = { schoolId -> deleteConfirmSchoolId = schoolId }
                 )
-                1 -> ActiveSchoolDataTab(
+                1 -> SchoolDetailsOverviewTab(
                     uiState = uiState,
                     onCategoryTabSelected = { index -> onAction(SchoolUiAction.SelectCategoryTab(index)) },
                     onAddStudentClick = { showAddStudentDialog = true },
@@ -201,11 +272,86 @@ fun SchoolsScreen(
                     onAddCourseClick = { showAddCourseDialog = true },
                     onAddAssessmentClick = { showAddAssessmentDialog = true }
                 )
+                2 -> CategoryList(
+                    items = uiState.academicYears,
+                    emptyText = "لا توجد أعوام دراسية مسجلة.",
+                    onAddClick = { showAddAcademicYearDialog = true },
+                    addButtonText = "إضافة عام دراسي جديد",
+                    itemContent = { ay ->
+                        EntityItemCard(
+                            title = ay.name,
+                            subtitle = "من ${ay.startDate} إلى ${ay.endDate}",
+                            badgeText = if (ay.isCurrent) "الحالي" else "سابق",
+                            icon = Icons.Default.CalendarToday,
+                            onDelete = { onAction(SchoolUiAction.DeleteAcademicYear(ay.id)) }
+                        )
+                    }
+                )
+                3 -> CategoryList(
+                    items = uiState.gradeLevels,
+                    emptyText = "لا توجد مراحل دراسية مضافة لهذه المدرسة.",
+                    onAddClick = { showAddGradeLevelDialog = true },
+                    addButtonText = "إضافة مرحلة دراسية",
+                    itemContent = { gl ->
+                        EntityItemCard(
+                            title = gl.name,
+                            subtitle = "الكود: ${gl.code} | الترتيب: ${gl.levelSequence} | المرحلة: ${gl.stage.name}",
+                            badgeText = "مرحلة",
+                            icon = Icons.Default.Grade,
+                            onDelete = { onAction(SchoolUiAction.DeleteGradeLevel(gl.id)) }
+                        )
+                    }
+                )
+                4 -> CategoryList(
+                    items = uiState.schoolClasses,
+                    emptyText = "لا توجد صفوف دراسية مضافة لهذه المدرسة.",
+                    onAddClick = { showAddClassDialog = true },
+                    addButtonText = "إضافة صف دراسي جديد",
+                    itemContent = { cls ->
+                        EntityItemCard(
+                            title = cls.name,
+                            subtitle = "المرحلة: ${cls.gradeLevel} | القاعة: ${cls.roomNumber} | السعة: ${cls.capacity} طالب",
+                            badgeText = "صف",
+                            icon = Icons.Default.Class,
+                            onDelete = { onAction(SchoolUiAction.DeleteSchoolClass(cls.id)) }
+                        )
+                    }
+                )
+                5 -> CategoryList(
+                    items = uiState.sections,
+                    emptyText = "لا توجد شعب مضافة لهذه المدرسة.",
+                    onAddClick = { showAddSectionDialog = true },
+                    addButtonText = "إضافة شعبة جديدة",
+                    itemContent = { sec ->
+                        EntityItemCard(
+                            title = sec.name,
+                            subtitle = "السعة القصوى: ${sec.capacity} طالب | المسجلون: ${sec.studentsCount}",
+                            badgeText = "شعبة",
+                            icon = Icons.Default.Room,
+                            onDelete = { onAction(SchoolUiAction.DeleteSection(sec.id)) }
+                        )
+                    }
+                )
+                6 -> CategoryList(
+                    items = uiState.subjects,
+                    emptyText = "لا توجد مواد دراسية مضافة لهذه المدرسة.",
+                    onAddClick = { showAddSubjectDialog = true },
+                    addButtonText = "إضافة مادة دراسية جديدة",
+                    itemContent = { sub ->
+                        EntityItemCard(
+                            title = sub.name,
+                            subtitle = "الكود: ${sub.code} | الساعات المعتمدة: ${sub.creditHours}",
+                            badgeText = "مادة",
+                            icon = Icons.Default.Book,
+                            onDelete = { onAction(SchoolUiAction.DeleteSubject(sub.id)) }
+                        )
+                    }
+                )
             }
         }
     }
 
-    // Add/Edit School Form Dialog
+    // Add/Edit School Dialog
     if (uiState.isFormDialogOpen) {
         AddEditSchoolDialog(
             school = uiState.editingSchool,
@@ -226,7 +372,297 @@ fun SchoolsScreen(
         )
     }
 
-    // Dialog for adding student to active school
+    // Delete Confirmation Dialog for School
+    deleteConfirmSchoolId?.let { schoolId ->
+        AlertDialog(
+            onDismissRequest = { deleteConfirmSchoolId = null },
+            title = { Text("تأكيد حذف المدرسة") },
+            text = { Text("هل أنت تأكد من رغبتك في حذف هذه المدرسة كافة بياناتها المعرفة؟") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onAction(SchoolUiAction.DeleteSchool(schoolId))
+                        deleteConfirmSchoolId = null
+                    }
+                ) { Text("حذف") }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteConfirmSchoolId = null }) { Text("إلغاء") }
+            }
+        )
+    }
+
+    // Add Academic Year Dialog
+    if (showAddAcademicYearDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddAcademicYearDialog = false },
+            title = { Text("إضافة عام دراسي") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = ayName,
+                        onValueChange = { ayName = it },
+                        label = { Text("اسم العام الدراسي (مثال: 2024-2025)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = ayStartDate,
+                        onValueChange = { ayStartDate = it },
+                        label = { Text("تاريخ البداية (YYYY-MM-DD)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = ayEndDate,
+                        onValueChange = { ayEndDate = it },
+                        label = { Text("تاريخ النهاية (YYYY-MM-DD)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (ayName.isNotBlank()) {
+                            onAction(
+                                SchoolUiAction.SaveAcademicYear(
+                                    id = null,
+                                    name = ayName,
+                                    startDate = ayStartDate,
+                                    endDate = ayEndDate,
+                                    isCurrent = true
+                                )
+                            )
+                            ayName = ""
+                            showAddAcademicYearDialog = false
+                        }
+                    }
+                ) { Text("حفظ") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddAcademicYearDialog = false }) { Text("إلغاء") }
+            }
+        )
+    }
+
+    // Add Grade Level Dialog
+    if (showAddGradeLevelDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddGradeLevelDialog = false },
+            title = { Text("إضافة مرحلة دراسية") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = gradeName,
+                        onValueChange = { gradeName = it },
+                        label = { Text("اسم المرحلة (مثال: الصف الأول الثانوي)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = gradeCode,
+                        onValueChange = { gradeCode = it },
+                        label = { Text("كود المرحلة (SEC-1)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = gradeSeq,
+                        onValueChange = { gradeSeq = it },
+                        label = { Text("الترتيب") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (gradeName.isNotBlank()) {
+                            onAction(
+                                SchoolUiAction.SaveGradeLevel(
+                                    id = null,
+                                    name = gradeName,
+                                    code = gradeCode.ifBlank { "GL-${gradeSeq}" },
+                                    sequence = gradeSeq.toIntOrNull() ?: 1,
+                                    stage = selectedStage
+                                )
+                            )
+                            gradeName = ""
+                            gradeCode = ""
+                            showAddGradeLevelDialog = false
+                        }
+                    }
+                ) { Text("حفظ") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddGradeLevelDialog = false }) { Text("إلغاء") }
+            }
+        )
+    }
+
+    // Add School Class Dialog
+    if (showAddClassDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddClassDialog = false },
+            title = { Text("إضافة صف دراسي جديد") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = className,
+                        onValueChange = { className = it },
+                        label = { Text("اسم الصف (مثال: 101 ثانٍ)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = classGradeLevel,
+                        onValueChange = { classGradeLevel = it },
+                        label = { Text("المرحلة الدراسية") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = classRoom,
+                        onValueChange = { classRoom = it },
+                        label = { Text("رقم القاعة / الغرفة") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = classCapacity,
+                        onValueChange = { classCapacity = it },
+                        label = { Text("السعة الاستيعابية") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (className.isNotBlank()) {
+                            onAction(
+                                SchoolUiAction.SaveSchoolClass(
+                                    id = null,
+                                    name = className,
+                                    gradeLevel = classGradeLevel.ifBlank { "الصف الأول" },
+                                    roomNumber = classRoom.ifBlank { "A-1" },
+                                    capacity = classCapacity.toIntOrNull() ?: 30
+                                )
+                            )
+                            className = ""
+                            classRoom = ""
+                            showAddClassDialog = false
+                        }
+                    }
+                ) { Text("حفظ") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddClassDialog = false }) { Text("إلغاء") }
+            }
+        )
+    }
+
+    // Add Section Dialog
+    if (showAddSectionDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddSectionDialog = false },
+            title = { Text("إضافة شعبة جديدة") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = sectionName,
+                        onValueChange = { sectionName = it },
+                        label = { Text("اسم الشعبة (مثال: شعبة أ)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = sectionCapacity,
+                        onValueChange = { sectionCapacity = it },
+                        label = { Text("السعة الاستيعابية للشعبة") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (sectionName.isNotBlank()) {
+                            onAction(
+                                SchoolUiAction.SaveSection(
+                                    id = null,
+                                    name = sectionName,
+                                    capacity = sectionCapacity.toIntOrNull() ?: 25
+                                )
+                            )
+                            sectionName = ""
+                            showAddSectionDialog = false
+                        }
+                    }
+                ) { Text("حفظ") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddSectionDialog = false }) { Text("إلغاء") }
+            }
+        )
+    }
+
+    // Add Subject Dialog
+    if (showAddSubjectDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddSubjectDialog = false },
+            title = { Text("إضافة مادة دراسية") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = subjectName,
+                        onValueChange = { subjectName = it },
+                        label = { Text("اسم المادة (مثال: الرياضيات)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = subjectCode,
+                        onValueChange = { subjectCode = it },
+                        label = { Text("كود المادة (MATH-101)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = subjectCreditHours,
+                        onValueChange = { subjectCreditHours = it },
+                        label = { Text("الساعات المعتمده") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (subjectName.isNotBlank()) {
+                            onAction(
+                                SchoolUiAction.SaveSubject(
+                                    id = null,
+                                    name = subjectName,
+                                    code = subjectCode.ifBlank { "SUB-1" },
+                                    creditHours = subjectCreditHours.toIntOrNull() ?: 3
+                                )
+                            )
+                            subjectName = ""
+                            subjectCode = ""
+                            showAddSubjectDialog = false
+                        }
+                    }
+                ) { Text("حفظ") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddSubjectDialog = false }) { Text("إلغاء") }
+            }
+        )
+    }
+
+    // Add Student Dialog
     if (showAddStudentDialog) {
         AlertDialog(
             onDismissRequest = { showAddStudentDialog = false },
@@ -271,9 +707,7 @@ fun SchoolsScreen(
                             showAddStudentDialog = false
                         }
                     }
-                ) {
-                    Text("إضافة")
-                }
+                ) { Text("إضافة") }
             },
             dismissButton = {
                 TextButton(onClick = { showAddStudentDialog = false }) { Text("إلغاء") }
@@ -281,7 +715,7 @@ fun SchoolsScreen(
         )
     }
 
-    // Dialog for adding teacher to active school
+    // Add Teacher Dialog
     if (showAddTeacherDialog) {
         AlertDialog(
             onDismissRequest = { showAddTeacherDialog = false },
@@ -326,9 +760,7 @@ fun SchoolsScreen(
                             showAddTeacherDialog = false
                         }
                     }
-                ) {
-                    Text("إضافة")
-                }
+                ) { Text("إضافة") }
             },
             dismissButton = {
                 TextButton(onClick = { showAddTeacherDialog = false }) { Text("إلغاء") }
@@ -336,7 +768,7 @@ fun SchoolsScreen(
         )
     }
 
-    // Dialog for adding course to active school
+    // Add Course Dialog
     if (showAddCourseDialog) {
         AlertDialog(
             onDismissRequest = { showAddCourseDialog = false },
@@ -372,9 +804,7 @@ fun SchoolsScreen(
                             showAddCourseDialog = false
                         }
                     }
-                ) {
-                    Text("إضافة")
-                }
+                ) { Text("إضافة") }
             },
             dismissButton = {
                 TextButton(onClick = { showAddCourseDialog = false }) { Text("إلغاء") }
@@ -382,7 +812,7 @@ fun SchoolsScreen(
         )
     }
 
-    // Dialog for adding assessment to active school
+    // Add Assessment Dialog
     if (showAddAssessmentDialog) {
         AlertDialog(
             onDismissRequest = { showAddAssessmentDialog = false },
@@ -418,9 +848,7 @@ fun SchoolsScreen(
                             showAddAssessmentDialog = false
                         }
                     }
-                ) {
-                    Text("إضافة")
-                }
+                ) { Text("إضافة") }
             },
             dismissButton = {
                 TextButton(onClick = { showAddAssessmentDialog = false }) { Text("إلغاء") }
@@ -632,7 +1060,7 @@ fun SchoolCard(
 }
 
 @Composable
-fun ActiveSchoolDataTab(
+fun SchoolDetailsOverviewTab(
     uiState: SchoolUiState,
     onCategoryTabSelected: (Int) -> Unit,
     onAddStudentClick: () -> Unit,
@@ -640,7 +1068,7 @@ fun ActiveSchoolDataTab(
     onAddCourseClick: () -> Unit,
     onAddAssessmentClick: () -> Unit
 ) {
-    val categories = listOf("الطلاب", "المعلمون", "الصفوف", "المواد", "الدورات", "الاختبارات")
+    val categories = listOf("الطلاب", "المعلمون", "الشعب", "المواد", "الدورات", "الاختبارات")
 
     Column(modifier = Modifier.fillMaxSize()) {
         ScrollableTabRow(
@@ -677,6 +1105,7 @@ fun ActiveSchoolDataTab(
                     items = uiState.students,
                     emptyText = "لا يوجد طلاب مسجلون في المدرسة النشطة حالياً.",
                     onAddClick = onAddStudentClick,
+                    addButtonText = "إضافة طالب جديد للمدرسة",
                     itemContent = { student ->
                         EntityItemCard(
                             title = student.name,
@@ -690,6 +1119,7 @@ fun ActiveSchoolDataTab(
                     items = uiState.teachers,
                     emptyText = "لا يوجد معلمون مسجلون في المدرسة النشطة حالياً.",
                     onAddClick = onAddTeacherClick,
+                    addButtonText = "إضافة معلم جديد للمدرسة",
                     itemContent = { teacher ->
                         EntityItemCard(
                             title = teacher.name,
@@ -701,13 +1131,13 @@ fun ActiveSchoolDataTab(
                 )
                 2 -> CategoryList(
                     items = uiState.sections,
-                    emptyText = "لا يوجد شعب / صفوف مضافة لهذه المدرسة حتى الآن.",
+                    emptyText = "لا يوجد شعب مضافة لهذه المدرسة.",
                     onAddClick = null,
                     itemContent = { section ->
                         EntityItemCard(
                             title = section.name,
                             subtitle = "السعة: ${section.capacity} طالب | عدد الطلاب: ${section.studentsCount}",
-                            badgeText = "صف / شعبة",
+                            badgeText = "شعبة",
                             icon = Icons.Default.Class
                         )
                     }
@@ -729,6 +1159,7 @@ fun ActiveSchoolDataTab(
                     items = uiState.courses,
                     emptyText = "لا توجد دورات تدريبية مسجلة لهذه المدرسة.",
                     onAddClick = onAddCourseClick,
+                    addButtonText = "إضافة دورة تدريبية للمدرسة",
                     itemContent = { course ->
                         EntityItemCard(
                             title = course.title,
@@ -742,6 +1173,7 @@ fun ActiveSchoolDataTab(
                     items = uiState.assessments,
                     emptyText = "لا توجد اختبارات مضافة لهذه المدرسة.",
                     onAddClick = onAddAssessmentClick,
+                    addButtonText = "إضافة اختبار جديد للمدرسة",
                     itemContent = { assessment ->
                         EntityItemCard(
                             title = assessment.title,
@@ -761,6 +1193,7 @@ fun <T> CategoryList(
     items: List<T>,
     emptyText: String,
     onAddClick: (() -> Unit)?,
+    addButtonText: String = "إضافة عنصر جديد",
     itemContent: @Composable (T) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -773,7 +1206,7 @@ fun <T> CategoryList(
             ) {
                 Icon(Icons.Default.Add, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("إضافة عنصر جديد للمدرسة النشطة")
+                Text(addButtonText)
             }
         }
 
@@ -808,7 +1241,8 @@ fun EntityItemCard(
     title: String,
     subtitle: String,
     badgeText: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onDelete: (() -> Unit)? = null
 ) {
     Card(
         colors = CardDefaults.cardColors(
@@ -859,6 +1293,16 @@ fun EntityItemCard(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.secondary
                 )
+            }
+            if (onDelete != null) {
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "حذف",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }

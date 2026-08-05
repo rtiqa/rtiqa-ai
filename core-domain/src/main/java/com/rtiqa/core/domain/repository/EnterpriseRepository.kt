@@ -35,6 +35,7 @@ interface EnterpriseRepository {
 
     fun getAcademicYears(orgId: String): Flow<List<AcademicYear>>
     suspend fun saveAcademicYear(academicYear: AcademicYear)
+    suspend fun deleteAcademicYear(id: String)
 
     fun getSemesters(academicYearId: String): Flow<List<Semester>>
     suspend fun saveSemester(semester: Semester)
@@ -47,9 +48,11 @@ interface EnterpriseRepository {
 
     fun getSections(majorId: String): Flow<List<Section>>
     suspend fun saveSection(section: Section)
+    suspend fun deleteSection(id: String)
 
     fun getSubjects(majorId: String): Flow<List<Subject>>
     suspend fun saveSubject(subject: Subject)
+    suspend fun deleteSubject(id: String)
 
     fun getStudyPlans(majorId: String): Flow<List<StudyPlan>>
     suspend fun saveStudyPlan(studyPlan: StudyPlan)
