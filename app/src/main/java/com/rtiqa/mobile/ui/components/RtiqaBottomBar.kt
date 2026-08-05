@@ -40,7 +40,7 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.res.stringResource
 import com.rtiqa.mobile.R
 
-sealed class NavItem(val route: String, @StringRes val titleRes: Int, val icon: ImageVector) {
+sealed class NavItem(val route: String, @get:StringRes val titleRes: Int, val icon: ImageVector) {
     object Home : NavItem("home", R.string.nav_home, Icons.Default.Home)
     object Courses : NavItem("courses", R.string.nav_courses, Icons.AutoMirrored.Filled.MenuBook)
     object AiTutor : NavItem("ai_tutor", R.string.nav_ai_tutor, Icons.Default.AutoAwesome)

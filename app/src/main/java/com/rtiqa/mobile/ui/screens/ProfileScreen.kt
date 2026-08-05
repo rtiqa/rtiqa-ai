@@ -335,6 +335,23 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            // Weekly Analytics Chart
+            com.rtiqa.core.ui.chart.RdsAnalyticsChart(
+                title = "سرعة التعلم الأسبوعية (XP)",
+                subtitle = "نشاط النقاط المكتسبة خلال الـ 7 أيام الماضية",
+                dataPoints = listOf(
+                    com.rtiqa.core.ui.chart.ChartPoint("السبت", 120f),
+                    com.rtiqa.core.ui.chart.ChartPoint("الأحد", 250f),
+                    com.rtiqa.core.ui.chart.ChartPoint("الاثنين", 180f),
+                    com.rtiqa.core.ui.chart.ChartPoint("الثلاثاء", 320f),
+                    com.rtiqa.core.ui.chart.ChartPoint("الأربعاء", 290f),
+                    com.rtiqa.core.ui.chart.ChartPoint("الخميس", 410f),
+                    com.rtiqa.core.ui.chart.ChartPoint("الجمعة", 500f)
+                )
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             // Achievements List
             Text(
                 text = stringResource(R.string.achievements_title),
