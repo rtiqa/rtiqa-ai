@@ -1,0 +1,13 @@
+port: 7880
+bind_addresses:
+  - ""
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 60000
+  use_external_ip: false
+keys:
+  rtiqa_livekit_key: "rtiqa_livekit_secret_token_2026_super_secure"
+logging:
+  json: false
+  level: info

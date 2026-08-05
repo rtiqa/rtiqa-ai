@@ -1,0 +1,45 @@
+# Production Helm Values for RTIQA Microservices Deployment
+
+global:
+  environment: production
+  domain: rtiqa.edu
+
+# Keycloak Identity Config
+keycloak:
+  enabled: true
+  replicaCount: 2
+  ingress:
+    enabled: true
+    hostname: auth.rtiqa.edu
+    tls: true
+
+# LiveKit WebRTC Config
+livekit:
+  enabled: true
+  replicaCount: 3
+  service:
+    type: LoadBalancer
+  config:
+    keys:
+      rtiqa_livekit_key: "ENV_LIVEKIT_SECRET"
+
+# Qdrant Vector Search Config
+qdrant:
+  enabled: true
+  replicaCount: 2
+  persistence:
+    size: 50Gi
+
+# RTIQA Ktor Microservices Config
+ktorBackend:
+  replicaCount: 3
+  image:
+    repository: rtiqa/backend-service
+    tag: 1.0.0
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 1024Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi

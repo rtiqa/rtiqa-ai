@@ -1,0 +1,58 @@
+{
+  "id": "rtiqa-institutional-realm",
+  "realm": "RTIQA",
+  "displayName": "RTIQA Educational Platform",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "STUDENT",
+        "description": "Student learner role with access to enrolled courses and AI tutor"
+      },
+      {
+        "name": "TEACHER",
+        "description": "Instructor role with course authoring, grading, and virtual classroom controls"
+      },
+      {
+        "name": "PARENT",
+        "description": "Parent role with read-only progress telemetry access"
+      },
+      {
+        "name": "INSTITUTION_ADMIN",
+        "description": "School district or university administrator"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "rtiqa-mobile-app",
+      "name": "RTIQA Android Native App",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "com.rtiqa.app://oauth2redirect"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "rtiqa-ktor-backend",
+      "name": "RTIQA Ktor Microservices",
+      "enabled": true,
+      "publicClient": false,
+      "bearerOnly": true,
+      "secret": "rtiqa-backend-service-secret-2026"
+    }
+  ]
+}

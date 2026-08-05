@@ -1,0 +1,19 @@
+apiVersion: v2
+name: rtiqa-stack
+description: Production Helm Chart for RTIQA Multi-Tenant Educational Infrastructure
+type: application
+version: 1.0.0
+appVersion: "2026.1.0"
+dependencies:
+  - name: keycloak
+    version: "24.0.1"
+    repository: "https://codecentric.github.io/helm-charts"
+    condition: keycloak.enabled
+  - name: livekit-server
+    version: "1.6.0"
+    repository: "https://helm.livekit.io"
+    condition: livekit.enabled
+  - name: qdrant
+    version: "0.8.0"
+    repository: "https://qdrant.github.io/qdrant-helm"
+    condition: qdrant.enabled

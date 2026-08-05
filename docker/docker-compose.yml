@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # 1. PostgreSQL + pgvector (Database Engine & Supabase Core)
+  # ============================================================================
+  postgres:
+    image: supabase/postgres:15.1.0.147
+    container_name: rtiqa-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rtiqa_secure_pass_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-rtiqa_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # 2. Keycloak Enterprise IAM (Authentication & Realm Management)
+  # ============================================================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: rtiqa-keycloak
+    restart: unless-stopped
+    command: start-dev --import-realm
+    ports:
+      - "${KEYCLOAK_PORT:-8080}:8080"
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin_secure_keycloak_2026}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-rtiqa_db}
+      KC_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-rtiqa_secure_pass_2026}
+      KC_DB_SCHEMA: keycloak
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ============================================================================
+  # 3. Directus Headless CMS (Curriculum Authoring Platform)
+  # ============================================================================
+  directus:
+    image: directus/directus:10.10.0
+    container_name: rtiqa-directus
+    restart: unless-stopped
+    ports:
+      - "${DIRECTUS_PORT:-8055}:8055"
+    environment:
+      KEY: "${DIRECTUS_KEY:-rtiqa-directus-secret-key-2026}"
+      SECRET: "${DIRECTUS_SECRET:-rtiqa-directus-secret-token-2026}"
+      ADMIN_EMAIL: "${DIRECTUS_ADMIN_EMAIL:-admin@rtiqa.edu}"
+      ADMIN_PASSWORD: "${DIRECTUS_ADMIN_PASSWORD:-rtiqa_directus_admin_2026}"
+      DB_CLIENT: "pg"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_DATABASE: "${POSTGRES_DB:-rtiqa_db}"
+      DB_USER: "${POSTGRES_USER:-postgres}"
+      DB_PASSWORD: "${POSTGRES_PASSWORD:-rtiqa_secure_pass_2026}"
+      DB_SEARCH_PATH: "directus"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ============================================================================
+  # 4. LiveKit WebRTC SFU Server (Virtual Classrooms & Live Tutoring)
+  # ============================================================================
+  livekit:
+    image: livekit/livekit-server:v1.6.0
+    container_name: rtiqa-livekit
+    restart: unless-stopped
+    command: --config /etc/livekit.yaml
+    ports:
+      - "${LIVEKIT_HTTP_PORT:-7880}:7880"   # HTTP / WebSocket API
+      - "7881:7881"   # RTC TCP
+      - "7882:7882/udp" # RTC UDP
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY:-rtiqa_livekit_key}: ${LIVEKIT_API_SECRET:-rtiqa_livekit_secret_token_2026_super_secure}"
+    volumes:
+      - ./livekit/livekit.yaml:/etc/livekit.yaml:ro
+
+  # ============================================================================
+  # 5. Typesense (Sub-20ms In-Memory Typo-Tolerant Search Engine)
+  # ============================================================================
+  typesense:
+    image: typesense/typesense:26.0
+    container_name: rtiqa-typesense
+    restart: unless-stopped
+    ports:
+      - "${TYPESENSE_PORT:-8108}:8108"
+    environment:
+      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-rtiqa_typesense_master_key_2026}
+      TYPESENSE_DATA_DIR: /data
+    volumes:
+      - typesense_data:/data
+
+  # ============================================================================
+  # 6. Qdrant (Rust Vector Database for Textbook RAG)
+  # ============================================================================
+  qdrant:
+    image: qdrant/qdrant:v1.8.0
+    container_name: rtiqa-qdrant
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_REST_PORT:-6333}:6333"   # REST API
+      - "${QDRANT_GRPC_PORT:-6334}:6334"   # gRPC API
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:-rtiqa_qdrant_secure_key_2026}
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  # ============================================================================
+  # 7. OpenTelemetry Collector (Unified Metrics & Tracing)
+  # ============================================================================
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.95.0
+    container_name: rtiqa-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "8888:8888" # Metrics
+    volumes:
+      - ./otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+
+volumes:
+  postgres_data:
+  typesense_data:
+  qdrant_data:
