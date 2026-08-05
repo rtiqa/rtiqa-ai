@@ -1,0 +1,38 @@
+name: 🚀 Feature Request
+description: Suggest an idea or new feature for RTIQA
+title: "[FEAT]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for suggesting a feature! Please provide details about your proposal.
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: Feature Description
+      description: Describe the feature you would like to see added.
+      placeholder: Describe the desired feature...
+    validations:
+      required: true
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem or Use Case
+      description: Is your feature request related to a problem or specific user need?
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution & Design
+      description: Describe how you envision this working within RTIQA's architecture.
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Any alternative solutions or features you've considered.
+    validations:
+      required: false

@@ -1,4 +1,4 @@
-name: Android CI/CD Pipeline
+name: Android CI/CD & Quality Pipeline
 
 on:
   push:
@@ -6,10 +6,14 @@ on:
   pull_request:
     branches: [ main, develop ]
 
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
+jobs:
+  lint-and-static-analysis:
+    name: 🔍 Lint & Static Analysis
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -21,11 +25,49 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Grant Execute Permission for Gradle
+      - name: Grant Execute Permission
         run: chmod +x gradlew || true
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v2
+
+  unit-tests:
+    name: 🧪 JVM Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
 
       - name: Run Unit Tests
         run: gradle testDebugUnitTest --continue
+
+      - name: Publish Test Results
+        uses: mikepenz/action-junit-report@v4
+        if: always()
+        with:
+          report_paths: '**/build/test-results/testDebugUnitTest/TEST-*.xml'
+
+  build-app:
+    name: 📦 Assemble Debug APK
+    needs: [lint-and-static-analysis, unit-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
 
       - name: Assemble Debug APK
         run: gradle assembleDebug
