@@ -198,7 +198,18 @@ class SchoolViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         val context: Context = RuntimeEnvironment.getApplication()
-        preferencesDataStore = RtiqaPreferencesDataStore(context)
+        preferencesDataStore = object : RtiqaPreferencesDataStore(context) {
+            override val userPreferencesFlow: Flow<UserPreferences> = flowOf(
+                UserPreferences(
+                    isDarkTheme = false,
+                    isOfflineModeEnabled = false,
+                    activeUserId = null,
+                    lastSyncTimestamp = 0L,
+                    activeSchoolId = "school_001"
+                )
+            )
+            override suspend fun setActiveSchoolId(schoolId: String) {}
+        }
 
         viewModel = SchoolViewModel(
             getSchoolsUseCase = GetSchoolsUseCase(fakeEnterpriseRepo),
