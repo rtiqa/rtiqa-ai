@@ -27,15 +27,56 @@ data class SchoolUiState(
     val academicYears: List<AcademicYear> = emptyList(),
     val courses: List<Course> = emptyList(),
     val assessments: List<Assessment> = emptyList(),
+    val searchQuery: String = "",
+    val stageFilter: EducationStage? = null,
     val isLoading: Boolean = false,
     val editingSchool: School? = null,
     val isFormDialogOpen: Boolean = false,
     val selectedTab: Int = 0, // 0: قائمة المدارس, 1: تفاصيل المدرسة, 2: الأعوام الدراسية, 3: المراحل الدراسية, 4: الصفوف, 5: الشعب, 6: المواد
     val activeCategoryTab: Int = 0, // 0: الطلاب, 1: المعلمون, 2: المراحل, 3: الصفوف, 4: الشعب, 5: المواد, 6: الدورات, 7: الاختبارات
     val errorMessage: String? = null
-) : ViewUiState
+) : ViewUiState {
+    val filteredSchools: List<School>
+        get() = if (searchQuery.isBlank()) schools else schools.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+            it.code.contains(searchQuery, ignoreCase = true) ||
+            it.address.contains(searchQuery, ignoreCase = true)
+        }
+
+    val filteredAcademicYears: List<AcademicYear>
+        get() = if (searchQuery.isBlank()) academicYears else academicYears.filter {
+            it.name.contains(searchQuery, ignoreCase = true)
+        }
+
+    val filteredGradeLevels: List<GradeLevel>
+        get() = gradeLevels.filter { gl ->
+            val matchesSearch = searchQuery.isBlank() || gl.name.contains(searchQuery, ignoreCase = true) || gl.code.contains(searchQuery, ignoreCase = true)
+            val matchesStage = stageFilter == null || gl.stage == stageFilter
+            matchesSearch && matchesStage
+        }
+
+    val filteredSchoolClasses: List<SchoolClass>
+        get() = if (searchQuery.isBlank()) schoolClasses else schoolClasses.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+            it.gradeLevel.contains(searchQuery, ignoreCase = true) ||
+            it.roomNumber.contains(searchQuery, ignoreCase = true)
+        }
+
+    val filteredSections: List<Section>
+        get() = if (searchQuery.isBlank()) sections else sections.filter {
+            it.name.contains(searchQuery, ignoreCase = true)
+        }
+
+    val filteredSubjects: List<Subject>
+        get() = if (searchQuery.isBlank()) subjects else subjects.filter {
+            it.name.contains(searchQuery, ignoreCase = true) ||
+            it.code.contains(searchQuery, ignoreCase = true)
+        }
+}
 
 sealed interface SchoolUiAction : ViewUiAction {
+    data class UpdateSearchQuery(val query: String) : SchoolUiAction
+    data class UpdateStageFilter(val stage: EducationStage?) : SchoolUiAction
     data class SelectActiveSchool(val schoolId: String) : SchoolUiAction
     data class OpenFormDialog(val school: School? = null) : SchoolUiAction
     object CloseFormDialog : SchoolUiAction

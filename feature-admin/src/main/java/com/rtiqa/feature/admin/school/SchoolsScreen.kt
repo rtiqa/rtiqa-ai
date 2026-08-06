@@ -95,6 +95,12 @@ fun SchoolsScreen(
     val context = LocalContext.current
 
     var deleteConfirmSchoolId by remember { mutableStateOf<String?>(null) }
+    var editingAcademicYearId by remember { mutableStateOf<String?>(null) }
+    var editingGradeLevelId by remember { mutableStateOf<String?>(null) }
+    var editingClassId by remember { mutableStateOf<String?>(null) }
+    var editingSectionId by remember { mutableStateOf<String?>(null) }
+    var editingSubjectId by remember { mutableStateOf<String?>(null) }
+
     var showAddAcademicYearDialog by remember { mutableStateOf(false) }
     var showAddGradeLevelDialog by remember { mutableStateOf(false) }
     var showAddClassDialog by remember { mutableStateOf(false) }
@@ -256,9 +262,23 @@ fun SchoolsScreen(
                 )
             }
 
+            // Search Bar for quick filtering across all tabs
+            if (uiState.selectedTab != 1) {
+                OutlinedTextField(
+                    value = uiState.searchQuery,
+                    onValueChange = { onAction(SchoolUiAction.UpdateSearchQuery(it)) },
+                    placeholder = { Text("بحث باسم أو كود العنصر...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .testTag("search_bar_input"),
+                    singleLine = true
+                )
+            }
+
             when (uiState.selectedTab) {
                 0 -> SchoolsListTab(
-                    schools = uiState.schools,
+                    schools = uiState.filteredSchools,
                     activeSchoolId = uiState.activeSchoolId,
                     onSelectActive = { schoolId -> onAction(SchoolUiAction.SelectActiveSchool(schoolId)) },
                     onEditSchool = { school -> onAction(SchoolUiAction.OpenFormDialog(school)) },
@@ -273,9 +293,15 @@ fun SchoolsScreen(
                     onAddAssessmentClick = { showAddAssessmentDialog = true }
                 )
                 2 -> CategoryList(
-                    items = uiState.academicYears,
-                    emptyText = "لا توجد أعوام دراسية مسجلة.",
-                    onAddClick = { showAddAcademicYearDialog = true },
+                    items = uiState.filteredAcademicYears,
+                    emptyText = "لا توجد أعوام دراسية مسجلة مطابقة للبحث.",
+                    onAddClick = {
+                        editingAcademicYearId = null
+                        ayName = ""
+                        ayStartDate = "2024-09-01"
+                        ayEndDate = "2025-06-30"
+                        showAddAcademicYearDialog = true
+                    },
                     addButtonText = "إضافة عام دراسي جديد",
                     itemContent = { ay ->
                         EntityItemCard(
@@ -283,14 +309,27 @@ fun SchoolsScreen(
                             subtitle = "من ${ay.startDate} إلى ${ay.endDate}",
                             badgeText = if (ay.isCurrent) "الحالي" else "سابق",
                             icon = Icons.Default.CalendarToday,
+                            onEdit = {
+                                editingAcademicYearId = ay.id
+                                ayName = ay.name
+                                ayStartDate = ay.startDate
+                                ayEndDate = ay.endDate
+                                showAddAcademicYearDialog = true
+                            },
                             onDelete = { onAction(SchoolUiAction.DeleteAcademicYear(ay.id)) }
                         )
                     }
                 )
                 3 -> CategoryList(
-                    items = uiState.gradeLevels,
-                    emptyText = "لا توجد مراحل دراسية مضافة لهذه المدرسة.",
-                    onAddClick = { showAddGradeLevelDialog = true },
+                    items = uiState.filteredGradeLevels,
+                    emptyText = "لا توجد مراحل دراسية مضافة لهذه المدرسة مطابقة للبحث.",
+                    onAddClick = {
+                        editingGradeLevelId = null
+                        gradeName = ""
+                        gradeCode = ""
+                        gradeSeq = "1"
+                        showAddGradeLevelDialog = true
+                    },
                     addButtonText = "إضافة مرحلة دراسية",
                     itemContent = { gl ->
                         EntityItemCard(
@@ -298,14 +337,29 @@ fun SchoolsScreen(
                             subtitle = "الكود: ${gl.code} | الترتيب: ${gl.levelSequence} | المرحلة: ${gl.stage.name}",
                             badgeText = "مرحلة",
                             icon = Icons.Default.Grade,
+                            onEdit = {
+                                editingGradeLevelId = gl.id
+                                gradeName = gl.name
+                                gradeCode = gl.code
+                                gradeSeq = gl.levelSequence.toString()
+                                selectedStage = gl.stage
+                                showAddGradeLevelDialog = true
+                            },
                             onDelete = { onAction(SchoolUiAction.DeleteGradeLevel(gl.id)) }
                         )
                     }
                 )
                 4 -> CategoryList(
-                    items = uiState.schoolClasses,
-                    emptyText = "لا توجد صفوف دراسية مضافة لهذه المدرسة.",
-                    onAddClick = { showAddClassDialog = true },
+                    items = uiState.filteredSchoolClasses,
+                    emptyText = "لا توجد صفوف دراسية مضافة لهذه المدرسة مطابقة للبحث.",
+                    onAddClick = {
+                        editingClassId = null
+                        className = ""
+                        classGradeLevel = ""
+                        classRoom = ""
+                        classCapacity = "30"
+                        showAddClassDialog = true
+                    },
                     addButtonText = "إضافة صف دراسي جديد",
                     itemContent = { cls ->
                         EntityItemCard(
@@ -313,14 +367,27 @@ fun SchoolsScreen(
                             subtitle = "المرحلة: ${cls.gradeLevel} | القاعة: ${cls.roomNumber} | السعة: ${cls.capacity} طالب",
                             badgeText = "صف",
                             icon = Icons.Default.Class,
+                            onEdit = {
+                                editingClassId = cls.id
+                                className = cls.name
+                                classGradeLevel = cls.gradeLevel
+                                classRoom = cls.roomNumber
+                                classCapacity = cls.capacity.toString()
+                                showAddClassDialog = true
+                            },
                             onDelete = { onAction(SchoolUiAction.DeleteSchoolClass(cls.id)) }
                         )
                     }
                 )
                 5 -> CategoryList(
-                    items = uiState.sections,
-                    emptyText = "لا توجد شعب مضافة لهذه المدرسة.",
-                    onAddClick = { showAddSectionDialog = true },
+                    items = uiState.filteredSections,
+                    emptyText = "لا توجد شعب مضافة لهذه المدرسة مطابقة للبحث.",
+                    onAddClick = {
+                        editingSectionId = null
+                        sectionName = ""
+                        sectionCapacity = "25"
+                        showAddSectionDialog = true
+                    },
                     addButtonText = "إضافة شعبة جديدة",
                     itemContent = { sec ->
                         EntityItemCard(
@@ -328,14 +395,26 @@ fun SchoolsScreen(
                             subtitle = "السعة القصوى: ${sec.capacity} طالب | المسجلون: ${sec.studentsCount}",
                             badgeText = "شعبة",
                             icon = Icons.Default.Room,
+                            onEdit = {
+                                editingSectionId = sec.id
+                                sectionName = sec.name
+                                sectionCapacity = sec.capacity.toString()
+                                showAddSectionDialog = true
+                            },
                             onDelete = { onAction(SchoolUiAction.DeleteSection(sec.id)) }
                         )
                     }
                 )
                 6 -> CategoryList(
-                    items = uiState.subjects,
-                    emptyText = "لا توجد مواد دراسية مضافة لهذه المدرسة.",
-                    onAddClick = { showAddSubjectDialog = true },
+                    items = uiState.filteredSubjects,
+                    emptyText = "لا توجد مواد دراسية مضافة لهذه المدرسة مطابقة للبحث.",
+                    onAddClick = {
+                        editingSubjectId = null
+                        subjectName = ""
+                        subjectCode = ""
+                        subjectCreditHours = "3"
+                        showAddSubjectDialog = true
+                    },
                     addButtonText = "إضافة مادة دراسية جديدة",
                     itemContent = { sub ->
                         EntityItemCard(
@@ -343,6 +422,13 @@ fun SchoolsScreen(
                             subtitle = "الكود: ${sub.code} | الساعات المعتمدة: ${sub.creditHours}",
                             badgeText = "مادة",
                             icon = Icons.Default.Book,
+                            onEdit = {
+                                editingSubjectId = sub.id
+                                subjectName = sub.name
+                                subjectCode = sub.code
+                                subjectCreditHours = sub.creditHours.toString()
+                                showAddSubjectDialog = true
+                            },
                             onDelete = { onAction(SchoolUiAction.DeleteSubject(sub.id)) }
                         )
                     }
@@ -427,7 +513,7 @@ fun SchoolsScreen(
                         if (ayName.isNotBlank()) {
                             onAction(
                                 SchoolUiAction.SaveAcademicYear(
-                                    id = null,
+                                    id = editingAcademicYearId,
                                     name = ayName,
                                     startDate = ayStartDate,
                                     endDate = ayEndDate,
@@ -435,6 +521,7 @@ fun SchoolsScreen(
                                 )
                             )
                             ayName = ""
+                            editingAcademicYearId = null
                             showAddAcademicYearDialog = false
                         }
                     }
@@ -481,7 +568,7 @@ fun SchoolsScreen(
                         if (gradeName.isNotBlank()) {
                             onAction(
                                 SchoolUiAction.SaveGradeLevel(
-                                    id = null,
+                                    id = editingGradeLevelId,
                                     name = gradeName,
                                     code = gradeCode.ifBlank { "GL-${gradeSeq}" },
                                     sequence = gradeSeq.toIntOrNull() ?: 1,
@@ -490,6 +577,7 @@ fun SchoolsScreen(
                             )
                             gradeName = ""
                             gradeCode = ""
+                            editingGradeLevelId = null
                             showAddGradeLevelDialog = false
                         }
                     }
@@ -543,7 +631,7 @@ fun SchoolsScreen(
                         if (className.isNotBlank()) {
                             onAction(
                                 SchoolUiAction.SaveSchoolClass(
-                                    id = null,
+                                    id = editingClassId,
                                     name = className,
                                     gradeLevel = classGradeLevel.ifBlank { "الصف الأول" },
                                     roomNumber = classRoom.ifBlank { "A-1" },
@@ -552,6 +640,7 @@ fun SchoolsScreen(
                             )
                             className = ""
                             classRoom = ""
+                            editingClassId = null
                             showAddClassDialog = false
                         }
                     }
@@ -591,12 +680,13 @@ fun SchoolsScreen(
                         if (sectionName.isNotBlank()) {
                             onAction(
                                 SchoolUiAction.SaveSection(
-                                    id = null,
+                                    id = editingSectionId,
                                     name = sectionName,
                                     capacity = sectionCapacity.toIntOrNull() ?: 25
                                 )
                             )
                             sectionName = ""
+                            editingSectionId = null
                             showAddSectionDialog = false
                         }
                     }
@@ -643,7 +733,7 @@ fun SchoolsScreen(
                         if (subjectName.isNotBlank()) {
                             onAction(
                                 SchoolUiAction.SaveSubject(
-                                    id = null,
+                                    id = editingSubjectId,
                                     name = subjectName,
                                     code = subjectCode.ifBlank { "SUB-1" },
                                     creditHours = subjectCreditHours.toIntOrNull() ?: 3
@@ -651,6 +741,7 @@ fun SchoolsScreen(
                             )
                             subjectName = ""
                             subjectCode = ""
+                            editingSubjectId = null
                             showAddSubjectDialog = false
                         }
                     }
@@ -1242,6 +1333,7 @@ fun EntityItemCard(
     subtitle: String,
     badgeText: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onEdit: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null
 ) {
     Card(
@@ -1294,8 +1386,18 @@ fun EntityItemCard(
                     color = MaterialTheme.colorScheme.secondary
                 )
             }
+            if (onEdit != null) {
+                Spacer(modifier = Modifier.width(4.dp))
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "تعديل",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
             if (onDelete != null) {
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 IconButton(onClick = onDelete) {
                     Icon(
                         imageVector = Icons.Default.Delete,

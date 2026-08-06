@@ -279,6 +279,12 @@ class SchoolViewModel(
 
     override fun onAction(action: SchoolUiAction) {
         when (action) {
+            is SchoolUiAction.UpdateSearchQuery -> {
+                setState { copy(searchQuery = action.query) }
+            }
+            is SchoolUiAction.UpdateStageFilter -> {
+                setState { copy(stageFilter = action.stage) }
+            }
             is SchoolUiAction.SelectActiveSchool -> {
                 viewModelScope.launch {
                     preferencesDataStore.setActiveSchoolId(action.schoolId)
