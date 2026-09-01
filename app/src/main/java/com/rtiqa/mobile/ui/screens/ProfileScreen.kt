@@ -271,7 +271,7 @@ fun ProfileScreen(
                                 tint = Color(0xFFF59E0B)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "شهادة إتمام معتمدة", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                            Text(text = stringResource(R.string.accredited_cert), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         }
                     },
                     text = {

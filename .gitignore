@@ -16,3 +16,8 @@
 local.properties
 .env
 debug.keystore
+
+**/build/
+.build-outputs/
+google-services.json
+debug.keystore.base64

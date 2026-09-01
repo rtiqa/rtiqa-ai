@@ -8,7 +8,7 @@
 
   # 🎓 RTIQA (رتقاء) — Smart Learning Platform
 
-  **Enterprise-Grade, Offline-First Educational Ecosystem & Multi-Tenant Infrastructure**
+  **Modular, Offline-Capable Educational Mobile App & Reference Microservices Architecture**
 
   [![Android CI/CD](https://github.com/rtiqa/mobile/actions/workflows/ci.yml/badge.svg)](https://github.com/rtiqa/mobile/actions/workflows/ci.yml)
   [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
@@ -25,21 +25,21 @@
 
 ## 📖 Overview
 
-**RTIQA (رتقاء)** is an open-source, enterprise-grade educational platform engineered for high-scale, offline-first mobile learning. Built natively in **Kotlin** and **Jetpack Compose (Material 3)**, RTIQA pairs an intelligent **Gemini 1.5 AI Tutor** with local **Room SQLite persistence**, instant vector search, and containerized cloud microservices.
+**RTIQA (رتقاء)** is an open-source educational platform engineered for modular mobile learning and offline content access. Built natively in **Kotlin** and **Jetpack Compose (Material 3)**, RTIQA integrates an interactive **Gemini AI Tutor** with local **Room SQLite persistence** and containerized reference microservices.
 
-Designed from the ground up for **bilingual (Arabic & English)** accessibility, RTIQA features dynamic Right-to-Left (RTL) layout mirroring, offline lesson downloads, gamified quizzes, verified digital certificates, and a complete institutional microservice backend.
+Designed for **bilingual (Arabic & English)** accessibility, RTIQA features Right-to-Left (RTL) layout support, local lesson persistence, interactive quizzes, digital certificates of completion, and supporting backend microservices.
 
 ---
 
 ## 🌟 Key Platform Capabilities
 
-- 🧠 **AI Tutor (المعلم الذكي)**: Context-aware interactive assistant powered by Gemini 1.5, offering real-time explanations, hint generation, and instant local offline fallback.
-- 📚 **Offline-First Course & Lesson Engine**: Zero-latency offline learning powered by Room DB with automatic `WorkManager` background synchronization.
-- 📝 **Interactive Quizzes & Assessments**: Adaptive multiple-choice and true/false assessments with instant grading, explanations, and XP rewards.
-- 🏆 **Gamification & Digital Certificates**: Streak counters, achievement badges, XP economy, and downloadable PDF/image completion certificates.
-- 🏫 **School Administration Portal**: Admin dashboard for managing classrooms, student progress telemetry, course publishing, and system analytics.
-- 🌐 **Bilingual (Arabic/English) RTL Support**: Native Right-to-Left (RTL) UI mirroring, localized typography, and seamless language switching.
-- ⚡ **Production Microservices Stack**: Containerized infrastructure including Keycloak (IAM/OIDC), Supabase PostgreSQL 15 + pgvector, Directus CMS, LiveKit SFU, Typesense Search, Qdrant Vector DB, and OpenTelemetry.
+- 🧠 **AI Tutor (المعلم الذكي)**: Interactive learning assistant powered by Gemini 1.5 REST API, with fallback guidance when offline.
+- 📚 **Offline-Capable Course Engine**: Local caching powered by Room DB with `WorkManager` background synchronization.
+- 📝 **Interactive Quizzes**: Multiple-choice and true/false assessments with instant scoring and XP points.
+- 🏆 **Gamification & Certificates**: Streak tracking, achievement badges, and downloadable course completion certificates.
+- 🏫 **School Administration Portal**: Management views for classrooms, student progress metrics, and course previews.
+- 🌐 **Bilingual (Arabic/English) RTL Support**: Right-to-Left (RTL) UI layout mirroring, localized typography, and language toggle.
+- ⚡ **Reference Microservices Stack**: Containerized setup including Keycloak (IAM), PostgreSQL 15 + pgvector, Directus CMS, LiveKit SFU, Typesense Search, and Qdrant Vector DB.
 
 ---
 

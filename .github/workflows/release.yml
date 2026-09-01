@@ -11,7 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - name: Checkout Code Repository
         uses: actions/checkout@v4
@@ -23,8 +22,27 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      - name: Verify and Inject Secrets
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_PASSWORD" ] || [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "Error: Production signing or Firebase secrets are missing."
+            echo "Configure STORE_PASSWORD, KEY_PASSWORD, ANDROID_KEYSTORE_BASE64, and GOOGLE_SERVICES_JSON_BASE64 in GitHub Secrets."
+            exit 1
+          fi
+          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > ${RUNNER_TEMP}/rtiqa-release.keystore
+
       - name: Build Release Bundles & APKs
-        run: gradle assembleRelease --stacktrace || gradle assembleDebug
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_PATH: ${{ runner.temp }}/rtiqa-release.keystore
+        run: ./gradlew assembleRelease --stacktrace
 
       - name: Generate Changelog Notes
         id: changelog
@@ -46,7 +64,13 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/release/*.apk
             deploy/ktor-starter/build/libs/*.jar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup Secrets
+        if: always()
+        run: |
+          rm -f app/google-services.json
+          rm -f ${RUNNER_TEMP}/rtiqa-release.keystore

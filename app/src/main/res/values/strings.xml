@@ -1,132 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App Details -->
-    <string name="app_name">رتقاء</string>
-    <string name="app_slogan">منصة التعلم الذكي والارتقاء والمعرفة</string>
-    <string name="back">رجوع</string>
-    <string name="see_all">عرض الكل</string>
-    <string name="rating">التقييم</string>
-    <string name="duration">المدة</string>
-    <string name="level">المستوى</string>
+    <string name="app_name">Rtiqa</string>
+    <string name="app_slogan">Smart Learning Platform &amp; Knowledge Ecosystem</string>
+    <string name="back">Back</string>
+    <string name="see_all">See All</string>
+    <string name="rating">Rating</string>
+    <string name="duration">Duration</string>
+    <string name="level">Level</string>
     <string name="xp">XP</string>
-    <string name="coins">العملات</string>
-    <string name="streak">أيام التتابع</string>
-    <string name="mins">دقيقة</string>
-    <string name="lessons">دروس</string>
+    <string name="coins">Coins</string>
+    <string name="streak">Streak Days</string>
+    <string name="mins">min</string>
+    <string name="lessons">lessons</string>
 
     <!-- Auth & Splash -->
-    <string name="welcome_title">ارتق بمهاراتك مع رتقاء</string>
-    <string name="welcome_subtitle">منصة ذكية تجمع بين دورات الذكاء الاصطناعي، والتعلم التفاعلي، والتقييمات الذكية أوفلاين وأونلاين</string>
-    <string name="create_account">إنشاء حساب جديد</string>
-    <string name="login">تسجيل الدخول</string>
-    <string name="continue_as_guest">المتابعة كزائر</string>
-    <string name="welcome_back">مرحباً بعودتك</string>
-    <string name="login_subtitle">سجل دخولك لمتابعة رحلة التعلم الذكي</string>
-    <string name="email">البريد الإلكتروني</string>
-    <string name="password">كلمة المرور</string>
-    <string name="forgot_password_question">نسيت كلمة المرور؟</string>
-    <string name="no_account_question">ليس لديك حساب؟</string>
-    <string name="register_now">سجل الآن</string>
-    <string name="full_name">الاسم الكامل</string>
-    <string name="confirm_password">تأكيد كلمة المرور</string>
-    <string name="already_have_account">لديك حساب بالفعل؟</string>
-    <string name="reset_password">استعادة كلمة المرور</string>
-    <string name="reset_password_instruction">أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور</string>
-    <string name="send_reset_link">إرسال رابط التعيين</string>
+    <string name="welcome_title">Elevate Your Skills with Rtiqa</string>
+    <string name="welcome_subtitle">Educational platform combining AI courses, interactive learning, and offline/online assessments</string>
+    <string name="create_account">Create New Account</string>
+    <string name="login">Log In</string>
+    <string name="continue_as_guest">Continue as Guest</string>
+    <string name="welcome_back">Welcome Back</string>
+    <string name="login_subtitle">Sign in to continue your smart learning journey</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="forgot_password_question">Forgot Password?</string>
+    <string name="no_account_question">Don\'t have an account?</string>
+    <string name="register_now">Register Now</string>
+    <string name="full_name">Full Name</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="already_have_account">Already have an account?</string>
+    <string name="reset_password">Reset Password</string>
+    <string name="reset_password_instruction">Enter your email and we will send you a password reset link</string>
+    <string name="send_reset_link">Send Reset Link</string>
 
     <!-- Home Screen -->
-    <string name="welcome_user">مرحباً بك، %1$s</string>
-    <string name="user_level_subtitle">المستوى %1$d • متعلم رتقاء</string>
-    <string name="ai_tutor_banner_title">المعلم الذكي المباشر</string>
-    <string name="ai_tutor_banner_desc">اسأل معلم الذكاء الاصطناعي أي سؤال تعليمي في أي وقت</string>
-    <string name="quick_action_ai_tutor">المعلم الذكي</string>
-    <string name="quick_action_quiz">التقييمات</string>
-    <string name="quick_action_downloads">المحفوظات</string>
-    <string name="quick_action_catalog">الدورات</string>
-    <string name="section_continue_recommended">متابعة التعلم والدورات المقترحة</string>
+    <string name="welcome_user">Welcome, %1$s</string>
+    <string name="user_level_subtitle">Level %1$d • Rtiqa Learner</string>
+    <string name="ai_tutor_banner_title">Smart AI Tutor</string>
+    <string name="ai_tutor_banner_desc">Ask the AI tutor any educational question anytime</string>
+    <string name="quick_action_ai_tutor">AI Tutor</string>
+    <string name="quick_action_quiz">Assessments</string>
+    <string name="quick_action_downloads">Saved Items</string>
+    <string name="quick_action_catalog">Courses</string>
+    <string name="section_continue_recommended">Continue Learning &amp; Recommended Courses</string>
 
     <!-- Courses Catalog Screen -->
-    <string name="courses_title">دليل الدورات والمسارات التعليمية</string>
-    <string name="search_placeholder">بحث في المقررات والمواضيع...</string>
-    <string name="category_all">الكل</string>
-    <string name="category_ai">الذكاء الاصطناعي</string>
-    <string name="category_programming">البرمجة</string>
-    <string name="category_design">التصميم</string>
-    <string name="category_business">الأعمال</string>
+    <string name="courses_title">Course Catalog &amp; Learning Paths</string>
+    <string name="search_placeholder">Search courses and topics...</string>
+    <string name="category_all">All</string>
+    <string name="category_ai">Artificial Intelligence</string>
+    <string name="category_programming">Programming</string>
+    <string name="category_design">Design</string>
+    <string name="category_business">Business</string>
 
     <!-- Course Detail Screen -->
-    <string name="syllabus_lessons">دروس المنهج الدراسي (%1$d)</string>
-    <string name="course_quiz_button">التقييم</string>
-    <string name="lesson_duration_format">%1$d دقائق • فيديو ونص</string>
+    <string name="syllabus_lessons">Syllabus Lessons (%1$d)</string>
+    <string name="course_quiz_button">Assessment</string>
+    <string name="lesson_duration_format">%1$d minutes • Video &amp; Text</string>
 
     <!-- Lesson Player Screen -->
-    <string name="playing_stream_offline">جاري تشغيل البث (الوضع المستقل نشط)</string>
-    <string name="tap_to_play">اضغط لتشغيل الصوت/الفيديو عالي الدقة</string>
-    <string name="mark_complete">إكمال الدرس</string>
-    <string name="completed_check">مكتمل ✓</string>
-    <string name="ai_summary">ملخص ذكي</string>
-    <string name="lesson_content_title">المحتوى التعليمي والنصوص</string>
+    <string name="playing_stream_offline">Playing Lesson (Local Offline Mode)</string>
+    <string name="tap_to_play">Tap to play audio/video</string>
+    <string name="mark_complete">Mark Complete</string>
+    <string name="completed_check">Completed ✓</string>
+    <string name="ai_summary">AI Summary</string>
+    <string name="lesson_content_title">Educational Content &amp; Text</string>
 
     <!-- Quiz Screen -->
-    <string name="quiz_completed_title">اكتمل التقييم بنجاح! 🎉</string>
-    <string name="quiz_rewards_earned">ربحت +%1$d نقطة XP و +%2$d عملة رتقاء!</string>
-    <string name="claim_rewards">إعادة التقييم أو المطالبة</string>
-    <string name="question_progress">السؤال %1$d من %2$d</string>
-    <string name="hint">تلميح</string>
-    <string name="submit_answer">تأكيد الإجابة</string>
-    <string name="next_question">السؤال التالي ➔</string>
-    <string name="correct_feedback">إجابة صحيحة! +%1$d XP</string>
-    <string name="incorrect_feedback">إجابة خاطئة</string>
+    <string name="quiz_completed_title">Assessment Completed! 🎉</string>
+    <string name="quiz_rewards_earned">You earned +%1$d XP and +%2$d Coins!</string>
+    <string name="claim_rewards">Retake or Claim Rewards</string>
+    <string name="question_progress">Question %1$d of %2$d</string>
+    <string name="hint">Hint</string>
+    <string name="submit_answer">Submit Answer</string>
+    <string name="next_question">Next Question ➔</string>
+    <string name="correct_feedback">Correct! +%1$d XP</string>
+    <string name="incorrect_feedback">Incorrect Answer</string>
 
     <!-- AI Tutor Screen -->
-    <string name="ai_tutor_title">المعلم الذكي - رتقاء</string>
-    <string name="ai_tutor_subtitle">محرك الذكاء الاصطناعي التفاعلي (المزدوج أوفلاين/أونلاين)</string>
-    <string name="ask_ai_placeholder">اسأل المعلم الذكي...</string>
-    <string name="suggestion_1">شرح الخلية العصبية الاصطناعية ببساطة</string>
-    <string name="suggestion_2">كيف أكتب كود كوتلن مع الهيكلية النظيفة؟</string>
-    <string name="suggestion_3">أنشئ لي خطة دراسية لمدة أسبوعين</string>
+    <string name="ai_tutor_title">Smart Tutor - Rtiqa</string>
+    <string name="ai_tutor_subtitle">Interactive Learning Engine (Gemini Online / Local Guidance Offline)</string>
+    <string name="ask_ai_placeholder">Ask the AI tutor...</string>
+    <string name="suggestion_1">Explain artificial neurons simply</string>
+    <string name="suggestion_2">How to write Kotlin with Clean Architecture?</string>
+    <string name="suggestion_3">Create a 2-week study plan for me</string>
 
     <!-- Downloads Screen -->
-    <string name="downloads_title">المحفوظات والتعلم بدون إنترنت</string>
-    <string name="storage_used">مساحة التخزين المستقلة المستخدمة: 142 MB</string>
-    <string name="downloaded_lessons_count">الدروس المحفوظة محلياً (%1$d)</string>
-    <string name="available_offline_text">متاح 100%% بدون إنترنت • %1$d دقيقة</string>
+    <string name="downloads_title">Saved Items &amp; Offline Learning</string>
+    <string name="storage_used">Local Storage Used: 142 MB (Sample View)</string>
+    <string name="downloaded_lessons_count">Saved Lessons Locally (%1$d)</string>
+    <string name="available_offline_text">Available Offline • %1$d min</string>
 
     <!-- Profile Screen -->
-    <string name="certificates_title">الشهادات المعتمدة من رتقاء</string>
-    <string name="accredited_cert">شهادة رتقاء المعتمدة</string>
-    <string name="cert_ai_title">الذكاء الاصطناعي والشبكات العصبية</string>
-    <string name="cert_issued_to">صادرة لـ: %1$s • رمز: RTIQA-2026-X92</string>
-    <string name="achievements_title">الإنجازات والأوسمة</string>
-    <string name="achievement_ai_pioneer">رائد الذكاء الاصطناعي</string>
-    <string name="achievement_ai_pioneer_desc">أكمل 5 دروس ذكاء اصطناعي أوفلاين</string>
-    <string name="achievement_consistent">باحث مواظب</string>
-    <string name="achievement_consistent_desc">حافظ على تتابع دراسي لمدة 12 يوماً</string>
-    <string name="achievement_quiz_master">خبير التقييمات</string>
-    <string name="achievement_quiz_master_desc">احصل على 100%% في 3 تقييمات</string>
+    <string name="certificates_title">Course Completion Certificates</string>
+    <string name="accredited_cert">Certificate of Completion</string>
+    <string name="cert_ai_title">Artificial Intelligence &amp; Neural Networks</string>
+    <string name="cert_issued_to">Issued to: %1$s • Code: RTIQA-2026-X92</string>
+    <string name="achievements_title">Achievements &amp; Badges</string>
+    <string name="achievement_ai_pioneer">AI Pioneer</string>
+    <string name="achievement_ai_pioneer_desc">Complete 5 AI lessons locally</string>
+    <string name="achievement_consistent">Dedicated Learner</string>
+    <string name="achievement_consistent_desc">Maintain a 12-day learning streak</string>
+    <string name="achievement_quiz_master">Quiz Master</string>
+    <string name="achievement_quiz_master_desc">Score 100%% on 3 assessments</string>
 
     <!-- Settings Screen -->
-    <string name="settings_title">الإعدادات والخيارات</string>
-    <string name="app_language">لغة التطبيق / Language</string>
-    <string name="arabic_default">العربية (الافتراضية)</string>
-    <string name="english_selected">الإنجليزية</string>
-    <string name="dark_theme">المظهر الداكن</string>
-    <string name="dark_theme_desc">خلفية داكنة عالية التباين</string>
-    <string name="offline_auto_sync">مزامنة تلقائية في الخلفية</string>
-    <string name="auto_sync_desc">مزامنة التقدم عند العثور على اتصال</string>
-    <string name="gemini_status_title">حالة محرك الذكاء الاصطناعي</string>
-    <string name="gemini_live">محرك جيميناي مباشر ونشط</string>
-    <string name="gemini_offline">محرك رتقاء المستقل المحلي</string>
-    <string name="network_status_title">حالة الاتصال</string>
-    <string name="network_online">متصل بالسحابة</string>
-    <string name="network_offline">وضع رتقاء المستقل</string>
+    <string name="settings_title">Settings &amp; Options</string>
+    <string name="app_language">App Language / اللغة</string>
+    <string name="arabic_default">Arabic (Default)</string>
+    <string name="english_selected">English</string>
+    <string name="dark_theme">Dark Mode</string>
+    <string name="dark_theme_desc">High-contrast dark background</string>
+    <string name="offline_auto_sync">Background Auto-Sync</string>
+    <string name="auto_sync_desc">Sync progress automatically when connected</string>
+    <string name="gemini_status_title">AI Engine Status</string>
+    <string name="gemini_live">Gemini API Engine Active</string>
+    <string name="gemini_offline">Local Guidance Mode (Offline)</string>
+    <string name="network_status_title">Connection Status</string>
+    <string name="network_online">Connected to Cloud</string>
+    <string name="network_offline">Local Storage Mode</string>
 
     <!-- Navigation & Banner -->
-    <string name="nav_home">الرئيسية</string>
-    <string name="nav_courses">الدورات</string>
-    <string name="nav_ai_tutor">المعلم الذكي</string>
-    <string name="nav_quiz">التقييم</string>
-    <string name="nav_downloads">المحفوظات</string>
-    <string name="nav_profile">الملف</string>
-    <string name="offline_banner_text">وضع رتقاء المستقل ينشط حالياً - جميع المحتويات محفوظة محلياً</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_courses">Courses</string>
+    <string name="nav_ai_tutor">AI Tutor</string>
+    <string name="nav_quiz">Quiz</string>
+    <string name="nav_downloads">Saved</string>
+    <string name="nav_profile">Profile</string>
+    <string name="offline_banner_text">Local storage mode active - Content available offline</string>
 </resources>

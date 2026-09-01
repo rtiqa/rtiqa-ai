@@ -40,7 +40,7 @@ jobs:
 
     - name: Build for CodeQL Analysis
       run: |
-        gradle compileDebugKotlin --continue || true
+        ./gradlew assembleDebug --stacktrace
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
