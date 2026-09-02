@@ -36,10 +36,10 @@ jobs:
         run: chmod +x gradlew scripts/bootstrap.sh && ./scripts/bootstrap.sh
 
       - name: Run JVM Unit Tests
-        run: ./gradlew testDebugUnitTest --stacktrace
+        run: bash ./gradlew testDebugUnitTest --stacktrace
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: bash ./gradlew assembleDebug --stacktrace
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
@@ -68,4 +68,4 @@ jobs:
           cache: 'gradle'
 
       - name: Build Ktor Microservice Gateway
-        run: ./gradlew -p deploy/ktor-starter build --stacktrace
+        run: bash ./gradlew -p deploy/ktor-starter build --stacktrace
