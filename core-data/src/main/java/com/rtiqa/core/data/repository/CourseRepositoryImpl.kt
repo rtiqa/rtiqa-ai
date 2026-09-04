@@ -1,6 +1,6 @@
 package com.rtiqa.core.data.repository
 
-import com.rtiqa.core.data.firestore.FirestoreSyncManager
+import com.rtiqa.core.domain.repository.RemoteSyncDataSource
 import com.rtiqa.core.data.mapper.toDomain
 import com.rtiqa.core.database.dao.CourseDao
 import com.rtiqa.core.database.dao.LessonDao
@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 class CourseRepositoryImpl(
     private val courseDao: CourseDao,
     private val lessonDao: LessonDao,
-    private val firestoreSyncManager: FirestoreSyncManager? = null,
+    private val remoteSyncDataSource: RemoteSyncDataSource? = null,
     private val currentUserIdProvider: (suspend () -> String?)? = null,
     private val offlineSyncManager: com.rtiqa.core.domain.repository.OfflineSyncContract? = null
 ) : CourseRepositoryContract {
@@ -216,7 +216,7 @@ class CourseRepositoryImpl(
 
             val userId = currentUserIdProvider?.invoke()
             if (userId != null) {
-                firestoreSyncManager?.syncCourseProgressToCloud(
+                remoteSyncDataSource?.syncCourseProgressToCloud(
                     userId = userId,
                     courseId = courseId,
                     progressPercent = progressPercent,
@@ -238,7 +238,7 @@ class CourseRepositoryImpl(
         return try {
             val userId = currentUserIdProvider?.invoke()
             if (userId != null) {
-                firestoreSyncManager?.syncCourseProgressToCloud(
+                remoteSyncDataSource?.syncCourseProgressToCloud(
                     userId = userId,
                     courseId = courseId,
                     progressPercent = progressPercent,
@@ -288,7 +288,7 @@ class CourseRepositoryImpl(
             courseDao.updateEnrollmentStatus(courseId, true)
             val userId = currentUserIdProvider?.invoke()
             if (userId != null) {
-                firestoreSyncManager?.syncCourseProgressToCloud(
+                remoteSyncDataSource?.syncCourseProgressToCloud(
                     userId = userId,
                     courseId = courseId,
                     progressPercent = 0f,
@@ -323,7 +323,7 @@ class CourseRepositoryImpl(
         return try {
             val userId = currentUserIdProvider?.invoke()
             if (userId != null) {
-                firestoreSyncManager?.fetchUserProfileFromCloud(userId)
+                remoteSyncDataSource?.fetchUserProfileFromCloud(userId)
             }
             offlineSyncManager?.syncRemoteCourses() ?: RtiqaResult.Success(Unit)
         } catch (e: Exception) {

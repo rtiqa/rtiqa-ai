@@ -4,7 +4,7 @@ import com.rtiqa.core.database.dao.AcademicDao
 import com.rtiqa.core.database.entity.AssessmentAttemptEntity
 import com.rtiqa.core.database.entity.AssessmentEntity
 import com.rtiqa.core.database.entity.QuestionBankEntity
-import com.rtiqa.core.data.firestore.FirestoreSyncManager
+import com.rtiqa.core.domain.repository.RemoteSyncDataSource
 import com.rtiqa.core.data.sync.OfflineSyncManager
 import com.rtiqa.core.domain.error.RtiqaError
 import com.rtiqa.core.domain.model.Question
@@ -25,7 +25,7 @@ import java.util.UUID
 class QuizRepositoryImpl(
     private val academicDao: AcademicDao? = null,
     private val offlineSyncManager: OfflineSyncManager,
-    private val firestoreSyncManager: FirestoreSyncManager? = null,
+    private val remoteSyncDataSource: RemoteSyncDataSource? = null,
     private val currentUserIdProvider: (suspend () -> String?)? = null
 ) : QuizRepositoryContract {
 
@@ -117,7 +117,7 @@ class QuizRepositoryImpl(
             offlineSyncManager.enqueueOfflineAction(actionType = "SUBMIT_QUIZ_RESULT", payloadJson = payload)
 
             if (userId != "user_default") {
-                firestoreSyncManager?.syncQuizResultToCloud(userId, quizId, score, total)
+                remoteSyncDataSource?.syncQuizResultToCloud(userId, quizId, score, total)
             }
 
             val quizResult = QuizResult(

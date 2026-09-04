@@ -4,6 +4,11 @@ import android.content.Context
 import com.rtiqa.core.ai.GeminiAiRepositoryImpl
 import com.rtiqa.core.data.datastore.RtiqaPreferencesDataStore
 import com.rtiqa.core.data.firestore.FirestoreSyncManager
+import com.rtiqa.core.data.remote.FirebaseAuthDataSourceImpl
+import com.rtiqa.core.data.remote.NodeAuthDataSourceImpl
+import com.rtiqa.core.network.RestNetworkClient
+import com.rtiqa.core.network.session.RestSessionStoreImpl
+import com.rtiqa.core.network.session.RestSessionStore
 import com.rtiqa.core.data.repository.AuthRepositoryImpl
 import com.rtiqa.core.data.repository.CourseRepositoryImpl
 import com.rtiqa.core.data.repository.DownloadManagerImpl
@@ -15,12 +20,14 @@ import com.rtiqa.core.database.RtiqaDatabase
 import com.rtiqa.core.di.RtiqaCoreDiContainer
 import com.rtiqa.core.domain.di.DomainUseCasesContainer
 import com.rtiqa.core.domain.repository.AiRepositoryContract
+import com.rtiqa.core.domain.repository.AuthRemoteDataSource
 import com.rtiqa.core.domain.repository.AuthRepositoryContract
 import com.rtiqa.core.domain.repository.CourseRepositoryContract
 import com.rtiqa.core.domain.repository.DownloadManagerContract
 import com.rtiqa.core.domain.repository.OfflineSyncContract
 import com.rtiqa.core.domain.repository.PermissionContract
 import com.rtiqa.core.domain.repository.QuizRepositoryContract
+import com.rtiqa.core.domain.repository.RemoteSyncDataSource
 import com.rtiqa.core.domain.repository.UserRepositoryContract
 import com.rtiqa.core.network.RetrofitNetworkClient
 import com.rtiqa.core.network.api.RtiqaApiService
@@ -33,14 +40,17 @@ import com.rtiqa.core.ui.navigation.AppNavigator
  */
 class AppDiContainer(val context: Context) {
 
+    companion object {
+        const val REST_AUTH_ENABLED = true
+    }
     val coreDiContainer: RtiqaCoreDiContainer by lazy {
         RtiqaCoreDiContainer(context)
     }
-
+    
     val database: RtiqaDatabase by lazy {
         RtiqaDatabase.getInstance(context)
     }
-
+    
     val preferencesDataStore: RtiqaPreferencesDataStore by lazy {
         RtiqaPreferencesDataStore(context)
     }
@@ -60,7 +70,26 @@ class AppDiContainer(val context: Context) {
         ConnectivityManagerNetworkMonitor(context)
     }
 
-    val firestoreSyncManager: FirestoreSyncManager by lazy {
+    val restSessionStore: RestSessionStore by lazy {
+        RestSessionStoreImpl(coreDiContainer.securityManager)
+    }
+
+    val restNetworkClient: RestNetworkClient by lazy {
+        RestNetworkClient(restSessionStore, isDebug = true)
+    }
+
+    val authRemoteDataSource: AuthRemoteDataSource by lazy {
+        if (REST_AUTH_ENABLED) {
+            NodeAuthDataSourceImpl(
+                restApiContract = restNetworkClient.api,
+                sessionStore = restSessionStore
+            )
+        } else {
+            FirebaseAuthDataSourceImpl()
+        }
+    }
+
+    val remoteSyncDataSource: RemoteSyncDataSource by lazy {
         FirestoreSyncManager()
     }
 
@@ -82,7 +111,8 @@ class AppDiContainer(val context: Context) {
             userProfileDao = database.userProfileDao(),
             preferencesDataStore = preferencesDataStore,
             securityManager = coreDiContainer.securityManager,
-            firestoreSyncManager = firestoreSyncManager
+            authRemoteDataSource = authRemoteDataSource,
+            remoteSyncDataSource = remoteSyncDataSource
         )
     }
 
@@ -102,7 +132,7 @@ class AppDiContainer(val context: Context) {
         CourseRepositoryImpl(
             courseDao = database.courseDao(),
             lessonDao = database.lessonDao(),
-            firestoreSyncManager = firestoreSyncManager,
+            remoteSyncDataSource = remoteSyncDataSource,
             currentUserIdProvider = { authRepository.getCurrentUserId() }
         )
     }
@@ -110,7 +140,7 @@ class AppDiContainer(val context: Context) {
     val userRepository: UserRepositoryContract by lazy {
         UserRepositoryImpl(
             userProfileDao = database.userProfileDao(),
-            firestoreSyncManager = firestoreSyncManager
+            remoteSyncDataSource = remoteSyncDataSource
         )
     }
 
@@ -118,54 +148,24 @@ class AppDiContainer(val context: Context) {
         QuizRepositoryImpl(
             academicDao = database.academicDao(),
             offlineSyncManager = offlineSyncManager,
-            firestoreSyncManager = firestoreSyncManager,
+            remoteSyncDataSource = remoteSyncDataSource,
             currentUserIdProvider = { authRepository.getCurrentUserId() }
         )
     }
 
     val aiRepository: AiRepositoryContract by lazy {
-        GeminiAiRepositoryImpl(
-            aiInsightDao = database.aiInsightDao()
-        )
-    }
-
-    val enterpriseRepository: com.rtiqa.core.domain.repository.EnterpriseRepository by lazy {
-        com.rtiqa.core.data.repository.EnterpriseRepositoryImpl(
-            enterpriseDao = database.enterpriseDao()
-        )
-    }
-
-    val academicRepository: com.rtiqa.core.domain.repository.AcademicRepository by lazy {
-        com.rtiqa.core.data.repository.AcademicRepositoryImpl(
-            academicDao = database.academicDao()
-        )
-    }
-
-    val classRepository: com.rtiqa.core.domain.repository.ClassRepository by lazy {
-        com.rtiqa.core.data.repository.ClassRepositoryImpl(
-            classDao = database.schoolClassDao()
-        )
-    }
-
-    val schoolManagementCoreRepository: com.rtiqa.core.domain.repository.SchoolManagementCoreRepository by lazy {
-        com.rtiqa.core.data.repository.SchoolManagementCoreRepositoryImpl(
-            dao = database.schoolManagementCoreDao()
-        )
+        GeminiAiRepositoryImpl(aiInsightDao = database.aiInsightDao())
     }
 
     val domainUseCasesContainer: DomainUseCasesContainer by lazy {
         DomainUseCasesContainer(
             authRepository = authRepository,
             courseRepository = courseRepository,
-            userRepository = userRepository,
             quizRepository = quizRepository,
+            userRepository = userRepository,
             aiRepository = aiRepository,
-            downloadManager = downloadManager,
             offlineSync = offlineSyncContract,
-            enterpriseRepository = enterpriseRepository,
-            academicRepository = academicRepository,
-            classRepository = classRepository,
-            schoolManagementCoreRepository = schoolManagementCoreRepository
+            downloadManager = downloadManager,
         )
     }
 

@@ -1,15 +1,14 @@
 package com.rtiqa.core.data.repository
 
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.UserProfileChangeRequest
 import com.rtiqa.core.data.datastore.RtiqaPreferencesDataStore
-import com.rtiqa.core.data.firestore.FirestoreSyncManager
 import com.rtiqa.core.data.mapper.toDomain
 import com.rtiqa.core.database.dao.UserProfileDao
 import com.rtiqa.core.database.entity.UserProfileEntity
 import com.rtiqa.core.domain.error.RtiqaError
 import com.rtiqa.core.domain.model.UserProfile
+import com.rtiqa.core.domain.repository.AuthRemoteDataSource
 import com.rtiqa.core.domain.repository.AuthRepositoryContract
+import com.rtiqa.core.domain.repository.RemoteSyncDataSource
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.logging.RtiqaLog
 import com.rtiqa.core.network.api.LoginRequestDto
@@ -19,69 +18,55 @@ import com.rtiqa.core.security.SecurityManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 /**
- * Production implementation of AuthRepositoryContract managing Firebase Authentication,
- * Cloud Firestore user profile sync, secure token storage, and offline-first fallback authentication.
+ * Production implementation of AuthRepositoryContract managing Remote Authentication,
+ * Cloud synchronization of user profile, secure token storage, and offline-first fallback authentication.
  */
 class AuthRepositoryImpl(
     private val apiService: RtiqaApiService,
     private val userProfileDao: UserProfileDao,
     private val preferencesDataStore: RtiqaPreferencesDataStore,
     private val securityManager: SecurityManager,
-    private val firestoreSyncManager: FirestoreSyncManager? = null
+    private val authRemoteDataSource: AuthRemoteDataSource,
+    private val remoteSyncDataSource: RemoteSyncDataSource? = null
 ) : AuthRepositoryContract {
 
     private val tag = "AuthRepositoryImpl"
-
-    private val firebaseAuth: FirebaseAuth? by lazy {
-        try {
-            FirebaseAuth.getInstance()
-        } catch (e: Exception) {
-            RtiqaLog.w(tag, "FirebaseAuth initialization failed or google-services.json not present: ${e.message}")
-            null
-        }
-    }
 
     override fun observeUserSession(): Flow<UserProfile?> {
         return userProfileDao.getUserProfile().map { it?.toDomain() }
     }
 
     override suspend fun login(email: String, pass: String): RtiqaResult<UserProfile> {
-        val fbAuth = firebaseAuth
-        if (fbAuth != null) {
-            try {
-                val authResult = fbAuth.signInWithEmailAndPassword(email, pass).await()
-                val fbUser = authResult.user
-                if (fbUser != null) {
-                    val uid = fbUser.uid
-                    val name = fbUser.displayName.takeIf { !it.isNullOrEmpty() } ?: email.substringBefore("@")
-                    
-                    securityManager.putEncryptedString(KEY_AUTH_TOKEN, "firebase_token_$uid")
-                    securityManager.putEncryptedString(KEY_USER_ID, uid)
-                    preferencesDataStore.setActiveUserId(uid)
+        val remoteAuth = authRemoteDataSource.login(email, pass)
+        if (remoteAuth is RtiqaResult.Success) {
+            val remoteUser = remoteAuth.data
+            val uid = remoteUser.uid
+            val name = remoteUser.displayName.takeIf { !it.isNullOrEmpty() } ?: email.substringBefore("@")
+            
+            securityManager.putEncryptedString(KEY_AUTH_TOKEN, "remote_token_$uid")
+            securityManager.putEncryptedString(KEY_USER_ID, uid)
+            preferencesDataStore.setActiveUserId(uid)
 
-                    // Fetch remote profile from Firestore if present
-                    val cloudFetch = firestoreSyncManager?.fetchUserProfileFromCloud(uid)
-                    val cloudEntity = if (cloudFetch is RtiqaResult.Success) cloudFetch.data else null
+            // Fetch remote profile if present
+            val cloudFetch = remoteSyncDataSource?.fetchUserProfileFromCloud(uid)
+            val cloudProfile = if (cloudFetch is RtiqaResult.Success) cloudFetch.data else null
 
-                    val entity = UserProfileEntity(
-                        id = uid,
-                        name = cloudEntity?.name ?: name,
-                        email = fbUser.email ?: email,
-                        levelXp = cloudEntity?.levelXp ?: 100,
-                        streakDays = cloudEntity?.streakDays ?: 1
-                    )
-                    userProfileDao.insertOrUpdateProfile(entity)
-                    firestoreSyncManager?.syncUserProfileToCloud(entity.toDomain())
+            val entity = UserProfileEntity(
+                id = uid,
+                name = cloudProfile?.name ?: name,
+                email = remoteUser.email ?: email,
+                levelXp = cloudProfile?.levelXp ?: 100,
+                streakDays = cloudProfile?.streakDays ?: 1
+            )
+            userProfileDao.insertOrUpdateProfile(entity)
+            remoteSyncDataSource?.syncUserProfileToCloud(entity.toDomain())
 
-                    return RtiqaResult.Success(entity.toDomain())
-                }
-            } catch (e: Exception) {
-                RtiqaLog.w(tag, "Firebase login failed, trying REST API or local database", e)
-            }
+            return RtiqaResult.Success(entity.toDomain())
+        } else {
+            RtiqaLog.w(tag, "Remote login failed, trying REST API or local database")
         }
 
         // Fallback: REST API authentication
@@ -129,41 +114,28 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun register(name: String, email: String, pass: String): RtiqaResult<UserProfile> {
-        val fbAuth = firebaseAuth
-        if (fbAuth != null) {
-            try {
-                val authResult = fbAuth.createUserWithEmailAndPassword(email, pass).await()
-                val fbUser = authResult.user
-                if (fbUser != null) {
-                    val uid = fbUser.uid
-                    try {
-                        val profileUpdates = UserProfileChangeRequest.Builder()
-                            .setDisplayName(name)
-                            .build()
-                        fbUser.updateProfile(profileUpdates).await()
-                    } catch (e: Exception) {
-                        RtiqaLog.w(tag, "Failed to update Firebase user display name", e)
-                    }
+        val remoteAuth = authRemoteDataSource.register(name, email, pass)
+        if (remoteAuth is RtiqaResult.Success) {
+            val remoteUser = remoteAuth.data
+            val uid = remoteUser.uid
+            
+            securityManager.putEncryptedString(KEY_AUTH_TOKEN, "remote_token_$uid")
+            securityManager.putEncryptedString(KEY_USER_ID, uid)
+            preferencesDataStore.setActiveUserId(uid)
 
-                    securityManager.putEncryptedString(KEY_AUTH_TOKEN, "firebase_token_$uid")
-                    securityManager.putEncryptedString(KEY_USER_ID, uid)
-                    preferencesDataStore.setActiveUserId(uid)
+            val entity = UserProfileEntity(
+                id = uid,
+                name = name,
+                email = email,
+                levelXp = 0,
+                streakDays = 1
+            )
+            userProfileDao.insertOrUpdateProfile(entity)
+            remoteSyncDataSource?.syncUserProfileToCloud(entity.toDomain())
 
-                    val entity = UserProfileEntity(
-                        id = uid,
-                        name = name,
-                        email = email,
-                        levelXp = 0,
-                        streakDays = 1
-                    )
-                    userProfileDao.insertOrUpdateProfile(entity)
-                    firestoreSyncManager?.syncUserProfileToCloud(entity.toDomain())
-
-                    return RtiqaResult.Success(entity.toDomain())
-                }
-            } catch (e: Exception) {
-                RtiqaLog.w(tag, "Firebase register failed, trying REST API or offline local fallback", e)
-            }
+            return RtiqaResult.Success(entity.toDomain())
+        } else {
+            RtiqaLog.w(tag, "Remote register failed, trying REST API or offline local fallback")
         }
 
         // Fallback: REST API registration
@@ -221,24 +193,18 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun resetPassword(email: String): RtiqaResult<Unit> {
-        val fbAuth = firebaseAuth
-        if (fbAuth != null) {
-            return try {
-                fbAuth.sendPasswordResetEmail(email).await()
-                RtiqaResult.Success(Unit)
-            } catch (e: Exception) {
-                RtiqaLog.e(tag, "Failed to send Firebase password reset email", e)
-                RtiqaResult.Error(RtiqaError.AuthError(e.message ?: "Failed to send reset email."))
-            }
+        val result = authRemoteDataSource.resetPassword(email)
+        if (result is RtiqaResult.Success) {
+            return result
         }
-        // Simulated local success for password reset when Firebase not present
-        RtiqaLog.i(tag, "Simulating password reset email for $email (Firebase unavailable)")
+        // Simulated local success for password reset when remote not present
+        RtiqaLog.i(tag, "Simulating password reset email for $email (Remote unavailable)")
         return RtiqaResult.Success(Unit)
     }
 
     override suspend fun logout(): RtiqaResult<Unit> {
         return try {
-            firebaseAuth?.signOut()
+            authRemoteDataSource.logout()
             securityManager.removeKey(KEY_AUTH_TOKEN)
             securityManager.removeKey(KEY_USER_ID)
             preferencesDataStore.setActiveUserId(null)
@@ -250,8 +216,8 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun getCurrentUserId(): String? {
-        val fbUid = firebaseAuth?.currentUser?.uid
-        if (fbUid != null) return fbUid
+        val remoteUid = authRemoteDataSource.getCurrentUserId()
+        if (remoteUid != null) return remoteUid
         return securityManager.getEncryptedString(KEY_USER_ID)
     }
 

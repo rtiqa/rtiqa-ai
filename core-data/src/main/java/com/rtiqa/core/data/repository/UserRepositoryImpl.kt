@@ -1,6 +1,6 @@
 package com.rtiqa.core.data.repository
 
-import com.rtiqa.core.data.firestore.FirestoreSyncManager
+import com.rtiqa.core.domain.repository.RemoteSyncDataSource
 import com.rtiqa.core.data.mapper.toDomain
 import com.rtiqa.core.database.dao.UserProfileDao
 import com.rtiqa.core.database.entity.UserProfileEntity
@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.map
  */
 class UserRepositoryImpl(
     private val userProfileDao: UserProfileDao,
-    private val firestoreSyncManager: FirestoreSyncManager? = null
+    private val remoteSyncDataSource: RemoteSyncDataSource? = null
 ) : UserRepositoryContract {
 
     override fun getUserProfile(): Flow<UserProfile?> {
@@ -40,7 +40,7 @@ class UserRepositoryImpl(
             userProfileDao.insertOrUpdateProfile(entity)
 
             // Asynchronously sync to Cloud Firestore
-            firestoreSyncManager?.syncUserProfileToCloud(profile)
+            remoteSyncDataSource?.syncUserProfileToCloud(profile)
 
             RtiqaResult.Success(Unit)
         } catch (e: Exception) {

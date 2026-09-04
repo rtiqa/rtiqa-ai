@@ -2,9 +2,9 @@ package com.rtiqa.core.data.firestore
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
-import com.rtiqa.core.database.entity.UserProfileEntity
 import com.rtiqa.core.domain.error.RtiqaError
 import com.rtiqa.core.domain.model.UserProfile
+import com.rtiqa.core.domain.repository.RemoteSyncDataSource
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.logging.RtiqaLog
 import kotlinx.coroutines.tasks.await
@@ -13,7 +13,7 @@ import kotlinx.coroutines.tasks.await
  * Cloud Firestore synchronization service providing offline-first cloud backup and data sync
  * for user profiles, settings, course progress, and quiz results.
  */
-class FirestoreSyncManager {
+class FirestoreSyncManager : RemoteSyncDataSource {
 
     private val tag = "FirestoreSyncManager"
 
@@ -29,12 +29,12 @@ class FirestoreSyncManager {
     /**
      * Checks whether Cloud Firestore service is active and accessible.
      */
-    fun isAvailable(): Boolean = firestore != null
+    override fun isAvailable(): Boolean = firestore != null
 
     /**
      * Uploads or merges user profile into Firestore collection 'users/{userId}'.
      */
-    suspend fun syncUserProfileToCloud(profile: UserProfile): RtiqaResult<Unit> {
+    override suspend fun syncUserProfileToCloud(profile: UserProfile): RtiqaResult<Unit> {
         val db = firestore ?: return RtiqaResult.Error(RtiqaError.SyncError("Firestore unavailable"))
         return try {
             val userMap = hashMapOf(
@@ -61,7 +61,7 @@ class FirestoreSyncManager {
     /**
      * Downloads latest user profile from Firestore collection 'users/{userId}'.
      */
-    suspend fun fetchUserProfileFromCloud(userId: String): RtiqaResult<UserProfileEntity?> {
+    override suspend fun fetchUserProfileFromCloud(userId: String): RtiqaResult<UserProfile?> {
         val db = firestore ?: return RtiqaResult.Error(RtiqaError.SyncError("Firestore unavailable"))
         return try {
             val snapshot = db.collection("users")
@@ -70,14 +70,14 @@ class FirestoreSyncManager {
                 .await()
 
             if (snapshot.exists()) {
-                val entity = UserProfileEntity(
+                val profile = UserProfile(
                     id = snapshot.getString("id") ?: userId,
                     name = snapshot.getString("name") ?: "",
                     email = snapshot.getString("email") ?: "",
                     levelXp = (snapshot.getLong("levelXp") ?: 0L).toInt(),
                     streakDays = (snapshot.getLong("streakDays") ?: 0L).toInt()
                 )
-                RtiqaResult.Success(entity)
+                RtiqaResult.Success(profile)
             } else {
                 RtiqaResult.Success(null)
             }
@@ -90,7 +90,7 @@ class FirestoreSyncManager {
     /**
      * Uploads course completion or progress details into 'users/{userId}/progress/{courseId}'.
      */
-    suspend fun syncCourseProgressToCloud(
+    override suspend fun syncCourseProgressToCloud(
         userId: String,
         courseId: String,
         progressPercent: Float,
@@ -122,7 +122,7 @@ class FirestoreSyncManager {
     /**
      * Uploads quiz results log to 'users/{userId}/quiz_results/{quizId}'.
      */
-    suspend fun syncQuizResultToCloud(
+    override suspend fun syncQuizResultToCloud(
         userId: String,
         quizId: String,
         score: Int,
@@ -154,7 +154,7 @@ class FirestoreSyncManager {
     /**
      * Uploads user app settings to 'users/{userId}/settings/user_settings'.
      */
-    suspend fun syncUserSettingsToCloud(
+    override suspend fun syncUserSettingsToCloud(
         userId: String,
         darkTheme: Boolean,
         notificationsEnabled: Boolean,
@@ -180,6 +180,24 @@ class FirestoreSyncManager {
         } catch (e: Exception) {
             RtiqaLog.e(tag, "Failed to sync user settings to Firestore", e)
             RtiqaResult.Error(RtiqaError.SyncError("Firestore user settings sync failed", e))
+        }
+    }
+
+    override suspend fun pushSyncPayload(
+        collection: String,
+        documentId: String,
+        payload: Map<String, Any>
+    ): RtiqaResult<Unit> {
+        val db = firestore ?: return RtiqaResult.Error(RtiqaError.SyncError("Firestore unavailable"))
+        return try {
+            db.collection(collection)
+                .document(documentId)
+                .set(payload)
+                .await()
+            RtiqaResult.Success(Unit)
+        } catch (e: Exception) {
+            RtiqaLog.e(tag, "Failed to push sync payload to $collection", e)
+            RtiqaResult.Error(RtiqaError.SyncError("Firestore push payload failed", e))
         }
     }
 }

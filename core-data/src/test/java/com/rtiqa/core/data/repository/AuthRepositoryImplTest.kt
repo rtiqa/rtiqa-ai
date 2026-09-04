@@ -108,7 +108,8 @@ class AuthRepositoryImplTest {
         apiService = apiService,
         userProfileDao = userProfileDao,
         preferencesDataStore = dataStore,
-        securityManager = securityManager
+        securityManager = securityManager,
+        authRemoteDataSource = com.rtiqa.core.data.remote.FirebaseAuthDataSourceImpl()
     )
 
     // Test 1: Correct login

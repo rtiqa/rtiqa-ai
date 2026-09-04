@@ -3,6 +3,7 @@ package com.rtiqa.mobile.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.rtiqa.core.data.di.AppDiContainer
 import com.rtiqa.mobile.data.local.RtiqaDatabase
 import com.rtiqa.mobile.data.remote.NetworkMonitor
 import com.rtiqa.mobile.data.repository.UserRepository
@@ -15,9 +16,13 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-
     private val database = RtiqaDatabase.getDatabase(application)
-    private val userRepository = UserRepository(database.userProfileDao())
+    private val diContainer = AppDiContainer(application)
+    private val userRepository = UserRepository(
+        userProfileDao = database.userProfileDao(),
+        authDataSource = diContainer.authRemoteDataSource,
+        syncDataSource = diContainer.remoteSyncDataSource
+    )
     private val networkMonitor = NetworkMonitor(application)
 
     val userProfile: StateFlow<UserProfile> = userRepository.userProfile.stateIn(
