@@ -3,8 +3,8 @@ package com.rtiqa.core.data.di
 import android.content.Context
 import com.rtiqa.core.ai.GeminiAiRepositoryImpl
 import com.rtiqa.core.data.datastore.RtiqaPreferencesDataStore
-import com.rtiqa.core.data.firestore.FirestoreSyncManager
-import com.rtiqa.core.data.remote.FirebaseAuthDataSourceImpl
+import com.rtiqa.core.data.sync.KtorRemoteSyncDataSource
+
 import com.rtiqa.core.data.remote.NodeAuthDataSourceImpl
 import com.rtiqa.core.network.RestNetworkClient
 import com.rtiqa.core.network.session.RestSessionStoreImpl
@@ -79,18 +79,14 @@ class AppDiContainer(val context: Context) {
     }
 
     val authRemoteDataSource: AuthRemoteDataSource by lazy {
-        if (REST_AUTH_ENABLED) {
-            NodeAuthDataSourceImpl(
-                restApiContract = restNetworkClient.api,
-                sessionStore = restSessionStore
-            )
-        } else {
-            FirebaseAuthDataSourceImpl()
-        }
+        NodeAuthDataSourceImpl(
+            restApiContract = restNetworkClient.api,
+            sessionStore = restSessionStore
+        )
     }
 
     val remoteSyncDataSource: RemoteSyncDataSource by lazy {
-        FirestoreSyncManager()
+        KtorRemoteSyncDataSource(apiService)
     }
 
     val offlineSyncManager: OfflineSyncManager by lazy {

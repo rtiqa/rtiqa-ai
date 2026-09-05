@@ -109,7 +109,13 @@ class AuthRepositoryImplTest {
         userProfileDao = userProfileDao,
         preferencesDataStore = dataStore,
         securityManager = securityManager,
-        authRemoteDataSource = com.rtiqa.core.data.remote.FirebaseAuthDataSourceImpl()
+        authRemoteDataSource = object : com.rtiqa.core.domain.repository.AuthRemoteDataSource {
+        override suspend fun login(email: String, pass: String) = com.rtiqa.core.domain.result.RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.AuthError("Not used in test fallback"))
+        override suspend fun register(name: String, email: String, pass: String) = com.rtiqa.core.domain.result.RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.AuthError("Not used"))
+        override suspend fun resetPassword(email: String) = com.rtiqa.core.domain.result.RtiqaResult.Success(Unit)
+        override suspend fun logout() = com.rtiqa.core.domain.result.RtiqaResult.Success(Unit)
+        override suspend fun getCurrentUserId(): String? = null
+    }
     )
 
     // Test 1: Correct login

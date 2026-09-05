@@ -27,14 +27,14 @@ jobs:
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+          UNUSED_VAR: ${{ secrets.UNUSED_VAR }}
         run: |
-          if [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_PASSWORD" ] || [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+          if [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_PASSWORD" ] || [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$UNUSED_VAR" ]; then
             echo "Error: Production signing or Firebase secrets are missing."
-            echo "Configure STORE_PASSWORD, KEY_PASSWORD, ANDROID_KEYSTORE_BASE64, and GOOGLE_SERVICES_JSON_BASE64 in GitHub Secrets."
+            echo "Configure STORE_PASSWORD, KEY_PASSWORD, ANDROID_KEYSTORE_BASE64, and UNUSED_VAR in GitHub Secrets."
             exit 1
           fi
-          echo "$GOOGLE_SERVICES_JSON_BASE64" | base64 --decode > app/google-services.json
+          echo "$UNUSED_VAR" | base64 --decode > app/unused_services.json
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > ${RUNNER_TEMP}/rtiqa-release.keystore
 
       - name: Build Release Bundles & APKs
@@ -72,5 +72,5 @@ jobs:
       - name: Cleanup Secrets
         if: always()
         run: |
-          rm -f app/google-services.json
+          rm -f app/unused_services.json
           rm -f ${RUNNER_TEMP}/rtiqa-release.keystore

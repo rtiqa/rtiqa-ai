@@ -21,8 +21,8 @@ dependencies {
     implementation(project(":core-domain"))
     implementation(project(":core-database"))
     implementation(libs.androidx.core.ktx)
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.ai)
+    
+    
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
 }

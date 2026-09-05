@@ -21,7 +21,25 @@ dependencies {
     implementation("io.ktor:ktor-server-cors-jvm:2.3.8")
     implementation("io.ktor:ktor-server-websockets-jvm:2.3.8")
     implementation("io.ktor:ktor-server-metrics-micrometer-jvm:2.3.8")
+    implementation("org.postgresql:postgresql:42.7.2")
+    implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("ch.qos.logback:logback-classic:1.4.14")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+sourceSets {
+    getByName("main") {
+        kotlin.srcDirs("src/main/kotlin")
+    }
+    getByName("test") {
+        kotlin.srcDirs("src/test/kotlin")
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 application {
