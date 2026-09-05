@@ -1,6 +1,10 @@
 package com.rtiqa.backend
 
+import com.rtiqa.backend.auth.SupabaseAuthClient
+import com.rtiqa.backend.auth.authRoutes
+import com.rtiqa.backend.auth.configureSecurity
 import com.rtiqa.backend.config.DatabaseConfig
+import com.rtiqa.backend.config.SupabaseConfig
 import com.rtiqa.backend.database.DatabaseFactory
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -34,16 +38,19 @@ fun main() {
     val server = embeddedServer(Netty, port = port, host = "0.0.0.0") {
         module()
     }
-
+    
     Runtime.getRuntime().addShutdownHook(Thread {
         DatabaseFactory.close()
         server.stop(1000, 2000)
     })
-
+    
     server.start(wait = true)
 }
 
 fun Application.module() {
+    val supabaseConfig = SupabaseConfig.fromEnvironment()
+    val authClient = SupabaseAuthClient(supabaseConfig)
+    
     install(ContentNegotiation) {
         json(Json {
             prettyPrint = true
@@ -51,12 +58,15 @@ fun Application.module() {
             ignoreUnknownKeys = true
         })
     }
+    
     install(CORS) {
         anyHost()
     }
-
+    
+    configureSecurity(supabaseConfig)
+    
     val environmentName = System.getenv("KTOR_ENV") ?: "development"
-    val authProvider = System.getenv("AUTH_PROVIDER_NAME") ?: "Keycloak IAM OIDC"
+    val authProvider = System.getenv("AUTH_PROVIDER_NAME") ?: "Supabase Auth"
     val dbProvider = System.getenv("DB_PROVIDER_NAME") ?: "Supabase PostgreSQL 15 + pgvector"
 
     routing {
@@ -65,7 +75,7 @@ fun Application.module() {
             val statusStr = if (dbHealthy) "UP" else "DEGRADED"
             val dbStr = if (dbHealthy) "UP" else "DOWN"
             val statusCode = if (dbHealthy) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable
-
+            
             call.respond(
                 statusCode,
                 SystemHealth(
@@ -75,6 +85,7 @@ fun Application.module() {
                 )
             )
         }
+
         get("/api/v1/status") {
             call.respond(mapOf(
                 "version" to "1.0.0",
@@ -83,5 +94,7 @@ fun Application.module() {
                 "db_provider" to dbProvider
             ))
         }
+        
+        authRoutes(authClient)
     }
 }
