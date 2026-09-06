@@ -34,7 +34,7 @@ fun main() {
         println("Warning: Database initialization failed at startup: ${e.message}")
     }
 
-    val port = System.getenv("KTOR_PORT")?.toIntOrNull() ?: 8081
+    val port = System.getenv("PORT")?.toIntOrNull() ?: System.getenv("KTOR_PORT")?.toIntOrNull() ?: 8081
     val server = embeddedServer(Netty, port = port, host = "0.0.0.0") {
         module()
     }

@@ -1,0 +1,64 @@
+# Build and cache
+.git
+.gradle
+build
+out
+.idea
+local.properties
+*.iml
+.build-outputs
+
+# Secrets and environment variables
+.env
+.env.*
+secrets
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+debug.keystore
+debug.keystore.base64
+service-account*.json
+
+# Other non-required
+test
+.kotlinc
+.kotlin
+
+# Exclude Android and feature modules
+app/
+core/
+core-ui/
+core-design/
+core-domain/
+core-data/
+core-network/
+core-database/
+core-ai/
+feature-auth/
+feature-home/
+feature-courses/
+feature-lessons/
+feature-quiz/
+feature-ai/
+feature-offline/
+feature-profile/
+feature-settings/
+feature-admin/
+
+docs/
+assets/
+helm/
+docker/
+scripts/
+.github/
+
+# Ensure Ktor and Gradle Wrapper are strictly preserved
+!gradlew
+!gradle/
+!deploy/ktor-starter/
+!deploy/ktor-starter/src/
+!deploy/ktor-starter/src/**
+!deploy/ktor-starter/build.gradle.kts
+!deploy/ktor-starter/settings.gradle.kts

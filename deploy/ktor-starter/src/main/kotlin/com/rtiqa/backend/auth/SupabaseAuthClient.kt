@@ -25,7 +25,7 @@ class SupabaseAuthClient(private val config: SupabaseConfig) {
         return try {
             val response = client.post("${config.url}/auth/v1/token?grant_type=password") {
                 contentType(ContentType.Application.Json)
-                header("apikey", config.anonKey)
+                header("apikey", config.publishableKey)
                 setBody(mapOf("email" to request.email, "password" to request.password))
             }
 

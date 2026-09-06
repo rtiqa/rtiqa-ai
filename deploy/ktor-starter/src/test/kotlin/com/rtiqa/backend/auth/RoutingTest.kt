@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 class RoutingTest {
 
     private fun ApplicationTestBuilder.setupApp() {
-        val config = SupabaseConfig("https://example.supabase.co", "anon")
+        val config = SupabaseConfig("https://example.supabase.co", "sb_publishable_test_value")
         application {
             install(ContentNegotiation) {
                 json(Json { ignoreUnknownKeys = true })
