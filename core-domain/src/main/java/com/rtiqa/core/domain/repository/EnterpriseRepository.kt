@@ -60,4 +60,10 @@ interface EnterpriseRepository {
     fun getMembers(orgId: String): Flow<List<EnterpriseMember>>
     suspend fun saveMember(member: EnterpriseMember)
     suspend fun deleteMember(id: String)
+
+    suspend fun deleteSemester(id: String)
+    suspend fun deleteDepartment(id: String)
+    suspend fun deleteMajor(id: String)
+    suspend fun deleteStudyPlan(id: String)
+
 }

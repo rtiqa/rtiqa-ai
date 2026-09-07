@@ -12,14 +12,19 @@ object DatabaseFactory {
 
     fun init(config: DatabaseConfig = DatabaseConfig.fromEnvironment()) {
         if (config.jdbcUrl.isBlank()) {
-            logger.warn("DATABASE_URL is not set. PostgreSQL connection pool will not be initialized.")
-            return
+            throw IllegalStateException("Configuration error: DATABASE_URL environment variable is required and cannot be blank.")
+        }
+        if (config.username.isBlank()) {
+            throw IllegalStateException("Configuration error: DATABASE_USER environment variable is required and cannot be blank.")
+        }
+        if (config.password.isBlank()) {
+            throw IllegalStateException("Configuration error: DATABASE_PASSWORD environment variable is required and cannot be blank.")
         }
 
         val hikariConfig = HikariConfig().apply {
             jdbcUrl = config.jdbcUrl
-            if (config.username.isNotBlank()) username = config.username
-            if (config.password.isNotBlank()) password = config.password
+            username = config.username
+            password = config.password
             driverClassName = "org.postgresql.Driver"
             maximumPoolSize = config.maximumPoolSize
             minimumIdle = config.minimumIdle

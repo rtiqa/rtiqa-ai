@@ -7,116 +7,117 @@ import com.rtiqa.core.domain.repository.DownloadManagerContract
 import com.rtiqa.core.domain.repository.OfflineSyncContract
 import com.rtiqa.core.domain.repository.QuizRepositoryContract
 import com.rtiqa.core.domain.repository.UserRepositoryContract
-import com.rtiqa.core.domain.usecase.AskAiTutorUseCase
-import com.rtiqa.core.domain.usecase.CompleteLessonUseCase
-import com.rtiqa.core.domain.usecase.DownloadCourseUseCase
-import com.rtiqa.core.domain.usecase.GenerateAiSummaryUseCase
-import com.rtiqa.core.domain.usecase.GetAiHistoryUseCase
-import com.rtiqa.core.domain.usecase.GetCourseDetailUseCase
-import com.rtiqa.core.domain.usecase.GetCoursesUseCase
-import com.rtiqa.core.domain.usecase.GetLessonsForCourseUseCase
-import com.rtiqa.core.domain.usecase.GetPagedCoursesUseCase
-import com.rtiqa.core.domain.usecase.GetQuizForCourseUseCase
-import com.rtiqa.core.domain.usecase.GetUserProfileUseCase
-import com.rtiqa.core.domain.usecase.LoginUseCase
-import com.rtiqa.core.domain.usecase.LogoutUseCase
-import com.rtiqa.core.domain.usecase.ObserveSyncStatusUseCase
-import com.rtiqa.core.domain.usecase.ObserveUserSessionUseCase
-import com.rtiqa.core.domain.usecase.RegisterUseCase
-import com.rtiqa.core.domain.usecase.ResetPasswordUseCase
-import com.rtiqa.core.domain.usecase.SearchCoursesUseCase
-import com.rtiqa.core.domain.usecase.SubmitQuizResultUseCase
-import com.rtiqa.core.domain.usecase.SyncOfflineDataUseCase
-import com.rtiqa.core.domain.usecase.UpdateUserProfileUseCase
-import com.rtiqa.core.domain.usecase.UpdateUserStreakUseCase
+import com.rtiqa.core.domain.usecase.*
 
-import com.rtiqa.core.domain.usecase.DeleteCourseUseCase
-import com.rtiqa.core.domain.usecase.SaveCourseUseCase
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 import com.rtiqa.core.domain.repository.EnterpriseRepository
 import com.rtiqa.core.domain.repository.AcademicRepository
 import com.rtiqa.core.domain.repository.ClassRepository
 import com.rtiqa.core.domain.repository.SchoolManagementCoreRepository
 
-import com.rtiqa.core.domain.usecase.GetGradeLevelsForSchoolUseCase
-import com.rtiqa.core.domain.usecase.SaveGradeLevelUseCase
-import com.rtiqa.core.domain.usecase.DeleteGradeLevelUseCase
-import com.rtiqa.core.domain.usecase.GetTeacherAssignmentsForSchoolUseCase
-import com.rtiqa.core.domain.usecase.GetTeacherAssignmentsForTeacherUseCase
-import com.rtiqa.core.domain.usecase.SaveTeacherAssignmentUseCase
-import com.rtiqa.core.domain.usecase.DeleteTeacherAssignmentUseCase
-import com.rtiqa.core.domain.usecase.GetEnrollmentsForSchoolUseCase
-import com.rtiqa.core.domain.usecase.GetEnrollmentsForClassUseCase
-import com.rtiqa.core.domain.usecase.SaveStudentEnrollmentUseCase
-import com.rtiqa.core.domain.usecase.DeleteStudentEnrollmentUseCase
-import com.rtiqa.core.domain.usecase.EvaluateUserPermissionUseCase
-import com.rtiqa.core.domain.usecase.CheckSchoolAccessUseCase
 
-import com.rtiqa.core.domain.usecase.GetOrganizationsUseCase
-import com.rtiqa.core.domain.usecase.SaveOrganizationUseCase
-import com.rtiqa.core.domain.usecase.DeleteOrganizationUseCase
-import com.rtiqa.core.domain.usecase.GetBranchesUseCase
-import com.rtiqa.core.domain.usecase.SaveBranchUseCase
-import com.rtiqa.core.domain.usecase.GetAcademicYearsUseCase
-import com.rtiqa.core.domain.usecase.SaveAcademicYearUseCase
-import com.rtiqa.core.domain.usecase.DeleteAcademicYearUseCase
-import com.rtiqa.core.domain.usecase.GetSemestersUseCase
-import com.rtiqa.core.domain.usecase.SaveSemesterUseCase
-import com.rtiqa.core.domain.usecase.GetDepartmentsUseCase
-import com.rtiqa.core.domain.usecase.SaveDepartmentUseCase
-import com.rtiqa.core.domain.usecase.GetMajorsUseCase
-import com.rtiqa.core.domain.usecase.SaveMajorUseCase
-import com.rtiqa.core.domain.usecase.GetSectionsUseCase
-import com.rtiqa.core.domain.usecase.SaveSectionUseCase
-import com.rtiqa.core.domain.usecase.DeleteSectionUseCase
-import com.rtiqa.core.domain.usecase.GetSubjectsUseCase
-import com.rtiqa.core.domain.usecase.SaveSubjectUseCase
-import com.rtiqa.core.domain.usecase.DeleteSubjectUseCase
-import com.rtiqa.core.domain.usecase.GetStudyPlansUseCase
-import com.rtiqa.core.domain.usecase.SaveStudyPlanUseCase
-import com.rtiqa.core.domain.usecase.GetEnterpriseMembersUseCase
-import com.rtiqa.core.domain.usecase.SaveEnterpriseMemberUseCase
-import com.rtiqa.core.domain.usecase.DeleteEnterpriseMemberUseCase
-import com.rtiqa.core.domain.usecase.GetSchoolsUseCase
-import com.rtiqa.core.domain.usecase.GetSchoolByIdUseCase
-import com.rtiqa.core.domain.usecase.SaveSchoolUseCase
-import com.rtiqa.core.domain.usecase.DeleteSchoolUseCase
-import com.rtiqa.core.domain.usecase.GetStudentsForSchoolUseCase
-import com.rtiqa.core.domain.usecase.GetTeachersForSchoolUseCase
-import com.rtiqa.core.domain.usecase.GetUsersForSchoolUseCase
-import com.rtiqa.core.domain.usecase.GetSectionsForSchoolUseCase
-import com.rtiqa.core.domain.usecase.GetSubjectsForSchoolUseCase
-import com.rtiqa.core.domain.usecase.GetCoursesForSchoolUseCase
-import com.rtiqa.core.domain.usecase.GetAssessmentsForSchoolUseCase
 
-import com.rtiqa.core.domain.usecase.GetClassesForSchoolUseCase
-import com.rtiqa.core.domain.usecase.GetClassByIdUseCase
-import com.rtiqa.core.domain.usecase.SaveClassUseCase
-import com.rtiqa.core.domain.usecase.DeleteClassUseCase
-import com.rtiqa.core.domain.usecase.ValidateClassNameUniquenessUseCase
-import com.rtiqa.core.domain.usecase.ReorderClassesUseCase
-import com.rtiqa.core.domain.usecase.GetModulesUseCase
-import com.rtiqa.core.domain.usecase.SaveModuleUseCase
-import com.rtiqa.core.domain.usecase.GetAcademicLessonsUseCase
-import com.rtiqa.core.domain.usecase.SaveAcademicLessonUseCase
-import com.rtiqa.core.domain.usecase.GetAssignmentsUseCase
-import com.rtiqa.core.domain.usecase.SaveAssignmentUseCase
-import com.rtiqa.core.domain.usecase.SubmitAssignmentUseCase
-import com.rtiqa.core.domain.usecase.GetAssessmentsUseCase
-import com.rtiqa.core.domain.usecase.SaveAssessmentUseCase
-import com.rtiqa.core.domain.usecase.SubmitAssessmentAttemptUseCase
-import com.rtiqa.core.domain.usecase.GetGradebookUseCase
-import com.rtiqa.core.domain.usecase.GetStudentProgressUseCase
-import com.rtiqa.core.domain.usecase.GetBadgesUseCase
-import com.rtiqa.core.domain.usecase.GetLearningPathsUseCase
-import com.rtiqa.core.domain.usecase.GetSmartRecommendationsUseCase
-import com.rtiqa.core.domain.usecase.GetOfflineDownloadsUseCase
-import com.rtiqa.core.domain.usecase.SaveOfflineDownloadUseCase
-import com.rtiqa.core.domain.usecase.SaveGradebookRecordUseCase
-import com.rtiqa.core.domain.usecase.SaveLearningPathUseCase
-import com.rtiqa.core.domain.usecase.UnlockBadgeUseCase
-import com.rtiqa.core.domain.usecase.SavePrerequisiteUseCase
-import com.rtiqa.core.domain.usecase.SaveQuestionUseCase
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Dependency container aggregating domain UseCases provided to presentation ViewModels.
@@ -200,6 +201,10 @@ class DomainUseCasesContainer(
     val saveStudyPlanUseCase by lazy { enterpriseRepositoryInstance?.let { SaveStudyPlanUseCase(it) } }
     val getEnterpriseMembersUseCase by lazy { enterpriseRepositoryInstance?.let { GetEnterpriseMembersUseCase(it) } }
     val saveEnterpriseMemberUseCase by lazy { enterpriseRepositoryInstance?.let { SaveEnterpriseMemberUseCase(it) } }
+    val deleteSemesterUseCase by lazy { enterpriseRepositoryInstance?.let { com.rtiqa.core.domain.usecase.DeleteSemesterUseCase(it) } }
+    val deleteDepartmentUseCase by lazy { enterpriseRepositoryInstance?.let { com.rtiqa.core.domain.usecase.DeleteDepartmentUseCase(it) } }
+    val deleteMajorUseCase by lazy { enterpriseRepositoryInstance?.let { com.rtiqa.core.domain.usecase.DeleteMajorUseCase(it) } }
+    val deleteStudyPlanUseCase by lazy { enterpriseRepositoryInstance?.let { com.rtiqa.core.domain.usecase.DeleteStudyPlanUseCase(it) } }
     val deleteEnterpriseMemberUseCase by lazy { enterpriseRepositoryInstance?.let { DeleteEnterpriseMemberUseCase(it) } }
 
     val getSchoolsUseCase by lazy { enterpriseRepositoryInstance?.let { GetSchoolsUseCase(it) } }

@@ -28,11 +28,7 @@ data class SystemHealth(
 
 fun main() {
     val dbConfig = DatabaseConfig.fromEnvironment()
-    try {
-        DatabaseFactory.init(dbConfig)
-    } catch (e: Exception) {
-        println("Warning: Database initialization failed at startup: ${e.message}")
-    }
+    DatabaseFactory.init(dbConfig)
 
     val port = System.getenv("PORT")?.toIntOrNull() ?: System.getenv("KTOR_PORT")?.toIntOrNull() ?: 8081
     val server = embeddedServer(Netty, port = port, host = "0.0.0.0") {

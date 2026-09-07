@@ -148,4 +148,17 @@ class EnterpriseRepositoryImpl(
     override suspend fun deleteMember(id: String) {
         enterpriseDao.deleteMember(id)
     }
+
+    override suspend fun deleteSemester(id: String) {
+        enterpriseDao.deleteSemester(id)
+    }
+    override suspend fun deleteDepartment(id: String) {
+        enterpriseDao.deleteDepartment(id)
+    }
+    override suspend fun deleteMajor(id: String) {
+        enterpriseDao.deleteMajor(id)
+    }
+    override suspend fun deleteStudyPlan(id: String) {
+        enterpriseDao.deleteStudyPlan(id)
+    }
 }

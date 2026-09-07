@@ -149,3 +149,16 @@ class SaveEnterpriseMemberUseCase(private val repository: EnterpriseRepository) 
 class DeleteEnterpriseMemberUseCase(private val repository: EnterpriseRepository) {
     suspend operator fun invoke(id: String) = repository.deleteMember(id)
 }
+
+class DeleteSemesterUseCase(private val repository: EnterpriseRepository) {
+    suspend operator fun invoke(id: String) = repository.deleteSemester(id)
+}
+class DeleteDepartmentUseCase(private val repository: EnterpriseRepository) {
+    suspend operator fun invoke(id: String) = repository.deleteDepartment(id)
+}
+class DeleteMajorUseCase(private val repository: EnterpriseRepository) {
+    suspend operator fun invoke(id: String) = repository.deleteMajor(id)
+}
+class DeleteStudyPlanUseCase(private val repository: EnterpriseRepository) {
+    suspend operator fun invoke(id: String) = repository.deleteStudyPlan(id)
+}

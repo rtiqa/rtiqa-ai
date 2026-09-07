@@ -189,6 +189,12 @@ class SchoolViewModelTest {
         override fun getMembers(orgId: String): Flow<List<EnterpriseMember>> = flowOf(emptyList())
         override suspend fun saveMember(member: EnterpriseMember) {}
         override suspend fun deleteMember(id: String) {}
+
+            override suspend fun deleteSemester(id: String) {}
+            override suspend fun deleteDepartment(id: String) {}
+            override suspend fun deleteMajor(id: String) {}
+            override suspend fun deleteStudyPlan(id: String) {}
+
     }
 
     private lateinit var preferencesDataStore: RtiqaPreferencesDataStore

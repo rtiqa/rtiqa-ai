@@ -72,6 +72,7 @@ fun AdminScreen(
     onAction: (AdminDashboardUiAction) -> Unit,
     onBack: () -> Unit,
     onNavigateToAcademicPlatform: () -> Unit = {},
+    onNavigateToAcademicStructure: () -> Unit = {},
     onNavigateToSchools: () -> Unit = {},
     onNavigateToUsers: () -> Unit = {},
     onNavigateToClasses: () -> Unit = {},
@@ -399,6 +400,7 @@ private fun OverviewTabContent(
     uiState: AdminDashboardUiState,
     onAction: (AdminDashboardUiAction) -> Unit,
     onNavigateToAcademicPlatform: () -> Unit = {},
+    onNavigateToAcademicStructure: () -> Unit = {},
     onNavigateToSchools: () -> Unit = {},
     onNavigateToUsers: () -> Unit = {},
     onNavigateToClasses: () -> Unit = {}

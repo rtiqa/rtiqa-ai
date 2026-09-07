@@ -373,6 +373,7 @@ fun RtiqaApp(
                     onAction = { action -> adminViewModel.onAction(action) },
                     onBack = { navController.popBackStack() },
                     onNavigateToAcademicPlatform = { navController.navigate("academic_platform") },
+                    onNavigateToAcademicStructure = { navController.navigate("academic_structure") },
                     onNavigateToSchools = { navController.navigate("schools_management") },
                     onNavigateToUsers = { navController.navigate("users_management") },
                     onNavigateToClasses = { navController.navigate("classes_management") }
@@ -416,6 +417,42 @@ fun RtiqaApp(
                 )
             }
 
+            composable("academic_structure") {
+                val academicStructureViewModel: com.rtiqa.feature.admin.academic.AcademicStructureViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                    factory = com.rtiqa.feature.admin.academic.AcademicStructureViewModelFactory(
+                        getAcademicYearsUseCase = appDiContainer.domainUseCasesContainer.getAcademicYearsUseCase!!,
+                        saveAcademicYearUseCase = appDiContainer.domainUseCasesContainer.saveAcademicYearUseCase!!,
+                        deleteAcademicYearUseCase = appDiContainer.domainUseCasesContainer.deleteAcademicYearUseCase!!,
+                        getSemestersUseCase = appDiContainer.domainUseCasesContainer.getSemestersUseCase!!,
+                        saveSemesterUseCase = appDiContainer.domainUseCasesContainer.saveSemesterUseCase!!,
+                        deleteSemesterUseCase = appDiContainer.domainUseCasesContainer.deleteSemesterUseCase!!,
+                        getGradeLevelsForSchoolUseCase = appDiContainer.domainUseCasesContainer.getGradeLevelsForSchoolUseCase!!,
+                        saveGradeLevelUseCase = appDiContainer.domainUseCasesContainer.saveGradeLevelUseCase!!,
+                        deleteGradeLevelUseCase = appDiContainer.domainUseCasesContainer.deleteGradeLevelUseCase!!,
+                        getDepartmentsUseCase = appDiContainer.domainUseCasesContainer.getDepartmentsUseCase!!,
+                        saveDepartmentUseCase = appDiContainer.domainUseCasesContainer.saveDepartmentUseCase!!,
+                        deleteDepartmentUseCase = appDiContainer.domainUseCasesContainer.deleteDepartmentUseCase!!,
+                        getMajorsUseCase = appDiContainer.domainUseCasesContainer.getMajorsUseCase!!,
+                        saveMajorUseCase = appDiContainer.domainUseCasesContainer.saveMajorUseCase!!,
+                        deleteMajorUseCase = appDiContainer.domainUseCasesContainer.deleteMajorUseCase!!,
+                        getSubjectsForSchoolUseCase = appDiContainer.domainUseCasesContainer.getSubjectsForSchoolUseCase!!,
+                        saveSubjectUseCase = appDiContainer.domainUseCasesContainer.saveSubjectUseCase!!,
+                        deleteSubjectUseCase = appDiContainer.domainUseCasesContainer.deleteSubjectUseCase!!,
+                        getSectionsForSchoolUseCase = appDiContainer.domainUseCasesContainer.getSectionsForSchoolUseCase!!,
+                        saveSectionUseCase = appDiContainer.domainUseCasesContainer.saveSectionUseCase!!,
+                        deleteSectionUseCase = appDiContainer.domainUseCasesContainer.deleteSectionUseCase!!,
+                        getStudyPlansUseCase = appDiContainer.domainUseCasesContainer.getStudyPlansUseCase!!,
+                        saveStudyPlanUseCase = appDiContainer.domainUseCasesContainer.saveStudyPlanUseCase!!,
+                        deleteStudyPlanUseCase = appDiContainer.domainUseCasesContainer.deleteStudyPlanUseCase!!
+                    )
+                )
+                val academicUiState by academicStructureViewModel.uiState.collectAsState()
+                com.rtiqa.feature.admin.academic.AcademicStructureScreen(
+                    uiState = academicUiState,
+                    onAction = { action -> academicStructureViewModel.onAction(action) },
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable("schools_management") {
                 val schoolViewModel: SchoolViewModel = viewModel(
                     factory = SchoolViewModelFactory(

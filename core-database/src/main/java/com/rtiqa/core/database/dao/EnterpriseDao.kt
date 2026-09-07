@@ -126,4 +126,17 @@ interface EnterpriseDao {
 
     @Query("DELETE FROM enterprise_members WHERE id = :id")
     suspend fun deleteMember(id: String)
+
+    @Query("DELETE FROM semesters WHERE id = :id")
+    suspend fun deleteSemester(id: String)
+
+    @Query("DELETE FROM departments WHERE id = :id")
+    suspend fun deleteDepartment(id: String)
+
+    @Query("DELETE FROM majors WHERE id = :id")
+    suspend fun deleteMajor(id: String)
+
+    @Query("DELETE FROM study_plans WHERE id = :id")
+    suspend fun deleteStudyPlan(id: String)
+
 }
