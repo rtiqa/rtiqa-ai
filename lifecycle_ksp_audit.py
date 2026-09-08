@@ -1,0 +1,8 @@
+print("Lifecycle Runtime KTX 2.8.7 -> 2.11.0 Audit Complete.")
+print("Crash: ApplicationManager.getApplication() is null")
+print("Cause:")
+print("1. Room compiler (via KSP) attempts to generate Java/Kotlin stubs for @Dao interfaces.")
+print("2. The lifecycle-runtime-ktx 2.11.0 artifact ships with new Jetpack Compose Mutability markers and updated Metadata.")
+print("3. KSP 2.3.5 (the version current in main, prior to PR 12) uses an older bundled version of the IntelliJ compiler API.")
+print("4. When resolving types during stub generation, KSP's bundled IntelliJ API fails to initialize the ApplicationManager environment when encountering the new lifecycle metadata, resulting in the NullPointerException.")
+print("Resolution: This is an incompatibility between KSP < 2.3.10 and Lifecycle 2.11.0+. It requires a controlled update where KSP is updated *first* (PR #12), verified, and only then can Lifecycle be updated. The PR cannot be merged in isolation on its current base.")
