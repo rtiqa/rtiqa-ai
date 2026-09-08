@@ -129,4 +129,30 @@
     <string name="nav_downloads">المحفوظات</string>
     <string name="nav_profile">الملف</string>
     <string name="offline_banner_text">وضع الحفظ المحلي نشط حالياً - المحتوى متاح بدون إنترنت</string>
+    <!-- Academic Structure -->
+    <string name="academic_structure">الهيكل الأكاديمي</string>
+    <string name="academic_structure_desc">إدارة الأعوام، الفصول، الأقسام، والمواد</string>
+    <string name="academic_years">الأعوام الدراسية</string>
+    <string name="semesters">الفصول الدراسية</string>
+    <string name="grade_levels">المراحل الدراسية</string>
+    <string name="departments">الأقسام</string>
+    <string name="majors">التخصصات</string>
+    <string name="subjects">المواد الدراسية</string>
+    <string name="sections">الشعب</string>
+    <string name="study_plans">الخطط الدراسية</string>
+    <string name="empty_academic_years">لا توجد أعوام دراسية</string>
+    <string name="empty_semesters">لا توجد فصول دراسية</string>
+    <string name="empty_grade_levels">لا توجد مراحل دراسية</string>
+    <string name="empty_departments">لا توجد أقسام</string>
+    <string name="empty_majors">لا توجد تخصصات</string>
+    <string name="empty_subjects">لا توجد مواد دراسية</string>
+    <string name="empty_sections">لا توجد شعب دراسية</string>
+    <string name="empty_study_plans">لا توجد خطط دراسية</string>
+    <string name="select_year_first">الرجاء تحديد عام دراسي أولاً</string>
+    <string name="select_dept_first">الرجاء تحديد قسم أولاً</string>
+    <string name="select_major_first">الرجاء تحديد تخصص أولاً</string>
+    <string name="order_prefix">الترتيب: </string>
+    <string name="code_prefix">الرمز: </string>
+    <string name="hours_prefix">الساعات: </string>
+    <string name="capacity_prefix">السعة: </string>
 </resources>
