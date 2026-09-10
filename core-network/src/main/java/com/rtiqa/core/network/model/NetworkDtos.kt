@@ -5,20 +5,20 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class CourseDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "title") val title: String,
-    @Json(name = "description") val description: String,
-    @Json(name = "category") val category: String,
-    @Json(name = "total_lessons") val totalLessons: Int,
-    @Json(name = "duration_minutes") val durationMinutes: Int,
-    @Json(name = "icon_url") val iconUrl: String? = null
+    @field:Json(name = "id") val id: String,
+    @field:Json(name = "title") val title: String,
+    @field:Json(name = "description") val description: String,
+    @field:Json(name = "category") val category: String,
+    @field:Json(name = "total_lessons") val totalLessons: Int,
+    @field:Json(name = "duration_minutes") val durationMinutes: Int,
+    @field:Json(name = "icon_url") val iconUrl: String? = null
 )
 
 @JsonClass(generateAdapter = true)
 data class LessonDto(
-    @Json(name = "id") val id: String,
-    @Json(name = "course_id") val courseId: String,
-    @Json(name = "title") val title: String,
-    @Json(name = "content") val content: String,
-    @Json(name = "order") val order: Int
+    @field:Json(name = "id") val id: String,
+    @field:Json(name = "course_id") val courseId: String,
+    @field:Json(name = "title") val title: String,
+    @field:Json(name = "content") val content: String,
+    @field:Json(name = "order") val order: Int
 )

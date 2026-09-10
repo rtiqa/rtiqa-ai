@@ -1,6 +1,0 @@
-print("Retrofit Moshi 2.x -> 3.x Audit Complete.")
-print("The primary breaking change in Retrofit 3.0.0 is the complete rewrite of Exception handling for HTTP failures.")
-print("In Retrofit 3.x, `retrofit2.HttpException` is no longer the root class used in some standard interceptors or converters.")
-print("Additionally, Moshi 3 requires strict Kotlin metadata compatibility changes, and all Moshi converters in Retrofit 3 target the latest K2 compiler paradigms.")
-print("Moshi Converter Factory must be updated and re-verified. We found multiple usages of `retrofit2.HttpException` in `NodeAuthDataSourceImpl.kt` and several test patches (patch_auth_test*.py).")
-print("Migrating to Retrofit 3.0.0 REQUIRES source code modifications and test suite overhauls.")

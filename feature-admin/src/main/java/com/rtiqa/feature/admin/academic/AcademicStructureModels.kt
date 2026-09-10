@@ -41,7 +41,9 @@ data class AcademicStructureUiState(
     val majors: List<Major> = emptyList(),
     val subjects: List<Subject> = emptyList(),
     val sections: List<Section> = emptyList(),
-    val studyPlans: List<StudyPlan> = emptyList()
+    val studyPlans: List<StudyPlan> = emptyList(),
+    val isDialogOpen: Boolean = false,
+    val activeDialogTab: AcademicTab? = null
 )
 
 sealed class AcademicStructureAction {
@@ -76,4 +78,6 @@ sealed class AcademicStructureAction {
     data class DeleteStudyPlan(val id: String) : AcademicStructureAction()
     
     object ClearError : AcademicStructureAction()
+    data class OpenDialog(val tab: AcademicTab) : AcademicStructureAction()
+    object CloseDialog : AcademicStructureAction()
 }

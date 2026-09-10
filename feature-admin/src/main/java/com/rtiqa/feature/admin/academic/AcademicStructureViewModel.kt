@@ -89,29 +89,31 @@ class AcademicStructureViewModel(
                 action.id?.let { loadStudyPlans(it) } ?: _uiState.update { it.copy(studyPlans = emptyList()) }
             }
             is AcademicStructureAction.ClearError -> _uiState.update { it.copy(error = null) }
+            is AcademicStructureAction.OpenDialog -> _uiState.update { it.copy(isDialogOpen = true, activeDialogTab = action.tab) }
+            is AcademicStructureAction.CloseDialog -> _uiState.update { it.copy(isDialogOpen = false, activeDialogTab = null) }
             
-            is AcademicStructureAction.SaveAcademicYear -> viewModelScope.launch { saveAcademicYearUseCase(action.item) }
+            is AcademicStructureAction.SaveAcademicYear -> viewModelScope.launch { saveAcademicYearUseCase(action.item); onAction(AcademicStructureAction.CloseDialog) }
             is AcademicStructureAction.DeleteAcademicYear -> viewModelScope.launch { deleteAcademicYearUseCase(action.id) }
             
-            is AcademicStructureAction.SaveSemester -> viewModelScope.launch { saveSemesterUseCase(action.item) }
+            is AcademicStructureAction.SaveSemester -> viewModelScope.launch { saveSemesterUseCase(action.item); onAction(AcademicStructureAction.CloseDialog) }
             is AcademicStructureAction.DeleteSemester -> viewModelScope.launch { deleteSemesterUseCase(action.id) }
             
-            is AcademicStructureAction.SaveGradeLevel -> viewModelScope.launch { saveGradeLevelUseCase(action.item) }
+            is AcademicStructureAction.SaveGradeLevel -> viewModelScope.launch { saveGradeLevelUseCase(action.item); onAction(AcademicStructureAction.CloseDialog) }
             is AcademicStructureAction.DeleteGradeLevel -> viewModelScope.launch { deleteGradeLevelUseCase(action.id) }
             
-            is AcademicStructureAction.SaveDepartment -> viewModelScope.launch { saveDepartmentUseCase(action.item) }
+            is AcademicStructureAction.SaveDepartment -> viewModelScope.launch { saveDepartmentUseCase(action.item); onAction(AcademicStructureAction.CloseDialog) }
             is AcademicStructureAction.DeleteDepartment -> viewModelScope.launch { deleteDepartmentUseCase(action.id) }
             
-            is AcademicStructureAction.SaveMajor -> viewModelScope.launch { saveMajorUseCase(action.item) }
+            is AcademicStructureAction.SaveMajor -> viewModelScope.launch { saveMajorUseCase(action.item); onAction(AcademicStructureAction.CloseDialog) }
             is AcademicStructureAction.DeleteMajor -> viewModelScope.launch { deleteMajorUseCase(action.id) }
             
-            is AcademicStructureAction.SaveSubject -> viewModelScope.launch { saveSubjectUseCase(action.item) }
+            is AcademicStructureAction.SaveSubject -> viewModelScope.launch { saveSubjectUseCase(action.item); onAction(AcademicStructureAction.CloseDialog) }
             is AcademicStructureAction.DeleteSubject -> viewModelScope.launch { deleteSubjectUseCase(action.id) }
             
-            is AcademicStructureAction.SaveSection -> viewModelScope.launch { saveSectionUseCase(action.item) }
+            is AcademicStructureAction.SaveSection -> viewModelScope.launch { saveSectionUseCase(action.item); onAction(AcademicStructureAction.CloseDialog) }
             is AcademicStructureAction.DeleteSection -> viewModelScope.launch { deleteSectionUseCase(action.id) }
             
-            is AcademicStructureAction.SaveStudyPlan -> viewModelScope.launch { saveStudyPlanUseCase(action.item) }
+            is AcademicStructureAction.SaveStudyPlan -> viewModelScope.launch { saveStudyPlanUseCase(action.item); onAction(AcademicStructureAction.CloseDialog) }
             is AcademicStructureAction.DeleteStudyPlan -> viewModelScope.launch { deleteStudyPlanUseCase(action.id) }
         }
     }

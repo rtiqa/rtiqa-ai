@@ -8,7 +8,7 @@ import com.squareup.moshi.JsonClass
  */
 @JsonClass(generateAdapter = true)
 data class RestApiError(
-    @Json(name = "status") val status: Int,
-    @Json(name = "message") val message: String,
-    @Json(name = "code") val code: String? = null
+    @field:Json(name = "status") val status: Int,
+    @field:Json(name = "message") val message: String,
+    @field:Json(name = "code") val code: String? = null
 )

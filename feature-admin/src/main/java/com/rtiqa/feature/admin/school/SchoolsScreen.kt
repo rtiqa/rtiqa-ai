@@ -20,7 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CalendarToday
@@ -30,7 +30,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Grade
-import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Quiz
@@ -171,7 +171,7 @@ fun SchoolsScreen(
                         onClick = onBack,
                         modifier = Modifier.testTag("back_button")
                     ) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "رجوع")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -1256,7 +1256,7 @@ fun SchoolDetailsOverviewTab(
                             title = course.title,
                             subtitle = "تصنيف: ${course.category} | الدروس: ${course.totalLessons}",
                             badgeText = "دورة",
-                            icon = Icons.Default.MenuBook
+                            icon = Icons.AutoMirrored.Filled.MenuBook
                         )
                     }
                 )

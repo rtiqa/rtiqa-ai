@@ -32,7 +32,7 @@ fun AcademicYearsList(uiState: AcademicStructureUiState, onAction: (AcademicStru
                     },
                     modifier = Modifier.clickable { onAction(AcademicStructureAction.SelectAcademicYear(item.id)) }
                 )
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -58,7 +58,7 @@ fun SemestersList(uiState: AcademicStructureUiState, onAction: (AcademicStructur
                         }
                     }
                 )
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -80,7 +80,7 @@ fun GradeLevelsList(uiState: AcademicStructureUiState, onAction: (AcademicStruct
                         }
                     }
                 )
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -103,7 +103,7 @@ fun DepartmentsList(uiState: AcademicStructureUiState, onAction: (AcademicStruct
                     },
                     modifier = Modifier.clickable { onAction(AcademicStructureAction.SelectDepartment(item.id)) }
                 )
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -130,7 +130,7 @@ fun MajorsList(uiState: AcademicStructureUiState, onAction: (AcademicStructureAc
                     },
                     modifier = Modifier.clickable { onAction(AcademicStructureAction.SelectMajor(item.id)) }
                 )
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -152,7 +152,7 @@ fun SubjectsList(uiState: AcademicStructureUiState, onAction: (AcademicStructure
                         }
                     }
                 )
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -174,7 +174,7 @@ fun SectionsList(uiState: AcademicStructureUiState, onAction: (AcademicStructure
                         }
                     }
                 )
-                Divider()
+                HorizontalDivider()
             }
         }
     }
@@ -200,7 +200,7 @@ fun StudyPlansList(uiState: AcademicStructureUiState, onAction: (AcademicStructu
                         }
                     }
                 )
-                Divider()
+                HorizontalDivider()
             }
         }
     }
