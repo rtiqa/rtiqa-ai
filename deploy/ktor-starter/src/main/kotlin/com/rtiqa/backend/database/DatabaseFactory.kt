@@ -1,8 +1,11 @@
 package com.rtiqa.backend.database
 
+import com.rtiqa.backend.auth.TenantContext
 import com.rtiqa.backend.config.DatabaseConfig
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import java.sql.Connection
 
@@ -50,6 +53,33 @@ object DatabaseFactory {
         } catch (e: Exception) {
             logger.error("Failed to acquire database connection: ${e.message}")
             null
+        }
+    }
+
+    suspend fun <T> transactionWithTenant(context: TenantContext, block: suspend (Connection) -> T): T = withContext(Dispatchers.IO) {
+        val ds = dataSource ?: throw IllegalStateException("Database not initialized")
+        val conn = ds.connection
+        val originalAutoCommit = conn.autoCommit
+        conn.autoCommit = false
+        try {
+            conn.prepareStatement("SELECT set_config('app.current_tenant_id', ?, true)").use { stmt ->
+                stmt.setString(1, context.orgId.toString())
+                stmt.executeQuery().use { it.next() }
+            }
+            conn.prepareStatement("SELECT set_config('app.current_user_id', ?, true)").use { stmt ->
+                stmt.setString(1, context.userId.toString())
+                stmt.executeQuery().use { it.next() }
+            }
+            
+            val result = block(conn)
+            conn.commit()
+            result
+        } catch (e: Exception) {
+            conn.rollback()
+            throw e
+        } finally {
+            conn.autoCommit = originalAutoCommit
+            conn.close()
         }
     }
 

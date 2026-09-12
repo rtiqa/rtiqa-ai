@@ -24,6 +24,7 @@ fun Route.authRoutes(authClient: SupabaseAuthClient) {
             }
 
             val result = authClient.login(request)
+            
             if (result.isSuccess) {
                 val tokenResponse = result.getOrNull()!!
                 
@@ -32,8 +33,8 @@ fun Route.authRoutes(authClient: SupabaseAuthClient) {
                     user = UserDto(
                         id = tokenResponse.user.id,
                         email = tokenResponse.user.email ?: request.email,
-                        role = "USER", // Default for now
-                        full_name = null
+                        role = "", // Mock role removed. Actual roles are tenant-specific and derived per request via X-Tenant-ID.
+                        full_name = null // Needs to be fetched from profiles if required by Android
                     ),
                     organization_id = null
                 )
