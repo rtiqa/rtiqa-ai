@@ -53,11 +53,16 @@ data class AiInsightEntity(
     val modelVersion: String
 )
 
-@Entity(tableName = "sync_queue")
+@Entity(
+    tableName = "sync_queue",
+    indices = [androidx.room.Index(value = ["ownerUserId", "ownerSessionId"])]
+)
 data class SyncQueueEntity(
     @PrimaryKey val id: String,
     val actionType: String,
     val payloadJson: String,
     val createdAt: Long,
-    val retryCount: Int = 0
+    val retryCount: Int = 0,
+    val ownerUserId: String,
+    val ownerSessionId: String
 )

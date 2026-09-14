@@ -20,6 +20,10 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 
+import com.rtiqa.core.network.session.RestSessionStore
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
 /**
  * Production implementation of AuthRepositoryContract managing Remote Authentication,
  * Cloud synchronization of user profile, secure token storage, and offline-first fallback authentication.
@@ -30,7 +34,9 @@ class AuthRepositoryImpl(
     private val preferencesDataStore: RtiqaPreferencesDataStore,
     private val securityManager: SecurityManager,
     private val authRemoteDataSource: AuthRemoteDataSource,
-    private val remoteSyncDataSource: RemoteSyncDataSource? = null
+    private val remoteSyncDataSource: RemoteSyncDataSource? = null,
+    private val sessionStore: RestSessionStore,
+    private val syncMutex: Mutex
 ) : AuthRepositoryContract {
 
     private val tag = "AuthRepositoryImpl"
@@ -63,7 +69,7 @@ class AuthRepositoryImpl(
             )
             userProfileDao.insertOrUpdateProfile(entity)
             remoteSyncDataSource?.syncUserProfileToCloud(entity.toDomain())
-
+            sessionStore.generateAndSaveSessionId()
             return RtiqaResult.Success(entity.toDomain())
         } else {
             RtiqaLog.w(tag, "Remote login failed, trying REST API or local database")
@@ -88,6 +94,7 @@ class AuthRepositoryImpl(
                     streakDays = netUser.streakCount
                 )
                 userProfileDao.insertOrUpdateProfile(entity)
+                sessionStore.generateAndSaveSessionId()
                 RtiqaResult.Success(entity.toDomain())
             } else {
                 // Offline fallback authentication check
@@ -95,6 +102,7 @@ class AuthRepositoryImpl(
                 if (existingLocalProfile != null && existingLocalProfile.email.equals(email, ignoreCase = true)) {
                     preferencesDataStore.setActiveUserId(existingLocalProfile.id)
                     securityManager.putEncryptedString(KEY_USER_ID, existingLocalProfile.id)
+                    sessionStore.generateAndSaveSessionId()
                     RtiqaResult.Success(existingLocalProfile)
                 } else {
                     RtiqaResult.Error(RtiqaError.AuthError("Invalid credentials or user not found offline."))
@@ -106,6 +114,7 @@ class AuthRepositoryImpl(
             if (existingLocalProfile != null && existingLocalProfile.email.equals(email, ignoreCase = true)) {
                 preferencesDataStore.setActiveUserId(existingLocalProfile.id)
                 securityManager.putEncryptedString(KEY_USER_ID, existingLocalProfile.id)
+                sessionStore.generateAndSaveSessionId()
                 RtiqaResult.Success(existingLocalProfile)
             } else {
                 RtiqaResult.Error(RtiqaError.NetworkError("Authentication failed due to connectivity.", cause = e))
@@ -132,7 +141,7 @@ class AuthRepositoryImpl(
             )
             userProfileDao.insertOrUpdateProfile(entity)
             remoteSyncDataSource?.syncUserProfileToCloud(entity.toDomain())
-
+            sessionStore.generateAndSaveSessionId()
             return RtiqaResult.Success(entity.toDomain())
         } else {
             RtiqaLog.w(tag, "Remote register failed, trying REST API or offline local fallback")
@@ -157,6 +166,7 @@ class AuthRepositoryImpl(
                     streakDays = netUser.streakCount
                 )
                 userProfileDao.insertOrUpdateProfile(entity)
+                sessionStore.generateAndSaveSessionId()
                 RtiqaResult.Success(entity.toDomain())
             } else {
                 // Local registration creation for offline availability
@@ -172,6 +182,7 @@ class AuthRepositoryImpl(
                 preferencesDataStore.setActiveUserId(newUserId)
                 securityManager.putEncryptedString(KEY_USER_ID, newUserId)
                 securityManager.putEncryptedString(KEY_AUTH_TOKEN, "offline_token_$newUserId")
+                sessionStore.generateAndSaveSessionId()
                 RtiqaResult.Success(entity.toDomain())
             }
         } catch (e: Exception) {
@@ -188,6 +199,7 @@ class AuthRepositoryImpl(
             preferencesDataStore.setActiveUserId(newUserId)
             securityManager.putEncryptedString(KEY_USER_ID, newUserId)
             securityManager.putEncryptedString(KEY_AUTH_TOKEN, "offline_token_$newUserId")
+            sessionStore.generateAndSaveSessionId()
             RtiqaResult.Success(entity.toDomain())
         }
     }
@@ -204,11 +216,14 @@ class AuthRepositoryImpl(
 
     override suspend fun logout(): RtiqaResult<Unit> {
         return try {
-            authRemoteDataSource.logout()
-            securityManager.removeKey(KEY_AUTH_TOKEN)
-            securityManager.removeKey(KEY_USER_ID)
-            preferencesDataStore.setActiveUserId(null)
-            userProfileDao.clearUserProfile()
+            authRemoteDataSource.logout() // Network call outside mutex
+            syncMutex.withLock {
+                sessionStore.clearSession()
+                securityManager.removeKey(KEY_AUTH_TOKEN)
+                securityManager.removeKey(KEY_USER_ID)
+                preferencesDataStore.setActiveUserId(null)
+                userProfileDao.clearUserProfile()
+            }
             RtiqaResult.Success(Unit)
         } catch (e: Exception) {
             RtiqaResult.Error(RtiqaError.UnknownError("Failed to logout cleanly.", e))

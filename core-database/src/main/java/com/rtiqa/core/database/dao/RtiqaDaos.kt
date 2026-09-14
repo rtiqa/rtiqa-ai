@@ -105,11 +105,11 @@ interface AiInsightDao {
 
 @Dao
 interface SyncDao {
-    @Query("SELECT * FROM sync_queue ORDER BY createdAt ASC")
-    fun getAllPendingSyncItems(): Flow<List<com.rtiqa.core.database.entity.SyncQueueEntity>>
+    @Query("SELECT * FROM sync_queue WHERE ownerUserId = :userId AND ownerSessionId = :sessionId ORDER BY createdAt ASC")
+    fun getAllPendingSyncItems(userId: String, sessionId: String): Flow<List<com.rtiqa.core.database.entity.SyncQueueEntity>>
 
-    @Query("SELECT * FROM sync_queue ORDER BY createdAt ASC")
-    suspend fun getPendingSyncItemsList(): List<com.rtiqa.core.database.entity.SyncQueueEntity>
+    @Query("SELECT * FROM sync_queue WHERE ownerUserId = :userId AND ownerSessionId = :sessionId ORDER BY createdAt ASC")
+    suspend fun getPendingSyncItemsList(userId: String, sessionId: String): List<com.rtiqa.core.database.entity.SyncQueueEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSyncItem(item: com.rtiqa.core.database.entity.SyncQueueEntity)

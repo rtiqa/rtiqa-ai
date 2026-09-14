@@ -18,6 +18,7 @@ import com.rtiqa.core.network.RetrofitNetworkClient
 import com.rtiqa.core.network.api.NetworkSyncPayloadDto
 import com.rtiqa.core.network.api.RtiqaApiService
 import com.rtiqa.core.security.EncryptedSecurityManager
+import com.rtiqa.core.network.session.RestSessionStoreImpl
 import java.util.concurrent.TimeUnit
 
 /**
@@ -40,16 +41,32 @@ class OfflineSyncWorker(
         val okHttpClient = RetrofitNetworkClient.createOkHttpClient(securityManager)
         val apiService = RetrofitNetworkClient.createApiService(okHttpClient)
         val preferencesDataStore = RtiqaPreferencesDataStore(context)
+        val sessionStore = RestSessionStoreImpl(securityManager)
 
         return try {
-            val pendingItems = syncDao.getPendingSyncItemsList()
+            val startSessionId = sessionStore.getSessionId()
+            val userId = securityManager.getEncryptedString("user_id")
+            // Not checking organizationId explicitly here as it's not strictly required in standard login unless scoped
+
+            if (startSessionId.isNullOrBlank() || userId.isNullOrBlank()) {
+                RtiqaLog.w(tag, "Stopping sync gracefully: No active session or user")
+                return Result.success()
+            }
+
+            val pendingItems = syncDao.getPendingSyncItemsList(userId, startSessionId)
             if (pendingItems.isEmpty()) {
                 RtiqaLog.i(tag, "No pending offline items to sync.")
                 return Result.success()
             }
 
+            // Race condition guard: verify session hasn't changed right before preparing payload
+            if (sessionStore.getSessionId() != startSessionId) {
+                RtiqaLog.w(tag, "Stopping sync gracefully: Session changed during execution")
+                return Result.success()
+            }
+
             val payload = NetworkSyncPayloadDto(
-                userId = securityManager.getEncryptedString("user_id") ?: "anonymous",
+                userId = userId,
                 progressUpdates = pendingItems.map { item ->
                     mapOf("id" to item.id, "type" to item.actionType, "payload" to item.payloadJson)
                 },
@@ -58,14 +75,20 @@ class OfflineSyncWorker(
 
             val response = apiService.syncOfflineData(payload)
             if (response.isSuccessful && response.body()?.success == true) {
-                // Clear successfully synced items
+                // Clear ONLY successfully synced items
                 pendingItems.forEach { syncDao.deleteSyncItem(it.id) }
                 preferencesDataStore.updateLastSyncTimestamp(System.currentTimeMillis())
                 RtiqaLog.i(tag, "Successfully synced ${pendingItems.size} offline actions.")
                 Result.success()
             } else {
-                RtiqaLog.w(tag, "Offline sync failed on server: ${response.code()} ${response.message()}")
-                Result.retry()
+                val code = response.code()
+                RtiqaLog.w(tag, "Offline sync failed on server: $code ${response.message()}")
+                if (code == 401 || code == 403) {
+                    RtiqaLog.e(tag, "Authentication failed during sync, stopping retries.")
+                    Result.failure()
+                } else {
+                    Result.retry()
+                }
             }
         } catch (e: Exception) {
             RtiqaLog.e(tag, "Exception during offline background sync", e)

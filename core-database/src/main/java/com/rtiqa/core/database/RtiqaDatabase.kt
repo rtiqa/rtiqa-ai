@@ -87,7 +87,7 @@ import com.rtiqa.core.database.entity.UserProfileEntity
         TeacherAssignmentEntity::class,
         StudentEnrollmentEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class RtiqaDatabase : RoomDatabase() {
@@ -105,6 +105,12 @@ abstract class RtiqaDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: RtiqaDatabase? = null
 
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `sync_queue` ADD COLUMN `ownerUserId` TEXT NOT NULL DEFAULT 'legacy_user'")
+                db.execSQL("ALTER TABLE `sync_queue` ADD COLUMN `ownerSessionId` TEXT NOT NULL DEFAULT 'legacy_session'")
+            }
+        }
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
@@ -129,7 +135,7 @@ abstract class RtiqaDatabase : RoomDatabase() {
                     RtiqaDatabase::class.java,
                     "rtiqa_database.db"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_6_7)
                     .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                 INSTANCE = instance

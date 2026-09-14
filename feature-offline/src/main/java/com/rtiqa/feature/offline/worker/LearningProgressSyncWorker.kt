@@ -40,8 +40,17 @@ class LearningProgressSyncWorker(
             }
             val remoteSyncDataSource = diContainerInstance!!.remoteSyncDataSource
 
+            val securityManager = diContainerInstance!!.coreDiContainer.securityManager
+            val sessionId = securityManager.getEncryptedString("rtiqa_rest_session_id", "") as String
+            val userId = securityManager.getEncryptedString("user_id", "") as String
+
+            if (sessionId.isBlank() || userId.isBlank()) {
+                Log.w(TAG, "Stopping sync gracefully: No active session or user")
+                return@withContext Result.success()
+            }
+
             // Retrieve pending sync queue items from Room DB
-            val pendingSyncItems = syncDao.getPendingSyncItemsList()
+            val pendingSyncItems = syncDao.getPendingSyncItemsList(userId, sessionId)
             Log.d(TAG, "Found ${pendingSyncItems.size} pending items to sync.")
 
             for (item in pendingSyncItems) {

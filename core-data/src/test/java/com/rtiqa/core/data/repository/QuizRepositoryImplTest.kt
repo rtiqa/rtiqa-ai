@@ -111,8 +111,8 @@ class FakeCourseDao : CourseDao {
 
 class FakeSyncDao : SyncDao {
     val items = mutableListOf<SyncQueueEntity>()
-    override fun getAllPendingSyncItems(): Flow<List<SyncQueueEntity>> = flowOf(items)
-    override suspend fun getPendingSyncItemsList(): List<SyncQueueEntity> = items
+    override fun getAllPendingSyncItems(userId: String, sessionId: String): Flow<List<SyncQueueEntity>> = kotlinx.coroutines.flow.flowOf(items.filter { it.ownerUserId == userId && it.ownerSessionId == sessionId })
+    override suspend fun getPendingSyncItemsList(userId: String, sessionId: String): List<SyncQueueEntity> = items.filter { it.ownerUserId == userId && it.ownerSessionId == sessionId }
     override suspend fun insertSyncItem(item: SyncQueueEntity) { items.add(item) }
     override suspend fun deleteSyncItem(id: String) { items.removeAll { it.id == id } }
     override suspend fun clearAll() { items.clear() }
@@ -141,7 +141,18 @@ class QuizRepositoryImplTest {
         offlineSyncManager = OfflineSyncManager(
             apiService = FakeRtiqaApiService(),
             courseDao = FakeCourseDao(),
-            syncDao = fakeSyncDao
+            syncDao = fakeSyncDao,
+            syncMutex = kotlinx.coroutines.sync.Mutex(),
+            sessionStore = object : com.rtiqa.core.network.session.RestSessionStore {
+                var _sessionId: String? = "test_session_id"
+                override fun saveSession(t: String, o: String?) {}
+                override fun getSessionToken() = null
+                override fun getActiveOrganizationId() = null
+                override fun updateActiveOrganizationId(o: String?) {}
+                override fun generateAndSaveSessionId() = "new_id".also { _sessionId = it }
+                override fun getSessionId() = _sessionId
+                override fun clearSession() { _sessionId = null }
+            }
         )
         repository = QuizRepositoryImpl(
             academicDao = fakeDao,
@@ -150,8 +161,7 @@ class QuizRepositoryImplTest {
         )
     }
 
-    @Test
-    fun getQuizzesForCourse_returnsDefaultWhenDbEmpty() = runTest {
+    @Test    fun getQuizzesForCourse_returnsDefaultWhenDbEmpty() = runTest {
         val quizzes = repository.getQuizzesForCourse("c1").first()
         assertEquals(1, quizzes.size)
         assertEquals("quiz_c1", quizzes[0].id)

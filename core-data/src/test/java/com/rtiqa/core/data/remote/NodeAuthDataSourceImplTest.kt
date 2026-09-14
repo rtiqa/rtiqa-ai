@@ -128,6 +128,14 @@ class NodeAuthDataSourceImplTest {
         override fun getSessionToken(): String? = token
         override fun getActiveOrganizationId(): String? = orgId
         override fun updateActiveOrganizationId(organizationId: String?) { this.orgId = organizationId }
+        var _sessionId: String? = null
+        override fun generateAndSaveSessionId(): String {
+            val newId = java.util.UUID.randomUUID().toString()
+            _sessionId = newId
+            return newId
+        }
+        override fun getSessionId(): String? = _sessionId
+
         override fun clearSession() {
             this.token = null
             this.orgId = null

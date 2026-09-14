@@ -13,13 +13,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 
+import com.rtiqa.core.network.session.RestSessionStore
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+
 /**
  * Manager responsible for triggering and queuing offline synchronization.
  */
 class OfflineSyncManager(
     private val apiService: RtiqaApiService,
     private val courseDao: CourseDao,
-    private val syncDao: SyncDao
+    private val syncDao: SyncDao,
+    private val syncMutex: Mutex,
+    private val sessionStore: RestSessionStore,
+    private val securityManager: com.rtiqa.core.security.SecurityManager? = null
 ) : OfflineSyncContract {
     private val tag = "OfflineSyncManager"
 
@@ -43,22 +50,61 @@ class OfflineSyncManager(
     }
 
     override suspend fun enqueueOfflineAction(actionType: String, payloadJson: String): RtiqaResult<Unit> {
-        return try {
-            val syncItem = SyncQueueEntity(
-                id = UUID.randomUUID().toString(),
-                actionType = actionType,
-                payloadJson = payloadJson,
-                createdAt = System.currentTimeMillis()
+        return syncMutex.withLock {
+            val sessionId = sessionStore.getSessionId()
+            if (sessionId.isNullOrBlank()) {
+                RtiqaLog.w(tag, "Refusing to enqueue offline action: No active session")
+                return@withLock RtiqaResult.Error(RtiqaError.AuthError("No active session"))
+            }
+            try {
+                val userId = securityManager?.getEncryptedString("user_id") ?: "legacy_user"
+                val syncItem = SyncQueueEntity(
+                    id = UUID.randomUUID().toString(),
+                    actionType = actionType,
+                    payloadJson = payloadJson,
+                    createdAt = System.currentTimeMillis(),
+                    ownerUserId = userId,
+                    ownerSessionId = sessionId
+                )
+                syncDao.insertSyncItem(syncItem)
+                RtiqaLog.i(tag, "Queued offline action ($actionType) into SyncQueue database.")
+                RtiqaResult.Success(Unit)
+            } catch (e: Exception) {
+                RtiqaResult.Error(RtiqaError.DatabaseError("Failed to enqueue offline action", e))
+            }
+        }
+    }
+
+    suspend fun syncPendingItemsNow(): RtiqaResult<Unit> {
+        // Simple direct sync logic mirroring the worker for immediate sync during logout.
+        // It's outside mutex in the caller.
+        try {
+            val sessionId = sessionStore.getSessionId() ?: return RtiqaResult.Success(Unit)
+            val userId = securityManager?.getEncryptedString("user_id") ?: "legacy_user"
+            val pendingItems = syncDao.getPendingSyncItemsList(userId, sessionId)
+            if (pendingItems.isEmpty()) return RtiqaResult.Success(Unit)
+            
+            val payload = com.rtiqa.core.network.api.NetworkSyncPayloadDto(
+                userId = sessionStore.getSessionId() ?: "anonymous", // In a real app this uses the actual user ID
+                progressUpdates = pendingItems.map { item ->
+                    mapOf("id" to item.id, "type" to item.actionType, "payload" to item.payloadJson)
+                },
+                lastSyncedTimestamp = System.currentTimeMillis()
             )
-            syncDao.insertSyncItem(syncItem)
-            RtiqaLog.i(tag, "Queued offline action ($actionType) into SyncQueue database.")
-            RtiqaResult.Success(Unit)
+            val response = apiService.syncOfflineData(payload)
+            if (response.isSuccessful && response.body()?.success == true) {
+                pendingItems.forEach { syncDao.deleteSyncItem(it.id) }
+                return RtiqaResult.Success(Unit)
+            }
+            return RtiqaResult.Error(RtiqaError.NetworkError("Immediate sync failed"))
         } catch (e: Exception) {
-            RtiqaResult.Error(RtiqaError.DatabaseError("Failed to enqueue offline action", e))
+            return RtiqaResult.Error(RtiqaError.NetworkError("Immediate sync failed", cause = e))
         }
     }
 
     override fun observePendingSyncCount(): Flow<Int> {
-        return syncDao.getAllPendingSyncItems().map { it.size }
+        val sessionId = sessionStore.getSessionId() ?: "legacy_session"
+        val userId = securityManager?.getEncryptedString("user_id") ?: "legacy_user"
+        return syncDao.getAllPendingSyncItems(userId, sessionId).map { it.size }
     }
 }

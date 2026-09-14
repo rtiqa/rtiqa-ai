@@ -186,6 +186,14 @@ class MockRestSessionStore : RestSessionStore {
         this.tenantId = organizationId
     }
 
+    var _sessionId: String? = null
+    override fun generateAndSaveSessionId(): String {
+        val newId = java.util.UUID.randomUUID().toString()
+        _sessionId = newId
+        return newId
+    }
+    override fun getSessionId(): String? = _sessionId
+
     override fun clearSession() {
         token = null
         tenantId = null

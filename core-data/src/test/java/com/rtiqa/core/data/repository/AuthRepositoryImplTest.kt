@@ -115,7 +115,9 @@ class AuthRepositoryImplTest {
         override suspend fun resetPassword(email: String) = com.rtiqa.core.domain.result.RtiqaResult.Success(Unit)
         override suspend fun logout() = com.rtiqa.core.domain.result.RtiqaResult.Success(Unit)
         override suspend fun getCurrentUserId(): String? = null
-    }
+    },
+        sessionStore = com.rtiqa.core.network.session.RestSessionStoreImpl(securityManager),
+        syncMutex = kotlinx.coroutines.sync.Mutex()
     )
 
     // Test 1: Correct login

@@ -35,6 +35,8 @@ import com.rtiqa.core.network.monitor.ConnectivityManagerNetworkMonitor
 import com.rtiqa.core.network.monitor.NetworkMonitor
 import com.rtiqa.core.ui.navigation.AppNavigator
 
+import kotlinx.coroutines.sync.Mutex
+
 /**
  * Root Application DI Container providing dependency graph binding across all core and feature modules.
  */
@@ -42,6 +44,10 @@ class AppDiContainer(val context: Context) {
 
     companion object {
         const val REST_AUTH_ENABLED = true
+    }
+
+    val globalSyncMutex: Mutex by lazy {
+        Mutex()
     }
     val coreDiContainer: RtiqaCoreDiContainer by lazy {
         RtiqaCoreDiContainer(context)
@@ -93,7 +99,10 @@ class AppDiContainer(val context: Context) {
         OfflineSyncManager(
             apiService = apiService,
             courseDao = database.courseDao(),
-            syncDao = database.syncDao()
+            syncDao = database.syncDao(),
+            syncMutex = globalSyncMutex,
+            sessionStore = restSessionStore,
+            securityManager = coreDiContainer.securityManager
         )
     }
 
@@ -108,7 +117,9 @@ class AppDiContainer(val context: Context) {
             preferencesDataStore = preferencesDataStore,
             securityManager = coreDiContainer.securityManager,
             authRemoteDataSource = authRemoteDataSource,
-            remoteSyncDataSource = remoteSyncDataSource
+            remoteSyncDataSource = remoteSyncDataSource,
+            sessionStore = restSessionStore,
+            syncMutex = globalSyncMutex
         )
     }
 
