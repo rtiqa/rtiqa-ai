@@ -194,8 +194,8 @@ class MultiTenantSchoolUnitTest {
     @Test
     fun testActiveSchoolSelectionAndDynamicStateSwitch() {
         val schools = listOf(
-            School("school_001", "مدرسة المستقبل", "SCH-001", "الرياض", "+966501234567"),
-            School("school_002", "مدرسة التفوق", "SCH-002", "جدة", "+966507654321")
+            School(id="school_001", orgId="", name="مدرسة المستقبل", code="SCH-001", address="الرياض", phone="+966501234567"),
+            School(id="school_002", orgId="", name="مدرسة التفوق", code="SCH-002", address="جدة", phone="+966507654321")
         )
 
         var activeSchoolId = "school_001"
@@ -214,7 +214,7 @@ class MultiTenantSchoolUnitTest {
     @Test
     fun testAddEditSchoolEntityAndPersistence() {
         val initialList = mutableListOf(
-            School("school_001", "المستقبل", "SCH-001", "الرياض", "+966500000001")
+            School(id="school_001", orgId="", name="المستقبل", code="SCH-001", address="الرياض", phone="+966500000001")
         )
 
         // Add new school

@@ -16,7 +16,7 @@ data class CourseEntity(
     val progressPercent: Float,
     val isEnrolled: Boolean = false,
     val isBookmarked: Boolean = false,
-    val schoolId: String = "school_001"
+    val schoolId: String? = null
 )
 
 @Entity(tableName = "lessons")
@@ -28,7 +28,7 @@ data class LessonEntity(
     val order: Int,
     val isCompleted: Boolean,
     val audioUrl: String?,
-    val schoolId: String = "school_001"
+    val schoolId: String? = null
 )
 
 @Entity(tableName = "user_profiles")
@@ -41,7 +41,7 @@ data class UserProfileEntity(
     val streakDays: Int = 0,
     val isAdmin: Boolean = false,
     val isOfflineModeEnabled: Boolean = false,
-    val schoolId: String = "school_001"
+    val schoolId: String? = null
 )
 
 @Entity(tableName = "ai_insights")

@@ -149,3 +149,24 @@ class LessonViewerViewModel(
         }
     }
 }
+
+
+class LessonViewerViewModelFactory(
+    private val completeLessonUseCase: CompleteLessonUseCase,
+    private val getLessonDetailUseCase: GetLessonDetailUseCase? = null,
+    private val getNextLessonUseCase: GetNextLessonUseCase? = null,
+    private val saveLessonProgressUseCase: SaveLessonProgressUseCase? = null
+) : androidx.lifecycle.ViewModelProvider.Factory {
+    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(LessonViewerViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return LessonViewerViewModel(
+                completeLessonUseCase,
+                getLessonDetailUseCase,
+                getNextLessonUseCase,
+                saveLessonProgressUseCase
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}

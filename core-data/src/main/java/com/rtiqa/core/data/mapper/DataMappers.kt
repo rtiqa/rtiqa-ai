@@ -21,7 +21,7 @@ fun CourseEntity.toDomain(): Course = Course(
     progressPercent = progressPercent,
     isEnrolled = isEnrolled,
     isBookmarked = isBookmarked,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 fun Course.toEntity(): CourseEntity = CourseEntity(
@@ -36,7 +36,7 @@ fun Course.toEntity(): CourseEntity = CourseEntity(
     progressPercent = progressPercent,
     isEnrolled = isEnrolled,
     isBookmarked = isBookmarked,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 fun CourseDto.toEntity(): CourseEntity = CourseEntity(
@@ -77,7 +77,7 @@ fun LessonEntity.toDomain(): Lesson = Lesson(
     order = order,
     isCompleted = isCompleted,
     audioUrl = audioUrl,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 fun Lesson.toEntity(): LessonEntity = LessonEntity(
@@ -88,7 +88,7 @@ fun Lesson.toEntity(): LessonEntity = LessonEntity(
     order = order,
     isCompleted = isCompleted,
     audioUrl = audioUrl,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 fun UserProfileEntity.toDomain(): UserProfile = UserProfile(
@@ -100,12 +100,13 @@ fun UserProfileEntity.toDomain(): UserProfile = UserProfile(
     streakDays = streakDays,
     isAdmin = isAdmin,
     isOfflineModeEnabled = isOfflineModeEnabled,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 // Enterprise Mappers
 fun com.rtiqa.core.database.entity.SchoolEntity.toDomain(): com.rtiqa.core.domain.model.School = com.rtiqa.core.domain.model.School(
     id = id,
+    orgId = orgId,
     name = name,
     code = code,
     address = address,
@@ -118,6 +119,7 @@ fun com.rtiqa.core.database.entity.SchoolEntity.toDomain(): com.rtiqa.core.domai
 
 fun com.rtiqa.core.domain.model.School.toEntity(): com.rtiqa.core.database.entity.SchoolEntity = com.rtiqa.core.database.entity.SchoolEntity(
     id = id,
+    orgId = orgId,
     name = name,
     code = code,
     address = address,
@@ -246,7 +248,7 @@ fun com.rtiqa.core.database.entity.SectionEntity.toDomain(): com.rtiqa.core.doma
     name = name,
     capacity = capacity,
     studentsCount = studentsCount,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 fun com.rtiqa.core.domain.model.Section.toEntity(): com.rtiqa.core.database.entity.SectionEntity = com.rtiqa.core.database.entity.SectionEntity(
@@ -257,7 +259,7 @@ fun com.rtiqa.core.domain.model.Section.toEntity(): com.rtiqa.core.database.enti
     name = name,
     capacity = capacity,
     studentsCount = studentsCount,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 fun com.rtiqa.core.database.entity.SubjectEntity.toDomain(): com.rtiqa.core.domain.model.Subject = com.rtiqa.core.domain.model.Subject(
@@ -266,7 +268,7 @@ fun com.rtiqa.core.database.entity.SubjectEntity.toDomain(): com.rtiqa.core.doma
     code = code,
     name = name,
     creditHours = creditHours,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 fun com.rtiqa.core.domain.model.Subject.toEntity(): com.rtiqa.core.database.entity.SubjectEntity = com.rtiqa.core.database.entity.SubjectEntity(
@@ -275,7 +277,7 @@ fun com.rtiqa.core.domain.model.Subject.toEntity(): com.rtiqa.core.database.enti
     code = code,
     name = name,
     creditHours = creditHours,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 fun com.rtiqa.core.database.entity.StudyPlanEntity.toDomain(): com.rtiqa.core.domain.model.StudyPlan = com.rtiqa.core.domain.model.StudyPlan(
@@ -303,7 +305,7 @@ fun com.rtiqa.core.database.entity.EnterpriseMemberEntity.toDomain(): com.rtiqa.
     department = department,
     status = com.rtiqa.core.domain.model.MemberStatus.valueOf(status),
     phone = phone,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 fun com.rtiqa.core.domain.model.EnterpriseMember.toEntity(): com.rtiqa.core.database.entity.EnterpriseMemberEntity = com.rtiqa.core.database.entity.EnterpriseMemberEntity(
@@ -315,7 +317,7 @@ fun com.rtiqa.core.domain.model.EnterpriseMember.toEntity(): com.rtiqa.core.data
     department = department,
     status = status.name,
     phone = phone,
-    schoolId = schoolId
+    schoolId = schoolId ?: ""
 )
 
 // Academic Platform Mappers

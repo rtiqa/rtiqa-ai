@@ -29,6 +29,7 @@ import kotlinx.coroutines.sync.withLock
  * Cloud synchronization of user profile, secure token storage, and offline-first fallback authentication.
  */
 class AuthRepositoryImpl(
+    private val database: com.rtiqa.core.database.RtiqaDatabase,
     private val apiService: RtiqaApiService,
     private val userProfileDao: UserProfileDao,
     private val preferencesDataStore: RtiqaPreferencesDataStore,
@@ -52,7 +53,7 @@ class AuthRepositoryImpl(
             val uid = remoteUser.uid
             val name = remoteUser.displayName.takeIf { !it.isNullOrEmpty() } ?: email.substringBefore("@")
             
-            securityManager.putEncryptedString(KEY_AUTH_TOKEN, "remote_token_$uid")
+            sessionStore.saveSession("remote_token_$uid", null)
             securityManager.putEncryptedString(KEY_USER_ID, uid)
             preferencesDataStore.setActiveUserId(uid)
 
@@ -82,7 +83,7 @@ class AuthRepositoryImpl(
                 val authBody = response.body()!!
                 val netUser = authBody.user
 
-                securityManager.putEncryptedString(KEY_AUTH_TOKEN, authBody.token)
+                sessionStore.saveSession(authBody.token, null)
                 securityManager.putEncryptedString(KEY_USER_ID, netUser.id)
                 preferencesDataStore.setActiveUserId(netUser.id)
 
@@ -128,7 +129,7 @@ class AuthRepositoryImpl(
             val remoteUser = remoteAuth.data
             val uid = remoteUser.uid
             
-            securityManager.putEncryptedString(KEY_AUTH_TOKEN, "remote_token_$uid")
+            sessionStore.saveSession("remote_token_$uid", null)
             securityManager.putEncryptedString(KEY_USER_ID, uid)
             preferencesDataStore.setActiveUserId(uid)
 
@@ -154,7 +155,7 @@ class AuthRepositoryImpl(
                 val authBody = response.body()!!
                 val netUser = authBody.user
 
-                securityManager.putEncryptedString(KEY_AUTH_TOKEN, authBody.token)
+                sessionStore.saveSession(authBody.token, null)
                 securityManager.putEncryptedString(KEY_USER_ID, netUser.id)
                 preferencesDataStore.setActiveUserId(netUser.id)
 
@@ -181,7 +182,7 @@ class AuthRepositoryImpl(
                 userProfileDao.insertOrUpdateProfile(entity)
                 preferencesDataStore.setActiveUserId(newUserId)
                 securityManager.putEncryptedString(KEY_USER_ID, newUserId)
-                securityManager.putEncryptedString(KEY_AUTH_TOKEN, "offline_token_$newUserId")
+                sessionStore.saveSession("offline_token_$newUserId", null)
                 sessionStore.generateAndSaveSessionId()
                 RtiqaResult.Success(entity.toDomain())
             }
@@ -198,7 +199,7 @@ class AuthRepositoryImpl(
             userProfileDao.insertOrUpdateProfile(entity)
             preferencesDataStore.setActiveUserId(newUserId)
             securityManager.putEncryptedString(KEY_USER_ID, newUserId)
-            securityManager.putEncryptedString(KEY_AUTH_TOKEN, "offline_token_$newUserId")
+            sessionStore.saveSession("offline_token_$newUserId", null)
             sessionStore.generateAndSaveSessionId()
             RtiqaResult.Success(entity.toDomain())
         }
@@ -223,6 +224,7 @@ class AuthRepositoryImpl(
                 securityManager.removeKey(KEY_USER_ID)
                 preferencesDataStore.setActiveUserId(null)
                 userProfileDao.clearUserProfile()
+                database.clearSensitiveData()
             }
             RtiqaResult.Success(Unit)
         } catch (e: Exception) {

@@ -37,7 +37,7 @@ class ClassesViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val fakeSchools = listOf(
-        School(id = "school_001", name = "المدرسة النموذجية", code = "SCH-001", address = "الرياض", phone = "0112345678", studentsCount = 450, teachersCount = 32)
+        School(id = "school_001", orgId = "", name = "المدرسة النموذجية", code = "SCH-001", address = "الرياض", phone = "0112345678", studentsCount = 450, teachersCount = 32)
     )
 
     private val fakeClasses = mutableListOf(

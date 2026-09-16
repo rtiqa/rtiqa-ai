@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SchoolClassDao {
+    @Query("DELETE FROM school_classes WHERE id = :id")
+    suspend fun deleteClassById(id: String)
     @Query("SELECT * FROM school_classes WHERE schoolId = :schoolId ORDER BY displayOrder ASC, name ASC")
     fun getClassesForSchool(schoolId: String): Flow<List<SchoolClassEntity>>
 
@@ -24,6 +26,4 @@ interface SchoolClassDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertClasses(classes: List<SchoolClassEntity>)
 
-    @Query("DELETE FROM school_classes WHERE id = :id")
-    suspend fun deleteClassById(id: String)
 }

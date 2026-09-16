@@ -9,7 +9,8 @@ data class School(
     val logoUrl: String? = null,
     val studentsCount: Int = 0,
     val teachersCount: Int = 0,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val orgId: String = ""
 )
 
 enum class OrgType(val labelAr: String) {

@@ -58,10 +58,21 @@ class OfflineSyncManager(
             }
             try {
                 val userId = securityManager?.getEncryptedString("user_id") ?: "legacy_user"
+                var finalPayload = payloadJson
+                val orgId = sessionStore.getActiveOrganizationId()
+                if (!orgId.isNullOrBlank()) {
+                    try {
+                        val json = org.json.JSONObject(payloadJson)
+                        json.put("orgId", orgId)
+                        finalPayload = json.toString()
+                    } catch (e: Exception) {
+                        RtiqaLog.w(tag, "Could not embed orgId into payloadJson", e)
+                    }
+                }
                 val syncItem = SyncQueueEntity(
                     id = UUID.randomUUID().toString(),
                     actionType = actionType,
-                    payloadJson = payloadJson,
+                    payloadJson = finalPayload,
                     createdAt = System.currentTimeMillis(),
                     ownerUserId = userId,
                     ownerSessionId = sessionId
@@ -85,7 +96,7 @@ class OfflineSyncManager(
             if (pendingItems.isEmpty()) return RtiqaResult.Success(Unit)
             
             val payload = com.rtiqa.core.network.api.NetworkSyncPayloadDto(
-                userId = sessionStore.getSessionId() ?: "anonymous", // In a real app this uses the actual user ID
+                userId = securityManager?.getEncryptedString("user_id") ?: "legacy_user", // In a real app this uses the actual user ID
                 progressUpdates = pendingItems.map { item ->
                     mapOf("id" to item.id, "type" to item.actionType, "payload" to item.payloadJson)
                 },

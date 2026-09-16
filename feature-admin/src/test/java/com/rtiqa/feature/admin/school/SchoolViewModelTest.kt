@@ -69,8 +69,8 @@ class SchoolViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val fakeSchools = mutableListOf(
-        School(id = "school_001", name = "المدرسة النموذجية الأولية", code = "SCH-001", address = "الرياض - حي الملز", phone = "0112345678", studentsCount = 450, teachersCount = 32),
-        School(id = "school_002", name = "مدرسة التميز الثانوية", code = "SCH-002", address = "جدة - حي الشاطئ", phone = "0126543210", studentsCount = 380, teachersCount = 28)
+        School(id = "school_001", orgId = "", name = "المدرسة النموذجية الأولية", code = "SCH-001", address = "الرياض - حي الملز", phone = "0112345678", studentsCount = 450, teachersCount = 32),
+        School(id = "school_002", orgId = "", name = "مدرسة التميز الثانوية", code = "SCH-002", address = "جدة - حي الشاطئ", phone = "0126543210", studentsCount = 380, teachersCount = 28)
     )
 
     private val fakeAcademicYears = mutableListOf(

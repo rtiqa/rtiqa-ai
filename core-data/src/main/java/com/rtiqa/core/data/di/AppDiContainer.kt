@@ -61,8 +61,13 @@ class AppDiContainer(val context: Context) {
         RtiqaPreferencesDataStore(context)
     }
 
+    val restSessionStore: RestSessionStore by lazy {
+        RestSessionStoreImpl(coreDiContainer.securityManager)
+    }
+
     val okHttpClient by lazy {
         RetrofitNetworkClient.createOkHttpClient(
+            sessionStore = restSessionStore,
             securityManager = coreDiContainer.securityManager,
             isDebug = true
         )
@@ -76,9 +81,6 @@ class AppDiContainer(val context: Context) {
         ConnectivityManagerNetworkMonitor(context)
     }
 
-    val restSessionStore: RestSessionStore by lazy {
-        RestSessionStoreImpl(coreDiContainer.securityManager)
-    }
 
     val restNetworkClient: RestNetworkClient by lazy {
         RestNetworkClient(restSessionStore, isDebug = true)
@@ -112,6 +114,7 @@ class AppDiContainer(val context: Context) {
 
     val authRepository: AuthRepositoryContract by lazy {
         AuthRepositoryImpl(
+            database = database,
             apiService = apiService,
             userProfileDao = database.userProfileDao(),
             preferencesDataStore = preferencesDataStore,

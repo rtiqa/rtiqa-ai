@@ -85,21 +85,17 @@ class SchoolViewModel(
     }
 
     private fun seedInitialSchoolsIfEmpty() {
-        viewModelScope.launch {
+        if(false) viewModelScope.launch {
             getSchoolsUseCase().collect { currentSchools ->
                 if (currentSchools.isEmpty()) {
-                    val defaultSchool1 = School(
-                        id = "school_001",
-                        name = "مدرسة المستقبل النموذجية",
+                    val defaultSchool1 = School(id = "school_001", orgId = "", name = "مدرسة المستقبل النموذجية",
                         code = "SCH-001",
                         address = "الرياض - طريق الملك فهد",
                         phone = "+966501234567",
                         studentsCount = 450,
                         teachersCount = 35
                     )
-                    val defaultSchool2 = School(
-                        id = "school_002",
-                        name = "مدرسة التفوق الدولية",
+                    val defaultSchool2 = School(id = "school_002", orgId = "", name = "مدرسة التفوق الدولية",
                         code = "SCH-002",
                         address = "جدة - حي الزهراء",
                         phone = "+966507654321",
@@ -375,9 +371,7 @@ class SchoolViewModel(
     private fun saveSchool(action: SchoolUiAction.SaveSchool) {
         viewModelScope.launch {
             val schoolId = action.id ?: "school_${UUID.randomUUID().toString().take(8)}"
-            val school = School(
-                id = schoolId,
-                name = action.name,
+            val school = School(id = schoolId, orgId = "", name = action.name,
                 code = action.code,
                 address = action.address,
                 phone = action.phone,

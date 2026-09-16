@@ -492,6 +492,34 @@ fun RtiqaApp(
                 )
             }
 
+            
+            composable(com.rtiqa.feature.lessons.LessonRoutes.VIEWER) { backStackEntry ->
+                val lessonId = backStackEntry.arguments?.getString("lessonId") ?: ""
+                val courseId = "course_demo" // fallback for demo since not passed in route
+                val viewModel: com.rtiqa.feature.lessons.LessonViewerViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
+                    factory = com.rtiqa.feature.lessons.LessonViewerViewModelFactory(
+                        completeLessonUseCase = appDiContainer.domainUseCasesContainer.completeLessonUseCase,
+                        getLessonDetailUseCase = appDiContainer.domainUseCasesContainer.getLessonDetailUseCase,
+                        getNextLessonUseCase = appDiContainer.domainUseCasesContainer.getNextLessonUseCase,
+                        saveLessonProgressUseCase = appDiContainer.domainUseCasesContainer.saveLessonProgressUseCase
+                    )
+                )
+                
+                // Initialize if needed
+                androidx.compose.runtime.LaunchedEffect(lessonId) {
+                    viewModel.onAction(com.rtiqa.feature.lessons.LessonViewerUiAction.InitializeLesson(lessonId, courseId))
+                }
+
+                val uiState by viewModel.uiState.collectAsState()
+                
+                com.rtiqa.feature.lessons.LessonDetailsScreen(
+                    uiState = uiState,
+                    onAction = { viewModel.onAction(it) },
+                    onBack = { navController.popBackStack() },
+                    onStartQuiz = { /* No-op for now based on requirements */ }
+                )
+            }
+
             composable("academic_platform") {
                 val academicViewModel: com.rtiqa.mobile.ui.viewmodel.AcademicPlatformViewModel = viewModel()
                 val academicUiState by academicViewModel.uiState.collectAsState()

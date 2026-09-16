@@ -105,6 +105,7 @@ class AuthRepositoryImplTest {
         securityManager: FakeSecurityManager,
         dataStore: FakeDataStore
     ) = AuthRepositoryImpl(
+        database = object : com.rtiqa.core.database.RtiqaDatabase() { override fun createOpenHelper(config: androidx.room.DatabaseConfiguration): androidx.sqlite.db.SupportSQLiteOpenHelper { throw NotImplementedError() } override fun createInvalidationTracker(): androidx.room.InvalidationTracker { throw NotImplementedError() } override fun clearAllTables() {} override fun userProfileDao(): com.rtiqa.core.database.dao.UserProfileDao { throw NotImplementedError() } override fun courseDao(): com.rtiqa.core.database.dao.CourseDao { throw NotImplementedError() } override fun lessonDao(): com.rtiqa.core.database.dao.LessonDao { throw NotImplementedError() } override fun aiInsightDao(): com.rtiqa.core.database.dao.AiInsightDao { throw NotImplementedError() } override fun syncDao(): com.rtiqa.core.database.dao.SyncDao { throw NotImplementedError() } override fun enterpriseDao(): com.rtiqa.core.database.dao.EnterpriseDao { throw NotImplementedError() } override fun schoolClassDao(): com.rtiqa.core.database.dao.SchoolClassDao { throw NotImplementedError() } override fun academicDao(): com.rtiqa.core.database.dao.AcademicDao { throw NotImplementedError() } override fun schoolManagementCoreDao(): com.rtiqa.core.database.dao.SchoolManagementCoreDao { throw NotImplementedError() } override fun clearSensitiveData() { } },
         apiService = apiService,
         userProfileDao = userProfileDao,
         preferencesDataStore = dataStore,
@@ -131,7 +132,7 @@ class AuthRepositoryImplTest {
 
         val result = repo.login("alex@rtiqa.com", "password123")
         assertTrue(result is RtiqaResult.Success)
-        assertEquals("fake_jwt_token", sec.getEncryptedString("auth_token"))
+        assertEquals("fake_jwt_token", sec.getEncryptedString("rtiqa_rest_auth_token"))
         assertEquals("u1", ds.activeUserId)
     }
 
@@ -215,14 +216,14 @@ class AuthRepositoryImplTest {
     @Test
     fun logout_clearsDataAndSession() = runTest {
         val dao = DynamicFakeUserProfileDao()
-        val sec = FakeSecurityManager().apply { putEncryptedString("auth_token", "token") }
+        val sec = FakeSecurityManager().apply { putEncryptedString("rtiqa_rest_auth_token", "token") }
         val ds = FakeDataStore(ApplicationProvider.getApplicationContext()).apply { activeUserId = "u1" }
         val repo = createRepository(DynamicFakeApiService(), dao, sec, ds)
 
         val result = repo.logout()
         assertTrue(result is RtiqaResult.Success)
         assertNull(ds.activeUserId)
-        assertNull(sec.getEncryptedString("auth_token"))
+        assertNull(sec.getEncryptedString("rtiqa_rest_auth_token"))
         assertNull(dao.getUserProfile().first())
     }
 
@@ -276,3 +277,9 @@ class AuthRepositoryImplTest {
     }
 }
 
+
+// Dummy implementation of RtiqaDatabase for testing
+abstract class FakeRtiqaDatabase : com.rtiqa.core.database.RtiqaDatabase() {
+    // We don't need to implement anything since it's just passed along
+}
+// End of file

@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit
  * Factory class for creating configured Retrofit and OkHttpClient instances.
  */
 object RetrofitNetworkClient {
-
     private const val DEFAULT_BASE_URL = "https://api.rtiqa.com/"
     private const val CONNECT_TIMEOUT_SECONDS = 30L
     private const val READ_TIMEOUT_SECONDS = 30L
@@ -29,17 +28,21 @@ object RetrofitNetworkClient {
 
     fun createOkHttpClient(
         securityManager: SecurityManager,
+        sessionStore: com.rtiqa.core.network.session.RestSessionStore,
         isDebug: Boolean = false
     ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
             level = if (isDebug) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
+            redactHeader("Authorization")
+            redactHeader("X-Tenant-Id")
         }
 
         return OkHttpClient.Builder()
             .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .writeTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .addInterceptor(AuthInterceptor(securityManager))
+            .addInterceptor(com.rtiqa.core.network.interceptor.RestAuthInterceptor(sessionStore))
+            .addInterceptor(com.rtiqa.core.network.interceptor.RestTenantInterceptor(sessionStore))
             .addInterceptor(NetworkRetryInterceptor())
             .addInterceptor(loggingInterceptor)
             .build()

@@ -1,3 +1,7 @@
+#!/bin/bash
+# Revert back entirely, since the missing functions in EnterpriseDao are breaking compiling and removing them causes more problems
+
+cat << 'RESTORE_EOF' > /app/applet/core-network/src/test/java/com/rtiqa/core/network/RestInterceptorsTest.kt
 package com.rtiqa.core.network
 
 import com.rtiqa.core.network.interceptor.RestAuthInterceptor
@@ -198,3 +202,9 @@ class MockRestSessionStore : RestSessionStore {
         tenantId = null
     }
 }
+RESTORE_EOF
+
+# I'm going to just completely replace EnterpriseDao with the original correct version by undoing ALL modifications
+git checkout core-database/src/main/java/com/rtiqa/core/database/dao/EnterpriseDao.kt || true
+git checkout core-database/src/main/java/com/rtiqa/core/database/dao/RtiqaDaos.kt || true
+git checkout core-database/src/main/java/com/rtiqa/core/database/dao/SchoolClassDao.kt || true

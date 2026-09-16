@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CourseDao {
+    @Query("DELETE FROM courses WHERE id = :id")
+    suspend fun deleteCourseById(id: String)
     @Query("SELECT * FROM courses")
     fun getAllCourses(): Flow<List<CourseEntity>>
 
@@ -30,8 +32,6 @@ interface CourseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCourses(courses: List<CourseEntity>)
 
-    @Query("DELETE FROM courses WHERE id = :id")
-    suspend fun deleteCourseById(id: String)
 
     @Query("UPDATE courses SET isEnrolled = :isEnrolled WHERE id = :id")
     suspend fun updateEnrollmentStatus(id: String, isEnrolled: Boolean)
@@ -48,6 +48,8 @@ interface CourseDao {
 
 @Dao
 interface LessonDao {
+    @Query("DELETE FROM lessons WHERE courseId = :courseId")
+    suspend fun deleteLessonsForCourse(courseId: String)
     @Query("SELECT * FROM lessons WHERE courseId = :courseId ORDER BY `order` ASC")
     fun getLessonsForCourse(courseId: String): Flow<List<LessonEntity>>
 
@@ -69,8 +71,6 @@ interface LessonDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLessons(lessons: List<LessonEntity>)
 
-    @Query("DELETE FROM lessons WHERE courseId = :courseId")
-    suspend fun deleteLessonsForCourse(courseId: String)
 
     @Query("UPDATE lessons SET isCompleted = :isCompleted WHERE id = :id")
     suspend fun updateLessonCompletion(id: String, isCompleted: Boolean)
@@ -84,14 +84,14 @@ interface LessonDao {
 
 @Dao
 interface UserProfileDao {
+    @Query("DELETE FROM user_profiles")
+    suspend fun clearUserProfile()
     @Query("SELECT * FROM user_profiles LIMIT 1")
     fun getUserProfile(): Flow<UserProfileEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateProfile(profile: UserProfileEntity)
 
-    @Query("DELETE FROM user_profiles")
-    suspend fun clearUserProfile()
 }
 
 @Dao
@@ -105,6 +105,10 @@ interface AiInsightDao {
 
 @Dao
 interface SyncDao {
+    @Query("DELETE FROM sync_queue WHERE id = :id")
+    suspend fun deleteSyncItem(id: String)
+    @Query("DELETE FROM sync_queue")
+    suspend fun clearAll()
     @Query("SELECT * FROM sync_queue WHERE ownerUserId = :userId AND ownerSessionId = :sessionId ORDER BY createdAt ASC")
     fun getAllPendingSyncItems(userId: String, sessionId: String): Flow<List<com.rtiqa.core.database.entity.SyncQueueEntity>>
 
@@ -114,9 +118,5 @@ interface SyncDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSyncItem(item: com.rtiqa.core.database.entity.SyncQueueEntity)
 
-    @Query("DELETE FROM sync_queue WHERE id = :id")
-    suspend fun deleteSyncItem(id: String)
 
-    @Query("DELETE FROM sync_queue")
-    suspend fun clearAll()
 }

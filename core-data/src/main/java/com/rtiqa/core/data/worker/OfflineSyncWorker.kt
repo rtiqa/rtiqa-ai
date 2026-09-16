@@ -38,10 +38,10 @@ class OfflineSyncWorker(
         val database = RtiqaDatabase.getInstance(context)
         val syncDao = database.syncDao()
         val securityManager = EncryptedSecurityManager(context)
-        val okHttpClient = RetrofitNetworkClient.createOkHttpClient(securityManager)
+        val sessionStore = RestSessionStoreImpl(securityManager)
+        val okHttpClient = RetrofitNetworkClient.createOkHttpClient(securityManager, sessionStore)
         val apiService = RetrofitNetworkClient.createApiService(okHttpClient)
         val preferencesDataStore = RtiqaPreferencesDataStore(context)
-        val sessionStore = RestSessionStoreImpl(securityManager)
 
         return try {
             val startSessionId = sessionStore.getSessionId()

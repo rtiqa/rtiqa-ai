@@ -50,7 +50,7 @@ class CourseRepositoryImpl(
                     progressPercent = 0.35f,
                     isEnrolled = true,
                     isBookmarked = true,
-                    schoolId = "school_001"
+                    schoolId = ""
                 ),
                 CourseEntity(
                     id = "c_cs_201",
@@ -64,7 +64,7 @@ class CourseRepositoryImpl(
                     progressPercent = 0.10f,
                     isEnrolled = true,
                     isBookmarked = false,
-                    schoolId = "school_001"
+                    schoolId = ""
                 ),
                 CourseEntity(
                     id = "c_data_301",
@@ -78,7 +78,7 @@ class CourseRepositoryImpl(
                     progressPercent = 0.0f,
                     isEnrolled = false,
                     isBookmarked = true,
-                    schoolId = "school_001"
+                    schoolId = ""
                 ),
                 CourseEntity(
                     id = "c_cyber_401",
@@ -92,7 +92,7 @@ class CourseRepositoryImpl(
                     progressPercent = 0.0f,
                     isEnrolled = false,
                     isBookmarked = false,
-                    schoolId = "school_001"
+                    schoolId = ""
                 )
             )
 
@@ -105,7 +105,7 @@ class CourseRepositoryImpl(
                     order = 1,
                     isCompleted = true,
                     audioUrl = null,
-                    schoolId = "school_001"
+                    schoolId = ""
                 ),
                 LessonEntity(
                     id = "l_ai_2",
@@ -115,7 +115,7 @@ class CourseRepositoryImpl(
                     order = 2,
                     isCompleted = false,
                     audioUrl = null,
-                    schoolId = "school_001"
+                    schoolId = ""
                 )
             )
 

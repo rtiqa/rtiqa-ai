@@ -87,7 +87,7 @@ import com.rtiqa.core.database.entity.UserProfileEntity
         TeacherAssignmentEntity::class,
         StudentEnrollmentEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class RtiqaDatabase : RoomDatabase() {
@@ -101,9 +101,33 @@ abstract class RtiqaDatabase : RoomDatabase() {
     abstract fun schoolClassDao(): SchoolClassDao
     abstract fun schoolManagementCoreDao(): SchoolManagementCoreDao
 
+    open fun clearSensitiveData() {
+        runInTransaction {
+            val tables = listOf(
+                "courses", "lessons", "schools", "school_classes", "sync_queue",
+                "organizations", "branches", "academic_years", "semesters", "departments",
+                "majors", "sections", "subjects", "study_plans", "enterprise_members",
+                "curriculum_modules", "academic_lessons", "assignments", "assignment_submissions",
+                "question_bank", "assessments", "assessment_attempts", "gradebook_records",
+                "student_progress", "achievement_badges", "learning_paths", "prerequisites",
+                "smart_recommendations", "grade_levels", "teacher_assignments", "student_enrollments"
+            )
+            tables.forEach {
+                compileStatement("DELETE FROM $it").execute()
+            }
+        }
+    }
+
+
     companion object {
         @Volatile
         private var INSTANCE: RtiqaDatabase? = null
+
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `schools` ADD COLUMN `orgId` TEXT NOT NULL DEFAULT ''")
+            }
+        }
 
         val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -135,7 +159,7 @@ abstract class RtiqaDatabase : RoomDatabase() {
                     RtiqaDatabase::class.java,
                     "rtiqa_database.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_6_7, MIGRATION_7_8)
                     .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                 INSTANCE = instance
