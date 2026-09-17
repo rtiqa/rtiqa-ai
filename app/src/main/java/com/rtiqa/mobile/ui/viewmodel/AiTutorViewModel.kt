@@ -38,8 +38,15 @@ class AiTutorViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
     fun updateInputText(text: String) {
         _inputText.value = text
+    }
+
+    fun dismissError() {
+        _errorMessage.value = null
     }
 
     fun sendMessage(prompt: String = _inputText.value, isArabic: Boolean = true) {
@@ -53,16 +60,33 @@ class AiTutorViewModel(
         _messages.value = _messages.value + userMsg
         _inputText.value = ""
         _isLoading.value = true
+        _errorMessage.value = null
 
         viewModelScope.launch {
-            val reply = aiRepository.askAiTutor(prompt, isArabic)
-            val aiMsg = ChatMessage(
-                id = (System.currentTimeMillis() + 1).toString(),
-                sender = ChatMessage.Sender.AI,
-                text = reply
-            )
-            _messages.value = _messages.value + aiMsg
-            _isLoading.value = false
+            try {
+                val result = aiRepository.askAiTutor(prompt, isArabic)
+                
+                if (result.error != null) {
+                    _errorMessage.value = if (isArabic) "فشل الاتصال السحابي. تم تفعيل المحرك المحلي." else "Cloud connection failed. Local engine activated."
+                }
+                
+                val finalReply = if (result.isOfflineFallback) {
+                    result.text + if (isArabic) "\n\n(تم الرد عبر المحرك المحلي ⚡)" else "\n\n(Replied via Local Engine ⚡)"
+                } else {
+                    result.text
+                }
+                
+                val aiMsg = ChatMessage(
+                    id = (System.currentTimeMillis() + 1).toString(),
+                    sender = ChatMessage.Sender.AI,
+                    text = finalReply
+                )
+                _messages.value = _messages.value + aiMsg
+            } catch (e: Exception) {
+                _errorMessage.value = if (isArabic) "عذراً، حدث خطأ غير متوقع." else "Sorry, an unexpected error occurred."
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }

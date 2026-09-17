@@ -93,6 +93,7 @@ fun RtiqaApp(
     val chatMessages by aiTutorViewModel.messages.collectAsState()
     val aiInputText by aiTutorViewModel.inputText.collectAsState()
     val isAiLoading by aiTutorViewModel.isLoading.collectAsState()
+    val aiErrorMessage by aiTutorViewModel.errorMessage.collectAsState()
 
     val quizUiState by quizViewModel.uiState.collectAsState()
 
@@ -305,6 +306,8 @@ fun RtiqaApp(
                     messages = chatMessages,
                     inputText = aiInputText,
                     isLoading = isAiLoading,
+                    errorMessage = aiErrorMessage,
+                    onDismissError = { aiTutorViewModel.dismissError() },
                     onInputTextChange = { text -> aiTutorViewModel.updateInputText(text) },
                     onSendMessage = { prompt -> aiTutorViewModel.sendMessage(prompt, isArabic) },
                     isArabic = isArabic

@@ -45,6 +45,8 @@ fun AiTutorScreen(
     messages: List<ChatMessage>,
     inputText: String,
     isLoading: Boolean,
+    errorMessage: String? = null,
+    onDismissError: () -> Unit = {},
     onInputTextChange: (String) -> Unit,
     onSendMessage: (String) -> Unit,
     isArabic: Boolean = true,
@@ -145,6 +147,23 @@ fun AiTutorScreen(
                         CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     }
                 }
+            }
+        }
+
+        // Error Message
+        if (errorMessage != null) {
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .testTag("ai_error_message")
+            )
+            LaunchedEffect(errorMessage) {
+                kotlinx.coroutines.delay(3000)
+                onDismissError()
             }
         }
 

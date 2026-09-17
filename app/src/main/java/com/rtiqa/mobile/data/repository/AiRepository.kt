@@ -9,9 +9,15 @@ import com.rtiqa.mobile.data.remote.GeminiRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+data class AiResult(
+    val text: String,
+    val isOfflineFallback: Boolean,
+    val error: Exception? = null
+)
+
 class AiRepository {
 
-    suspend fun askAiTutor(prompt: String, isArabic: Boolean = true): String = withContext(Dispatchers.IO) {
+    suspend fun askAiTutor(prompt: String, isArabic: Boolean = true): AiResult = withContext(Dispatchers.IO) {
         val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Exception) { "" }
 
         if (apiKey.isNotEmpty() && apiKey != "MY_GEMINI_API_KEY" && apiKey != "null") {
@@ -33,15 +39,23 @@ class AiRepository {
                 val response = GeminiApiClient.service.generateContent(apiKey, request)
                 val text = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
                 if (!text.isNullOrEmpty()) {
-                    return@withContext text
+                    return@withContext AiResult(text, isOfflineFallback = false)
                 }
             } catch (e: Exception) {
                 // Fallback to local intelligent AI response generator on network error or offline
+                return@withContext AiResult(
+                    text = generateLocalEducationalResponse(prompt, isArabic),
+                    isOfflineFallback = true,
+                    error = e
+                )
             }
         }
 
         // Local Smart Offline AI Response Generator
-        return@withContext generateLocalEducationalResponse(prompt, isArabic)
+        return@withContext AiResult(
+            text = generateLocalEducationalResponse(prompt, isArabic),
+            isOfflineFallback = true
+        )
     }
 
     private fun String?.poeticOrEmpty(): Boolean = this.isNullOrEmpty()

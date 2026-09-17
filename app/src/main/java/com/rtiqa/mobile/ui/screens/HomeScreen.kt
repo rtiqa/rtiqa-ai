@@ -145,6 +145,17 @@ fun HomeScreen(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
+                        onClick = { onNavigate("ai_tutor") },
+                        modifier = Modifier.testTag("ai_tutor_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = "المعلم الذكي",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    IconButton(
                         onClick = { showNotificationsDialog = true },
                         modifier = Modifier.testTag("notifications_button")
                     ) {
