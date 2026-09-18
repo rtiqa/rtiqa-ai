@@ -45,6 +45,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.filled.School
 
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.BarChart
@@ -64,6 +66,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 fun ProfileScreen(
     userProfile: UserProfile,
     onNavigateToAdmin: () -> Unit = {},
+    onNavigateToTeacherDashboard: () -> Unit = {},
     onLogout: () -> Unit = {},
     isArabic: Boolean = true,
     modifier: Modifier = Modifier
@@ -158,6 +161,21 @@ fun ProfileScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = "لوحة تحكم المسؤول", fontWeight = FontWeight.Bold)
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = onNavigateToTeacherDashboard,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.School,
+                                contentDescription = "Teacher",
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "لوحة تحكم المعلم", fontWeight = FontWeight.Bold)
                         }
                     }
 

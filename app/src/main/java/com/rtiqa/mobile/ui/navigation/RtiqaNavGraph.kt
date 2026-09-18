@@ -65,6 +65,9 @@ import com.rtiqa.feature.admin.school.SchoolViewModelFactory
 import com.rtiqa.feature.admin.users.UsersScreen
 import com.rtiqa.feature.admin.users.UserManagementViewModel
 import com.rtiqa.feature.admin.users.UserViewModelFactory
+import com.rtiqa.feature.admin.teacher.TeacherDashboardScreen
+import com.rtiqa.feature.admin.teacher.TeacherDashboardViewModel
+import com.rtiqa.feature.admin.teacher.TeacherDashboardUiAction
 
 @Composable
 fun RtiqaApp(
@@ -356,6 +359,7 @@ fun RtiqaApp(
                 ProfileScreen(
                     userProfile = userProfile,
                     onNavigateToAdmin = { navController.navigate("admin_dashboard") },
+                    onNavigateToTeacherDashboard = { navController.navigate("teacher_dashboard") },
                     onLogout = {
                         scope.launch {
                             appDiContainer.authRepository.logout()
@@ -379,7 +383,21 @@ fun RtiqaApp(
                     onNavigateToAcademicStructure = { navController.navigate("academic_structure") },
                     onNavigateToSchools = { navController.navigate("schools_management") },
                     onNavigateToUsers = { navController.navigate("users_management") },
-                    onNavigateToClasses = { navController.navigate("classes_management") }
+                    onNavigateToClasses = { navController.navigate("classes_management") },
+                    onNavigateToTeacherDashboard = { navController.navigate("teacher_dashboard") }
+                )
+            }
+
+            composable("teacher_dashboard") {
+                val teacherViewModel: TeacherDashboardViewModel = viewModel()
+                val teacherUiState by teacherViewModel.uiState.collectAsState()
+                TeacherDashboardScreen(
+                    uiState = teacherUiState,
+                    uiEvent = teacherViewModel.uiEvent,
+                    onAction = { action -> teacherViewModel.onAction(action) },
+                    onBack = { navController.popBackStack() },
+                    onNavigateToClasses = { navController.navigate("classes_management") },
+                    onNavigateToAcademicPlatform = { navController.navigate("academic_platform") }
                 )
             }
 

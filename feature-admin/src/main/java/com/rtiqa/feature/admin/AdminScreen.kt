@@ -76,6 +76,7 @@ fun AdminScreen(
     onNavigateToSchools: () -> Unit = {},
     onNavigateToUsers: () -> Unit = {},
     onNavigateToClasses: () -> Unit = {},
+    onNavigateToTeacherDashboard: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -113,6 +114,9 @@ fun AdminScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToTeacherDashboard) {
+                        Icon(Icons.Default.Person, contentDescription = "بوابة المعلم")
+                    }
                     IconButton(onClick = onNavigateToSchools) {
                         Icon(Icons.Default.Business, contentDescription = "إدارة المدارس")
                     }
@@ -198,7 +202,8 @@ fun AdminScreen(
                         onNavigateToAcademicPlatform = onNavigateToAcademicPlatform,
                         onNavigateToSchools = onNavigateToSchools,
                         onNavigateToUsers = onNavigateToUsers,
-                        onNavigateToClasses = onNavigateToClasses
+                        onNavigateToClasses = onNavigateToClasses,
+                        onNavigateToTeacherDashboard = onNavigateToTeacherDashboard
                     )
                     1 -> OrganizationsTabContent(uiState, onAction) { showAddOrgDialog = true }
                     2 -> AcademicStructureTabContent(uiState, onAction)
@@ -403,7 +408,8 @@ private fun OverviewTabContent(
     onNavigateToAcademicStructure: () -> Unit = {},
     onNavigateToSchools: () -> Unit = {},
     onNavigateToUsers: () -> Unit = {},
-    onNavigateToClasses: () -> Unit = {}
+    onNavigateToClasses: () -> Unit = {},
+    onNavigateToTeacherDashboard: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier
@@ -429,30 +435,30 @@ private fun OverviewTabContent(
                 Card(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { onNavigateToSchools() },
+                        .clickable { onNavigateToTeacherDashboard() },
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
                         Icon(Icons.Default.School, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text("إدارة المدارس", fontWeight = FontWeight.Bold)
-                        Text("التحكم بالمدارس النشطة", style = MaterialTheme.typography.bodySmall)
+                        Text("لوحة المعلم", fontWeight = FontWeight.Bold)
+                        Text("بوابة المعلم والفصول", style = MaterialTheme.typography.bodySmall)
                     }
                 }
 
                 Card(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { onNavigateToUsers() },
+                        .clickable { onNavigateToSchools() },
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Icon(Icons.Default.People, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                        Icon(Icons.Default.Business, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
                         Spacer(modifier = Modifier.height(6.dp))
-                        Text("مستخدمو المدرسة", fontWeight = FontWeight.Bold)
-                        Text("مدير، وكيل، معلم، طالب، ولي أمر", style = MaterialTheme.typography.bodySmall)
+                        Text("إدارة المدارس", fontWeight = FontWeight.Bold)
+                        Text("المدارس والفروع", style = MaterialTheme.typography.bodySmall)
                     }
                 }
 
@@ -467,7 +473,7 @@ private fun OverviewTabContent(
                         Icon(Icons.Default.School, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary)
                         Spacer(modifier = Modifier.height(6.dp))
                         Text("صفوف المدرسة", fontWeight = FontWeight.Bold)
-                        Text("الفصول والشعب والسعة", style = MaterialTheme.typography.bodySmall)
+                        Text("الفصول والشعب", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }

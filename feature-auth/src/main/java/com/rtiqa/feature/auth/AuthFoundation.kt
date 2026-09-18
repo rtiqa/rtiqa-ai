@@ -2,15 +2,12 @@ package com.rtiqa.feature.auth
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.rtiqa.core.ui.button.RdsPrimaryButton
-import com.rtiqa.core.ui.input.RdsTextField
 
 /**
  * Authentication module contracts and foundation components.

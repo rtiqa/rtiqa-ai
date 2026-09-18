@@ -18,6 +18,7 @@ object NavRoute {
     const val PROFILE_ME = "profile/me"
     const val SETTINGS_MAIN = "settings/main"
     const val ADMIN_DASHBOARD = "admin/dashboard"
+    const val TEACHER_DASHBOARD = "teacher/dashboard"
 
     fun createCourseDetailRoute(courseId: String): String = "courses/detail/$courseId"
     fun createLessonViewerRoute(lessonId: String): String = "lessons/viewer/$lessonId"

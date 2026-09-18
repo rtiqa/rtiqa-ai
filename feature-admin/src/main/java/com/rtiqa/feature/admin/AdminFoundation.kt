@@ -13,6 +13,7 @@ import com.rtiqa.core.ui.card.RdsCard
 
 object AdminRoutes {
     const val DASHBOARD = "admin/dashboard"
+    const val TEACHER_DASHBOARD = "teacher/dashboard"
 }
 
 @Composable
