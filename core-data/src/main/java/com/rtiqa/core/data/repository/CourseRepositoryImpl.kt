@@ -24,107 +24,77 @@ import kotlinx.coroutines.launch
 class CourseRepositoryImpl(
     private val courseDao: CourseDao,
     private val lessonDao: LessonDao,
+    private val apiService: com.rtiqa.core.network.api.RtiqaApiService? = null,
     private val remoteSyncDataSource: RemoteSyncDataSource? = null,
     private val currentUserIdProvider: (suspend () -> String?)? = null,
     private val offlineSyncManager: com.rtiqa.core.domain.repository.OfflineSyncContract? = null
 ) : CourseRepositoryContract {
 
-    init {
+    private fun refreshRemoteCourses(category: String? = null) {
+        val service = apiService ?: return
         CoroutineScope(Dispatchers.IO).launch {
-            seedDefaultDataIfNeeded()
+            try {
+                val catParam = if (category.isNullOrBlank() || category == "الكل") null else category
+                val response = service.getCourses(catParam)
+                if (response.isSuccessful) {
+                    val dtos = response.body().orEmpty()
+                    val existingCourses = courseDao.getAllCoursesList().associateBy { it.id }
+                    val entities = dtos.map { dto ->
+                        val existing = existingCourses[dto.id]
+                        CourseEntity(
+                            id = dto.id,
+                            title = dto.title,
+                            description = dto.description,
+                            category = dto.category,
+                            totalLessons = dto.totalModules,
+                            durationMinutes = existing?.durationMinutes ?: 30,
+                            iconUrl = existing?.iconUrl,
+                            isDownloaded = existing?.isDownloaded ?: false,
+                            progressPercent = dto.progressPercent,
+                            isEnrolled = existing?.isEnrolled ?: false,
+                            isBookmarked = existing?.isBookmarked ?: false,
+                            schoolId = existing?.schoolId
+                        )
+                    }
+                    courseDao.insertCourses(entities)
+                }
+            } catch (e: Exception) {
+                // Ignore network error to keep local offline cache
+            }
         }
     }
 
-    private suspend fun seedDefaultDataIfNeeded() {
-        if (courseDao.getAllCoursesList().isEmpty()) {
-            val defaultCourses = listOf(
-                CourseEntity(
-                    id = "c_ai_101",
-                    title = "الذكاء الاصطناعي والشبكات العصبيّة",
-                    description = "تعلم بنى التعلم العميق، ونماذج المحولات، والانتشار العكسي، وبناء نماذج الذكاء الاصطناعي العملية.",
-                    category = "الذكاء الاصطناعي والبيانات",
-                    totalLessons = 6,
-                    durationMinutes = 240,
-                    iconUrl = null,
-                    isDownloaded = true,
-                    progressPercent = 0.35f,
-                    isEnrolled = true,
-                    isBookmarked = true,
-                    schoolId = ""
-                ),
-                CourseEntity(
-                    id = "c_cs_201",
-                    title = "كوتلن الحديثة وهندسة أندرويد النظيفة",
-                    description = "صمّم تطبيقات أندرويد مؤسسية قابلة للتوسع باستخدام Jetpack Compose والطبقات النظيفة وتدفقات Coroutines.",
-                    category = "علوم الحاسوب",
-                    totalLessons = 8,
-                    durationMinutes = 310,
-                    iconUrl = null,
-                    isDownloaded = false,
-                    progressPercent = 0.10f,
-                    isEnrolled = true,
-                    isBookmarked = false,
-                    schoolId = ""
-                ),
-                CourseEntity(
-                    id = "c_data_301",
-                    title = "تحليل البيانات والرياضيات المالية",
-                    description = "اتقن استخراج البيانات وتحليل السلاسل الزمنية والنمذجة الإحصائية لتطبيقات الأعمال والتمويل.",
-                    category = "البيانات والمالية",
-                    totalLessons = 10,
-                    durationMinutes = 420,
-                    iconUrl = null,
-                    isDownloaded = false,
-                    progressPercent = 0.0f,
-                    isEnrolled = false,
-                    isBookmarked = true,
-                    schoolId = ""
-                ),
-                CourseEntity(
-                    id = "c_cyber_401",
-                    title = "الأمن السيبراني وحماية الشبكات",
-                    description = "أساسيات التشفير، واختبار الاختراق الأخلاقي، وتأمين البنى التحتية والتطبيقات.",
-                    category = "الأمن السيبراني",
-                    totalLessons = 7,
-                    durationMinutes = 280,
-                    iconUrl = null,
-                    isDownloaded = false,
-                    progressPercent = 0.0f,
-                    isEnrolled = false,
-                    isBookmarked = false,
-                    schoolId = ""
-                )
-            )
-
-            val defaultLessons = listOf(
-                LessonEntity(
-                    id = "l_ai_1",
-                    courseId = "c_ai_101",
-                    title = "مقدمة في الذكاء الاصطناعي والشبكات العصبية",
-                    content = "الخلية العصبية الاصطناعية ومعمارية Deep Learning وطرق التدريب الفعالة.",
-                    order = 1,
-                    isCompleted = true,
-                    audioUrl = null,
-                    schoolId = ""
-                ),
-                LessonEntity(
-                    id = "l_ai_2",
-                    courseId = "c_ai_101",
-                    title = "دوال التنشيط والانتشار الأمامي",
-                    content = "فهم ReLu, Sigmoid, Softmax وكيف تنقل الإشارات عبر طبقات الشبكة.",
-                    order = 2,
-                    isCompleted = false,
-                    audioUrl = null,
-                    schoolId = ""
-                )
-            )
-
-            courseDao.insertCourses(defaultCourses)
-            lessonDao.insertLessons(defaultLessons)
+    private fun refreshRemoteLessons(courseId: String) {
+        val service = apiService ?: return
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = service.getCourseLessons(courseId)
+                if (response.isSuccessful) {
+                    val dtos = response.body().orEmpty()
+                    val existingLessons = lessonDao.getLessonsForCourseList(courseId).associateBy { it.id }
+                    val entities = dtos.map { dto ->
+                        val existing = existingLessons[dto.id]
+                        LessonEntity(
+                            id = dto.id,
+                            courseId = dto.courseId,
+                            title = dto.title,
+                            content = dto.content,
+                            order = dto.moduleOrder,
+                            isCompleted = dto.isCompleted || (existing?.isCompleted ?: false),
+                            audioUrl = existing?.audioUrl,
+                            schoolId = existing?.schoolId
+                        )
+                    }
+                    lessonDao.insertLessons(entities)
+                }
+            } catch (e: Exception) {
+                // Ignore network error to keep local offline cache
+            }
         }
     }
 
     override fun getCourses(): Flow<List<Course>> {
+        refreshRemoteCourses()
         return courseDao.getAllCourses().map { entities ->
             entities.map { it.toDomain() }
         }
@@ -141,6 +111,7 @@ class CourseRepositoryImpl(
     }
 
     override fun getLessonsForCourse(courseId: String): Flow<List<Lesson>> {
+        refreshRemoteLessons(courseId)
         return lessonDao.getLessonsForCourse(courseId).map { entities ->
             entities.map { it.toDomain() }
         }
@@ -155,6 +126,7 @@ class CourseRepositoryImpl(
     }
 
     override fun getPagedCourses(request: PageRequest): Flow<PagedData<Course>> {
+        refreshRemoteCourses(request.filterCategory)
         val filterCat = request.filterCategory
         val query = request.searchQuery
         return courseDao.getAllCourses().map { entities ->
@@ -202,31 +174,64 @@ class CourseRepositoryImpl(
 
     override suspend fun markLessonCompleted(lessonId: String, courseId: String): RtiqaResult<Unit> {
         return try {
-            val lesson = lessonDao.getLessonById(lessonId)
-            if (lesson != null) {
-                lessonDao.insertLesson(lesson.copy(isCompleted = true))
+            if (apiService != null) {
+                val response = apiService.completeLesson(courseId = courseId, lessonId = lessonId)
+                if (!response.isSuccessful) {
+                    val code = response.code()
+                    val errorMsg = response.errorBody()?.string() ?: response.message()
+                    return when (code) {
+                        401 -> RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.AuthError("Unauthorized: $errorMsg", errorCode = "401"))
+                        403 -> RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.AuthError("Forbidden: $errorMsg", errorCode = "403"))
+                        404 -> RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.NetworkError("Lesson or course not found: $errorMsg", statusCode = 404))
+                        else -> RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.NetworkError("HTTP $code: $errorMsg", statusCode = code))
+                    }
+                }
+
+                val completion = response.body()
+                if (completion != null) {
+                    val lesson = lessonDao.getLessonById(lessonId)
+                    if (lesson != null) {
+                        lessonDao.insertLesson(lesson.copy(isCompleted = true))
+                    }
+                    val normalizedProgress = if (completion.courseProgressPercent > 1f) {
+                        completion.courseProgressPercent / 100f
+                    } else {
+                        completion.courseProgressPercent
+                    }
+                    courseDao.updateCourseProgress(courseId, normalizedProgress)
+
+                    // Trigger background refresh to sync PostgreSQL state across caches
+                    refreshRemoteCourses()
+                    refreshRemoteLessons(courseId)
+                }
+                RtiqaResult.Success(Unit)
+            } else {
+                val lesson = lessonDao.getLessonById(lessonId)
+                if (lesson != null) {
+                    lessonDao.insertLesson(lesson.copy(isCompleted = true))
+                }
+
+                val lessons = lessonDao.getLessonsForCourseList(courseId)
+                val completedCount = lessons.count { it.isCompleted }
+                val totalCount = lessons.size.coerceAtLeast(1)
+                val progressPercent = completedCount.toFloat() / totalCount.toFloat()
+
+                courseDao.updateCourseProgress(courseId, progressPercent)
+
+                val userId = currentUserIdProvider?.invoke()
+                if (userId != null) {
+                    remoteSyncDataSource?.syncCourseProgressToCloud(
+                        userId = userId,
+                        courseId = courseId,
+                        progressPercent = progressPercent,
+                        completedLessonsCount = completedCount
+                    )
+                }
+
+                RtiqaResult.Success(Unit)
             }
-
-            val lessons = lessonDao.getLessonsForCourseList(courseId)
-            val completedCount = lessons.count { it.isCompleted }
-            val totalCount = lessons.size.coerceAtLeast(1)
-            val progressPercent = completedCount.toFloat() / totalCount.toFloat()
-
-            courseDao.updateCourseProgress(courseId, progressPercent)
-
-            val userId = currentUserIdProvider?.invoke()
-            if (userId != null) {
-                remoteSyncDataSource?.syncCourseProgressToCloud(
-                    userId = userId,
-                    courseId = courseId,
-                    progressPercent = progressPercent,
-                    completedLessonsCount = completedCount
-                )
-            }
-
-            RtiqaResult.Success(Unit)
         } catch (e: Exception) {
-            RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to mark lesson complete", e))
+            RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.NetworkError("Failed to mark lesson complete: ${e.message}", cause = e))
         }
     }
 
@@ -324,6 +329,34 @@ class CourseRepositoryImpl(
             val userId = currentUserIdProvider?.invoke()
             if (userId != null) {
                 remoteSyncDataSource?.fetchUserProfileFromCloud(userId)
+            }
+            if (apiService != null) {
+                val response = apiService.getCourses()
+                if (response.isSuccessful) {
+                    val dtos = response.body().orEmpty()
+                    val existingCourses = courseDao.getAllCoursesList().associateBy { it.id }
+                    val entities = dtos.map { dto ->
+                        val existing = existingCourses[dto.id]
+                        CourseEntity(
+                            id = dto.id,
+                            title = dto.title,
+                            description = dto.description,
+                            category = dto.category,
+                            totalLessons = dto.totalModules,
+                            durationMinutes = existing?.durationMinutes ?: 30,
+                            iconUrl = existing?.iconUrl,
+                            isDownloaded = existing?.isDownloaded ?: false,
+                            progressPercent = dto.progressPercent,
+                            isEnrolled = existing?.isEnrolled ?: false,
+                            isBookmarked = existing?.isBookmarked ?: false,
+                            schoolId = existing?.schoolId
+                        )
+                    }
+                    courseDao.insertCourses(entities)
+                    return RtiqaResult.Success(Unit)
+                } else {
+                    return RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.NetworkError("HTTP ${response.code()}: ${response.message()}", statusCode = response.code()))
+                }
             }
             offlineSyncManager?.syncRemoteCourses() ?: RtiqaResult.Success(Unit)
         } catch (e: Exception) {

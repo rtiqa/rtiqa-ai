@@ -48,7 +48,18 @@ data class NetworkLessonDto(
     val title: String,
     val content: String,
     val moduleOrder: Int,
-    val estimatedMinutes: Int
+    val estimatedMinutes: Int,
+    val isCompleted: Boolean = false
+)
+
+data class LessonCompletionResponseDto(
+    val success: Boolean,
+    val lessonId: String,
+    val courseId: String,
+    val completed: Boolean,
+    val courseProgressPercent: Float,
+    val completedLessons: Int,
+    val totalLessons: Int
 )
 
 data class NetworkSyncPayloadDto(
@@ -90,6 +101,12 @@ interface RtiqaApiService {
     suspend fun getCourseLessons(
         @Path("courseId") courseId: String
     ): Response<List<NetworkLessonDto>>
+
+    @POST("api/v1/courses/{courseId}/lessons/{lessonId}/complete")
+    suspend fun completeLesson(
+        @Path("courseId") courseId: String,
+        @Path("lessonId") lessonId: String
+    ): Response<LessonCompletionResponseDto>
 
     @POST("api/v1/sync")
     suspend fun syncOfflineData(

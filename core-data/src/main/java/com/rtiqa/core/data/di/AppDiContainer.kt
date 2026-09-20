@@ -142,8 +142,10 @@ class AppDiContainer(val context: Context) {
         CourseRepositoryImpl(
             courseDao = database.courseDao(),
             lessonDao = database.lessonDao(),
+            apiService = apiService,
             remoteSyncDataSource = remoteSyncDataSource,
-            currentUserIdProvider = { authRepository.getCurrentUserId() }
+            currentUserIdProvider = { authRepository.getCurrentUserId() },
+            offlineSyncManager = offlineSyncManager
         )
     }
 

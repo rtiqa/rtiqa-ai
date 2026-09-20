@@ -7,6 +7,7 @@ import com.rtiqa.core.database.entity.UserProfileEntity
 import com.rtiqa.core.domain.error.RtiqaError
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.network.api.AuthResponseDto
+import com.rtiqa.core.network.api.LessonCompletionResponseDto
 import com.rtiqa.core.network.api.LoginRequestDto
 import com.rtiqa.core.network.api.NetworkCourseDto
 import com.rtiqa.core.network.api.NetworkLessonDto
@@ -70,6 +71,20 @@ class AuthRepositoryImplTest {
 
         override suspend fun syncOfflineData(payload: NetworkSyncPayloadDto): Response<NetworkSyncResponseDto> {
             return Response.success(NetworkSyncResponseDto(true, System.currentTimeMillis(), "Synced"))
+        }
+
+        override suspend fun completeLesson(courseId: String, lessonId: String): Response<LessonCompletionResponseDto> {
+            return Response.success(
+                LessonCompletionResponseDto(
+                    success = true,
+                    lessonId = lessonId,
+                    courseId = courseId,
+                    completed = true,
+                    courseProgressPercent = 100.0f,
+                    completedLessons = 1,
+                    totalLessons = 1
+                )
+            )
         }
     }
 

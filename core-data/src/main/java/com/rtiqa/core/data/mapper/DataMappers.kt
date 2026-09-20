@@ -69,6 +69,28 @@ fun com.rtiqa.core.network.api.NetworkCourseDto.toEntity(): CourseEntity = Cours
     schoolId = "school_001"
 )
 
+fun com.rtiqa.core.network.api.NetworkLessonDto.toEntity(): LessonEntity = LessonEntity(
+    id = id,
+    courseId = courseId,
+    title = title,
+    content = content,
+    order = moduleOrder,
+    isCompleted = isCompleted,
+    audioUrl = null,
+    schoolId = null
+)
+
+fun com.rtiqa.core.network.api.NetworkLessonDto.toDomain(): Lesson = Lesson(
+    id = id,
+    courseId = courseId,
+    title = title,
+    content = content,
+    order = moduleOrder,
+    isCompleted = isCompleted,
+    audioUrl = null,
+    schoolId = ""
+)
+
 fun LessonEntity.toDomain(): Lesson = Lesson(
     id = id,
     courseId = courseId,

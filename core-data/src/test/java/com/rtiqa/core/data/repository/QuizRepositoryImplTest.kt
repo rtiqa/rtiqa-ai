@@ -25,6 +25,7 @@ import com.rtiqa.core.domain.model.QuestionType
 import com.rtiqa.core.domain.model.Quiz
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.network.api.AuthResponseDto
+import com.rtiqa.core.network.api.LessonCompletionResponseDto
 import com.rtiqa.core.network.api.LoginRequestDto
 import com.rtiqa.core.network.api.NetworkCourseDto
 import com.rtiqa.core.network.api.NetworkLessonDto
@@ -124,6 +125,8 @@ class FakeRtiqaApiService : RtiqaApiService {
     override suspend fun getUserProfile(): Response<NetworkUserDto> = throw NotImplementedError()
     override suspend fun getCourses(category: String?): Response<List<NetworkCourseDto>> = Response.success(emptyList())
     override suspend fun getCourseLessons(courseId: String): Response<List<NetworkLessonDto>> = Response.success(emptyList())
+    override suspend fun completeLesson(courseId: String, lessonId: String): Response<LessonCompletionResponseDto> =
+        Response.success(LessonCompletionResponseDto(true, lessonId, courseId, true, 100.0f, 1, 1))
     override suspend fun syncOfflineData(payload: NetworkSyncPayloadDto): Response<NetworkSyncResponseDto> = throw NotImplementedError()
 }
 
