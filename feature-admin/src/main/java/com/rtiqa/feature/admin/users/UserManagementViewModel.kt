@@ -34,152 +34,137 @@ class UserManagementViewModel(
     }
 
     private fun seedInitialUsersIfEmpty() {
-        viewModelScope.launch {
-            getUsersForSchoolUseCase("school_001").collect { school1Users ->
-                if (school1Users.isEmpty()) {
-                    // Seed diverse roles for School 001
-                    saveEnterpriseMemberUseCase(
-                        EnterpriseMember(
-                            id = "usr_p1",
-                            orgId = "org_1",
-                            name = "د. محمد بن سلمان العتيبي",
-                            email = "principal@school1.edu",
-                            role = EnterpriseRole.PRINCIPAL,
-                            department = "إدارة المدرسة",
-                            status = MemberStatus.ACTIVE,
-                            phone = "+966501112233",
-                            schoolId = "school_001"
-                        )
-                    )
-                    saveEnterpriseMemberUseCase(
-                        EnterpriseMember(
-                            id = "usr_vp1",
-                            orgId = "org_1",
-                            name = "أ. عبد الرحمن الغامدي",
-                            email = "vp@school1.edu",
-                            role = EnterpriseRole.VICE_PRINCIPAL,
-                            department = "الشؤون التعليمية",
-                            status = MemberStatus.ACTIVE,
-                            phone = "+966502223344",
-                            schoolId = "school_001"
-                        )
-                    )
-                    saveEnterpriseMemberUseCase(
-                        EnterpriseMember(
-                            id = "usr_t1",
-                            orgId = "org_1",
-                            name = "أ.د. عبد الله الشهري",
-                            email = "abdullah@school1.edu",
-                            role = EnterpriseRole.TEACHER,
-                            department = "الرياضيات والعلوم",
-                            status = MemberStatus.ACTIVE,
-                            phone = "+966503334455",
-                            schoolId = "school_001"
-                        )
-                    )
-                    saveEnterpriseMemberUseCase(
-                        EnterpriseMember(
-                            id = "usr_s1",
-                            orgId = "org_1",
-                            name = "علي أحمد المظفر",
-                            email = "ali@school1.edu",
-                            role = EnterpriseRole.STUDENT,
-                            department = "الصف الأول الثانوي",
-                            status = MemberStatus.ACTIVE,
-                            phone = "+966504445566",
-                            schoolId = "school_001"
-                        )
-                    )
-                    saveEnterpriseMemberUseCase(
-                        EnterpriseMember(
-                            id = "usr_pr1",
-                            orgId = "org_1",
-                            name = "أحمد المظفر (ولي أمر)",
-                            email = "ahmed.parent@school1.edu",
-                            role = EnterpriseRole.PARENT,
-                            department = "أولياء الأمور",
-                            status = MemberStatus.ACTIVE,
-                            phone = "+966505556677",
-                            schoolId = "school_001"
-                        )
-                    )
-                }
-            }
-        }
+        val initialMembers = listOf(
+            // School 001
+            createSeedMember(
+                id = "usr_p1",
+                name = "د. محمد بن سلمان العتيبي",
+                email = "principal@school1.edu",
+                role = EnterpriseRole.PRINCIPAL,
+                department = "إدارة المدرسة",
+                phone = "+966501112233",
+                schoolId = "school_001"
+            ),
+            createSeedMember(
+                id = "usr_vp1",
+                name = "أ. عبد الرحمن الغامدي",
+                email = "vp@school1.edu",
+                role = EnterpriseRole.VICE_PRINCIPAL,
+                department = "الشؤون التعليمية",
+                phone = "+966502223344",
+                schoolId = "school_001"
+            ),
+            createSeedMember(
+                id = "usr_t1",
+                name = "أ.د. عبد الله الشهري",
+                email = "abdullah@school1.edu",
+                role = EnterpriseRole.TEACHER,
+                department = "الرياضيات والعلوم",
+                phone = "+966503334455",
+                schoolId = "school_001"
+            ),
+            createSeedMember(
+                id = "usr_s1",
+                name = "علي أحمد المظفر",
+                email = "ali@school1.edu",
+                role = EnterpriseRole.STUDENT,
+                department = "الصف الأول الثانوي",
+                phone = "+966504445566",
+                schoolId = "school_001"
+            ),
+            createSeedMember(
+                id = "usr_pr1",
+                name = "أحمد المظفر (ولي أمر)",
+                email = "ahmed.parent@school1.edu",
+                role = EnterpriseRole.PARENT,
+                department = "أولياء الأمور",
+                phone = "+966505556677",
+                schoolId = "school_001"
+            ),
+            // School 002
+            createSeedMember(
+                id = "usr_p2",
+                name = "د. نورة الزهراني",
+                email = "principal@school2.edu",
+                role = EnterpriseRole.PRINCIPAL,
+                department = "الإدارة العليا",
+                phone = "+966506667788",
+                schoolId = "school_002"
+            ),
+            createSeedMember(
+                id = "usr_vp2",
+                name = "م. خالد القحطاني",
+                email = "vp@school2.edu",
+                role = EnterpriseRole.VICE_PRINCIPAL,
+                department = "الشؤون الإدارية",
+                phone = "+966507778899",
+                schoolId = "school_002"
+            ),
+            createSeedMember(
+                id = "usr_t2",
+                name = "م. ريم الشمري",
+                email = "reem@school2.edu",
+                role = EnterpriseRole.TEACHER,
+                department = "الكيمياء والفيزياء",
+                phone = "+966508889900",
+                schoolId = "school_002"
+            ),
+            createSeedMember(
+                id = "usr_s2",
+                name = "سارة خالد العتيبي",
+                email = "sara@school2.edu",
+                role = EnterpriseRole.STUDENT,
+                department = "الصف الثاني الثانوي",
+                phone = "+966509990011",
+                schoolId = "school_002"
+            ),
+            createSeedMember(
+                id = "usr_pr2",
+                name = "خالد العتيبي (ولي أمر)",
+                email = "khalid.parent@school2.edu",
+                role = EnterpriseRole.PARENT,
+                department = "أولياء الأمور",
+                phone = "+966500001122",
+                schoolId = "school_002"
+            )
+        )
 
+        for ((schoolId, members) in initialMembers.groupBy { it.schoolId }) {
+            seedSchoolUsers(schoolId, members)
+        }
+    }
+
+    private fun seedSchoolUsers(schoolId: String, members: List<EnterpriseMember>) {
         viewModelScope.launch {
-            getUsersForSchoolUseCase("school_002").collect { school2Users ->
-                if (school2Users.isEmpty()) {
-                    // Seed diverse roles for School 002
-                    saveEnterpriseMemberUseCase(
-                        EnterpriseMember(
-                            id = "usr_p2",
-                            orgId = "org_1",
-                            name = "د. نورة الزهراني",
-                            email = "principal@school2.edu",
-                            role = EnterpriseRole.PRINCIPAL,
-                            department = "الإدارة العليا",
-                            status = MemberStatus.ACTIVE,
-                            phone = "+966506667788",
-                            schoolId = "school_002"
-                        )
-                    )
-                    saveEnterpriseMemberUseCase(
-                        EnterpriseMember(
-                            id = "usr_vp2",
-                            orgId = "org_1",
-                            name = "م. خالد القحطاني",
-                            email = "vp@school2.edu",
-                            role = EnterpriseRole.VICE_PRINCIPAL,
-                            department = "الشؤون الإدارية",
-                            status = MemberStatus.ACTIVE,
-                            phone = "+966507778899",
-                            schoolId = "school_002"
-                        )
-                    )
-                    saveEnterpriseMemberUseCase(
-                        EnterpriseMember(
-                            id = "usr_t2",
-                            orgId = "org_1",
-                            name = "م. ريم الشمري",
-                            email = "reem@school2.edu",
-                            role = EnterpriseRole.TEACHER,
-                            department = "الكيمياء والفيزياء",
-                            status = MemberStatus.ACTIVE,
-                            phone = "+966508889900",
-                            schoolId = "school_002"
-                        )
-                    )
-                    saveEnterpriseMemberUseCase(
-                        EnterpriseMember(
-                            id = "usr_s2",
-                            orgId = "org_1",
-                            name = "سارة خالد العتيبي",
-                            email = "sara@school2.edu",
-                            role = EnterpriseRole.STUDENT,
-                            department = "الصف الثاني الثانوي",
-                            status = MemberStatus.ACTIVE,
-                            phone = "+966509990011",
-                            schoolId = "school_002"
-                        )
-                    )
-                    saveEnterpriseMemberUseCase(
-                        EnterpriseMember(
-                            id = "usr_pr2",
-                            orgId = "org_1",
-                            name = "خالد العتيبي (ولي أمر)",
-                            email = "khalid.parent@school2.edu",
-                            role = EnterpriseRole.PARENT,
-                            department = "أولياء الأمور",
-                            status = MemberStatus.ACTIVE,
-                            phone = "+966500001122",
-                            schoolId = "school_002"
-                        )
-                    )
+            getUsersForSchoolUseCase(schoolId).collect { schoolUsers ->
+                if (schoolUsers.isEmpty()) {
+                    members.forEach { member ->
+                        saveEnterpriseMemberUseCase(member)
+                    }
                 }
             }
         }
     }
+
+    private fun createSeedMember(
+        id: String,
+        name: String,
+        email: String,
+        role: EnterpriseRole,
+        department: String,
+        phone: String,
+        schoolId: String
+    ): EnterpriseMember = EnterpriseMember(
+        id = id,
+        orgId = "org_1",
+        name = name,
+        email = email,
+        role = role,
+        department = department,
+        status = MemberStatus.ACTIVE,
+        phone = phone,
+        schoolId = schoolId
+    )
 
     private fun observeData() {
         val schoolsFlow = getSchoolsUseCase()

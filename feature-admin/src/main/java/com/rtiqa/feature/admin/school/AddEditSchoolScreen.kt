@@ -41,21 +41,137 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.rtiqa.core.domain.model.School
 
+/**
+ * State holder for School add/edit form data and validation.
+ */
+class SchoolFormState(
+    school: School? = null
+) {
+    var name by mutableStateOf(school?.name ?: "")
+    var code by mutableStateOf(school?.code ?: "")
+    var address by mutableStateOf(school?.address ?: "")
+    var phone by mutableStateOf(school?.phone ?: "")
+    var studentsCountStr by mutableStateOf((school?.studentsCount ?: 0).toString())
+    var teachersCountStr by mutableStateOf((school?.teachersCount ?: 0).toString())
+
+    var nameError by mutableStateOf(false)
+    var codeError by mutableStateOf(false)
+
+    fun validateAndSave(
+        schoolId: String?,
+        onSave: (id: String?, name: String, code: String, address: String, phone: String, studentsCount: Int, teachersCount: Int) -> Unit
+    ) {
+        if (name.isBlank() || code.isBlank()) {
+            nameError = name.isBlank()
+            codeError = code.isBlank()
+            return
+        }
+        val sCount = studentsCountStr.toIntOrNull() ?: 0
+        val tCount = teachersCountStr.toIntOrNull() ?: 0
+        onSave(schoolId, name, code, address, phone, sCount, tCount)
+    }
+}
+
+@Composable
+fun rememberSchoolFormState(school: School? = null): SchoolFormState {
+    return remember(school) { SchoolFormState(school) }
+}
+
+@Composable
+fun SchoolFormFields(
+    state: SchoolFormState,
+    modifier: Modifier = Modifier,
+    fieldSpacing: androidx.compose.ui.unit.Dp = 8.dp,
+    nameTestTag: String = "school_name_input",
+    codeTestTag: String = "school_code_input",
+    showNameErrorMessage: Boolean = true
+) {
+    Column(modifier = modifier) {
+        OutlinedTextField(
+            value = state.name,
+            onValueChange = {
+                state.name = it
+                state.nameError = it.isBlank()
+            },
+            label = { Text("اسم المدرسة *") },
+            leadingIcon = { Icon(Icons.Default.School, contentDescription = null) },
+            isError = state.nameError,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(nameTestTag)
+        )
+        if (showNameErrorMessage && state.nameError) {
+            Text(
+                text = "اسم المدرسة مطلوب",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+        Spacer(modifier = Modifier.height(fieldSpacing))
+
+        OutlinedTextField(
+            value = state.code,
+            onValueChange = {
+                state.code = it
+                state.codeError = it.isBlank()
+            },
+            label = { Text("رمز المدرسة (Code) *") },
+            leadingIcon = { Icon(Icons.Default.Business, contentDescription = null) },
+            isError = state.codeError,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(codeTestTag)
+        )
+        Spacer(modifier = Modifier.height(fieldSpacing))
+
+        OutlinedTextField(
+            value = state.address,
+            onValueChange = { state.address = it },
+            label = { Text("العنوان / المدينة") },
+            leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(fieldSpacing))
+
+        OutlinedTextField(
+            value = state.phone,
+            onValueChange = { state.phone = it },
+            label = { Text("رقم الهاتف / التواصل") },
+            leadingIcon = { Icon(Icons.Default.Call, contentDescription = null) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(fieldSpacing))
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = state.studentsCountStr,
+                onValueChange = { state.studentsCountStr = it },
+                label = { Text("عدد الطلاب") },
+                leadingIcon = { Icon(Icons.Default.People, contentDescription = null) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            OutlinedTextField(
+                value = state.teachersCountStr,
+                onValueChange = { state.teachersCountStr = it },
+                label = { Text("عدد المعلمين") },
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
 @Composable
 fun AddEditSchoolDialog(
     school: School? = null,
     onDismiss: () -> Unit,
     onSave: (id: String?, name: String, code: String, address: String, phone: String, studentsCount: Int, teachersCount: Int) -> Unit
 ) {
-    var name by remember { mutableStateOf(school?.name ?: "") }
-    var code by remember { mutableStateOf(school?.code ?: "") }
-    var address by remember { mutableStateOf(school?.address ?: "") }
-    var phone by remember { mutableStateOf(school?.phone ?: "") }
-    var studentsCountStr by remember { mutableStateOf((school?.studentsCount ?: 0).toString()) }
-    var teachersCountStr by remember { mutableStateOf((school?.teachersCount ?: 0).toString()) }
-
-    var nameError by remember { mutableStateOf(false) }
-    var codeError by remember { mutableStateOf(false) }
+    val formState = rememberSchoolFormState(school)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -66,100 +182,19 @@ fun AddEditSchoolDialog(
             )
         },
         text = {
-            Column(
+            SchoolFormFields(
+                state = formState,
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(vertical = 8.dp)
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = {
-                        name = it
-                        nameError = it.isBlank()
-                    },
-                    label = { Text("اسم المدرسة *") },
-                    leadingIcon = { Icon(Icons.Default.School, contentDescription = null) },
-                    isError = nameError,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("school_name_input")
-                )
-                if (nameError) {
-                    Text(
-                        text = "اسم المدرسة مطلوب",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = code,
-                    onValueChange = {
-                        code = it
-                        codeError = it.isBlank()
-                    },
-                    label = { Text("رمز المدرسة (Code) *") },
-                    leadingIcon = { Icon(Icons.Default.Business, contentDescription = null) },
-                    isError = codeError,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("school_code_input")
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = address,
-                    onValueChange = { address = it },
-                    label = { Text("العنوان / المدينة") },
-                    leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = phone,
-                    onValueChange = { phone = it },
-                    label = { Text("رقم الهاتف / التواصل") },
-                    leadingIcon = { Icon(Icons.Default.Call, contentDescription = null) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    OutlinedTextField(
-                        value = studentsCountStr,
-                        onValueChange = { studentsCountStr = it },
-                        label = { Text("عدد الطلاب") },
-                        leadingIcon = { Icon(Icons.Default.People, contentDescription = null) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    OutlinedTextField(
-                        value = teachersCountStr,
-                        onValueChange = { teachersCountStr = it },
-                        label = { Text("عدد المعلمين") },
-                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
+                    .padding(vertical = 8.dp),
+                fieldSpacing = 8.dp
+            )
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (name.isBlank() || code.isBlank()) {
-                        nameError = name.isBlank()
-                        codeError = code.isBlank()
-                        return@Button
-                    }
-                    val sCount = studentsCountStr.toIntOrNull() ?: 0
-                    val tCount = teachersCountStr.toIntOrNull() ?: 0
-                    onSave(school?.id, name, code, address, phone, sCount, tCount)
+                    formState.validateAndSave(school?.id, onSave)
                 },
                 modifier = Modifier.testTag("save_school_button")
             ) {
@@ -181,15 +216,7 @@ fun AddEditSchoolScreen(
     onBack: () -> Unit,
     onSave: (id: String?, name: String, code: String, address: String, phone: String, studentsCount: Int, teachersCount: Int) -> Unit
 ) {
-    var name by remember { mutableStateOf(school?.name ?: "") }
-    var code by remember { mutableStateOf(school?.code ?: "") }
-    var address by remember { mutableStateOf(school?.address ?: "") }
-    var phone by remember { mutableStateOf(school?.phone ?: "") }
-    var studentsCountStr by remember { mutableStateOf((school?.studentsCount ?: 0).toString()) }
-    var teachersCountStr by remember { mutableStateOf((school?.teachersCount ?: 0).toString()) }
-
-    var nameError by remember { mutableStateOf(false) }
-    var codeError by remember { mutableStateOf(false) }
+    val formState = rememberSchoolFormState(school)
 
     Scaffold(
         topBar = {
@@ -214,83 +241,16 @@ fun AddEditSchoolScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            OutlinedTextField(
-                value = name,
-                onValueChange = {
-                    name = it
-                    nameError = it.isBlank()
-                },
-                label = { Text("اسم المدرسة *") },
-                leadingIcon = { Icon(Icons.Default.School, contentDescription = null) },
-                isError = nameError,
-                modifier = Modifier.fillMaxWidth()
+            SchoolFormFields(
+                state = formState,
+                fieldSpacing = 12.dp
             )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = code,
-                onValueChange = {
-                    code = it
-                    codeError = it.isBlank()
-                },
-                label = { Text("رمز المدرسة *") },
-                leadingIcon = { Icon(Icons.Default.Business, contentDescription = null) },
-                isError = codeError,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = address,
-                onValueChange = { address = it },
-                label = { Text("العنوان") },
-                leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = phone,
-                onValueChange = { phone = it },
-                label = { Text("الهاتف") },
-                leadingIcon = { Icon(Icons.Default.Call, contentDescription = null) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(modifier = Modifier.fillMaxWidth()) {
-                OutlinedTextField(
-                    value = studentsCountStr,
-                    onValueChange = { studentsCountStr = it },
-                    label = { Text("عدد الطلاب") },
-                    leadingIcon = { Icon(Icons.Default.People, contentDescription = null) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                OutlinedTextField(
-                    value = teachersCountStr,
-                    onValueChange = { teachersCountStr = it },
-                    label = { Text("عدد المعلمين") },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.weight(1f)
-                )
-            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
-                    if (name.isBlank() || code.isBlank()) {
-                        nameError = name.isBlank()
-                        codeError = code.isBlank()
-                        return@Button
-                    }
-                    val sCount = studentsCountStr.toIntOrNull() ?: 0
-                    val tCount = teachersCountStr.toIntOrNull() ?: 0
-                    onSave(school?.id, name, code, address, phone, sCount, tCount)
+                    formState.validateAndSave(school?.id, onSave)
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {

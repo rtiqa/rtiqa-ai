@@ -17,6 +17,7 @@ import com.rtiqa.core.data.mapper.toEntity
 
 import com.rtiqa.core.database.entity.CourseEntity
 import com.rtiqa.core.database.entity.LessonEntity
+import com.rtiqa.core.network.api.NetworkCourseDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -30,6 +31,35 @@ class CourseRepositoryImpl(
     private val offlineSyncManager: com.rtiqa.core.domain.repository.OfflineSyncContract? = null
 ) : CourseRepositoryContract {
 
+    private suspend fun saveNetworkCoursesToDatabase(dtos: List<NetworkCourseDto>) {
+        val existingCourses = courseDao.getAllCoursesList().associateBy { it.id }
+        val entities = dtos.map { dto ->
+            val existing = existingCourses[dto.id]
+            CourseEntity(
+                id = dto.id,
+                title = dto.title,
+                description = dto.description,
+                category = dto.category,
+                totalLessons = dto.totalModules,
+                durationMinutes = existing?.durationMinutes ?: 30,
+                iconUrl = existing?.iconUrl,
+                isDownloaded = existing?.isDownloaded ?: false,
+                progressPercent = dto.progressPercent,
+                isEnrolled = existing?.isEnrolled ?: false,
+                isBookmarked = existing?.isBookmarked ?: false,
+                schoolId = existing?.schoolId
+            )
+        }
+        courseDao.insertCourses(entities)
+    }
+
+    private suspend fun markLessonCompletedLocally(lessonId: String) {
+        val lesson = lessonDao.getLessonById(lessonId)
+        if (lesson != null) {
+            lessonDao.insertLesson(lesson.copy(isCompleted = true))
+        }
+    }
+
     private fun refreshRemoteCourses(category: String? = null) {
         val service = apiService ?: return
         CoroutineScope(Dispatchers.IO).launch {
@@ -37,26 +67,7 @@ class CourseRepositoryImpl(
                 val catParam = if (category.isNullOrBlank() || category == "الكل") null else category
                 val response = service.getCourses(catParam)
                 if (response.isSuccessful) {
-                    val dtos = response.body().orEmpty()
-                    val existingCourses = courseDao.getAllCoursesList().associateBy { it.id }
-                    val entities = dtos.map { dto ->
-                        val existing = existingCourses[dto.id]
-                        CourseEntity(
-                            id = dto.id,
-                            title = dto.title,
-                            description = dto.description,
-                            category = dto.category,
-                            totalLessons = dto.totalModules,
-                            durationMinutes = existing?.durationMinutes ?: 30,
-                            iconUrl = existing?.iconUrl,
-                            isDownloaded = existing?.isDownloaded ?: false,
-                            progressPercent = dto.progressPercent,
-                            isEnrolled = existing?.isEnrolled ?: false,
-                            isBookmarked = existing?.isBookmarked ?: false,
-                            schoolId = existing?.schoolId
-                        )
-                    }
-                    courseDao.insertCourses(entities)
+                    saveNetworkCoursesToDatabase(response.body().orEmpty())
                 }
             } catch (e: Exception) {
                 // Ignore network error to keep local offline cache
@@ -189,10 +200,7 @@ class CourseRepositoryImpl(
 
                 val completion = response.body()
                 if (completion != null) {
-                    val lesson = lessonDao.getLessonById(lessonId)
-                    if (lesson != null) {
-                        lessonDao.insertLesson(lesson.copy(isCompleted = true))
-                    }
+                    markLessonCompletedLocally(lessonId)
                     val normalizedProgress = if (completion.courseProgressPercent > 1f) {
                         completion.courseProgressPercent / 100f
                     } else {
@@ -206,10 +214,7 @@ class CourseRepositoryImpl(
                 }
                 RtiqaResult.Success(Unit)
             } else {
-                val lesson = lessonDao.getLessonById(lessonId)
-                if (lesson != null) {
-                    lessonDao.insertLesson(lesson.copy(isCompleted = true))
-                }
+                markLessonCompletedLocally(lessonId)
 
                 val lessons = lessonDao.getLessonsForCourseList(courseId)
                 val completedCount = lessons.count { it.isCompleted }
@@ -333,26 +338,7 @@ class CourseRepositoryImpl(
             if (apiService != null) {
                 val response = apiService.getCourses()
                 if (response.isSuccessful) {
-                    val dtos = response.body().orEmpty()
-                    val existingCourses = courseDao.getAllCoursesList().associateBy { it.id }
-                    val entities = dtos.map { dto ->
-                        val existing = existingCourses[dto.id]
-                        CourseEntity(
-                            id = dto.id,
-                            title = dto.title,
-                            description = dto.description,
-                            category = dto.category,
-                            totalLessons = dto.totalModules,
-                            durationMinutes = existing?.durationMinutes ?: 30,
-                            iconUrl = existing?.iconUrl,
-                            isDownloaded = existing?.isDownloaded ?: false,
-                            progressPercent = dto.progressPercent,
-                            isEnrolled = existing?.isEnrolled ?: false,
-                            isBookmarked = existing?.isBookmarked ?: false,
-                            schoolId = existing?.schoolId
-                        )
-                    }
-                    courseDao.insertCourses(entities)
+                    saveNetworkCoursesToDatabase(response.body().orEmpty())
                     return RtiqaResult.Success(Unit)
                 } else {
                     return RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.NetworkError("HTTP ${response.code()}: ${response.message()}", statusCode = response.code()))

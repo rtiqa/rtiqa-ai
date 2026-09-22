@@ -367,4 +367,153 @@ class CourseRoutesTest {
         assertTrue(body.contains("\"completed\":true"))
         assertTrue(body.contains("\"courseProgressPercent\":50.0"))
     }
+
+    @Test
+    fun `POST courses without JWT returns 401`() = testApplication {
+        application {
+            testCourseModule(
+                mockSubject = null,
+                mockRole = null,
+                mockRepository = CourseRepository()
+            )
+        }
+
+        val response = client.post("/api/v1/courses") {
+            header("X-Tenant-ID", UUID.randomUUID().toString())
+            contentType(ContentType.Application.Json)
+            setBody("""{"title":"دورة برمجة"}""")
+        }
+        assertEquals(HttpStatusCode.Unauthorized, response.status)
+    }
+
+    @Test
+    fun `POST courses without X-Tenant-ID returns 400`() = testApplication {
+        application {
+            testCourseModule(
+                mockSubject = UUID.randomUUID().toString(),
+                mockRole = EnterpriseRole.TEACHER,
+                mockRepository = CourseRepository()
+            )
+        }
+
+        val response = client.post("/api/v1/courses") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"title":"دورة برمجة"}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun `POST courses with unauthorized role STUDENT returns 403`() = testApplication {
+        application {
+            testCourseModule(
+                mockSubject = UUID.randomUUID().toString(),
+                mockRole = EnterpriseRole.STUDENT,
+                mockRepository = CourseRepository()
+            )
+        }
+
+        val response = client.post("/api/v1/courses") {
+            header("X-Tenant-ID", UUID.randomUUID().toString())
+            contentType(ContentType.Application.Json)
+            setBody("""{"title":"دورة برمجة"}""")
+        }
+        assertEquals(HttpStatusCode.Forbidden, response.status)
+    }
+
+    @Test
+    fun `POST courses with blank or missing title returns 400`() = testApplication {
+        application {
+            testCourseModule(
+                mockSubject = UUID.randomUUID().toString(),
+                mockRole = EnterpriseRole.TEACHER,
+                mockRepository = CourseRepository()
+            )
+        }
+
+        // Blank title
+        val blankResponse = client.post("/api/v1/courses") {
+            header("X-Tenant-ID", UUID.randomUUID().toString())
+            contentType(ContentType.Application.Json)
+            setBody("""{"title":"   ","description":"وصف"}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, blankResponse.status)
+
+        // Missing title
+        val missingResponse = client.post("/api/v1/courses") {
+            header("X-Tenant-ID", UUID.randomUUID().toString())
+            contentType(ContentType.Application.Json)
+            setBody("""{"description":"بدون عنوان"}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, missingResponse.status)
+    }
+
+    @Test
+    fun `POST courses with authorized TEACHER returns 201 with created course`() = testApplication {
+        val courseId = UUID.randomUUID()
+        val mockCreated = CourseResponseDto(
+            id = courseId.toString(),
+            title = "أساسيات بايثون للمعلمين",
+            description = "مقدمة شاملة",
+            category = "البرمجة",
+            difficulty = "مبتدئ",
+            totalModules = 0,
+            completedModules = 0,
+            progressPercent = 0.0f
+        )
+
+        application {
+            testCourseModule(
+                mockSubject = UUID.randomUUID().toString(),
+                mockRole = EnterpriseRole.TEACHER,
+                mockRepository = CourseRepository(),
+                mockTransactionRunner = { _, _ -> mockCreated }
+            )
+        }
+
+        val response = client.post("/api/v1/courses") {
+            header("X-Tenant-ID", UUID.randomUUID().toString())
+            contentType(ContentType.Application.Json)
+            setBody("""{"title":"أساسيات بايثون للمعلمين","description":"مقدمة شاملة","category":"البرمجة","difficulty":"مبتدئ"}""")
+        }
+        assertEquals(HttpStatusCode.Created, response.status)
+        val body = response.bodyAsText()
+        assertTrue(body.contains("أساسيات بايثون للمعلمين"))
+        assertTrue(body.contains(courseId.toString()))
+        assertTrue(body.contains("\"progressPercent\":0.0"))
+    }
+
+    @Test
+    fun `POST courses with authorized ORG_ADMIN returns 201 with created course`() = testApplication {
+        val courseId = UUID.randomUUID()
+        val mockCreated = CourseResponseDto(
+            id = courseId.toString(),
+            title = "إدارة المنهج الدراسي",
+            description = "منهج المدرسة",
+            category = "إدارة تعليمية",
+            difficulty = "متقدم",
+            totalModules = 0,
+            completedModules = 0,
+            progressPercent = 0.0f
+        )
+
+        application {
+            testCourseModule(
+                mockSubject = UUID.randomUUID().toString(),
+                mockRole = EnterpriseRole.ORG_ADMIN,
+                mockRepository = CourseRepository(),
+                mockTransactionRunner = { _, _ -> mockCreated }
+            )
+        }
+
+        val response = client.post("/api/v1/courses") {
+            header("X-Tenant-ID", UUID.randomUUID().toString())
+            contentType(ContentType.Application.Json)
+            setBody("""{"title":"إدارة المنهج الدراسي","description":"منهج المدرسة","category":"إدارة تعليمية","difficulty":"متقدم"}""")
+        }
+        assertEquals(HttpStatusCode.Created, response.status)
+        val body = response.bodyAsText()
+        assertTrue(body.contains("إدارة المنهج الدراسي"))
+    }
 }
+

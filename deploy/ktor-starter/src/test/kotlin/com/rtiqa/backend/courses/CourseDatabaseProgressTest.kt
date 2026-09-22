@@ -67,11 +67,14 @@ class CourseDatabaseProgressTest {
                     title VARCHAR(255) NOT NULL,
                     description TEXT,
                     category VARCHAR(100),
+                    level VARCHAR(50) DEFAULT 'مبتدئ',
                     difficulty VARCHAR(50),
                     total_modules INT DEFAULT 0,
-                    status VARCHAR(50) NOT NULL,
-                    created_at TIMESTAMP NOT NULL,
-                    updated_at TIMESTAMP NOT NULL
+                    duration_minutes INT DEFAULT 0,
+                    icon_url TEXT,
+                    status VARCHAR(50) DEFAULT 'published',
+                    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
                 )
                 """.trimIndent(),
                 """
@@ -344,4 +347,38 @@ class CourseDatabaseProgressTest {
             }
         }
     }
+
+    @Test
+    fun `createCourse persists course in database for organization`() {
+        val request = CreateCourseRequestDto(
+            title = "دورة تطوير تطبيقات أندرويد",
+            description = "تعلم لغة كوتلن مع جيت باك كومبوز",
+            category = "تطوير البرمجيات",
+            difficulty = "متوسط",
+            durationMinutes = 120
+        )
+        val created = repository.createCourse(connection, tenantA, request)
+
+        assertEquals("دورة تطوير تطبيقات أندرويد", created.title)
+        assertEquals("تعلم لغة كوتلن مع جيت باك كومبوز", created.description)
+        assertEquals("تطوير البرمجيات", created.category)
+        assertEquals("متوسط", created.difficulty)
+        assertEquals(0, created.totalModules)
+        assertEquals(0, created.completedModules)
+        assertEquals(0.0f, created.progressPercent)
+
+        // Verify direct database row
+        connection.prepareStatement("SELECT title, description, category, level, duration_minutes FROM courses WHERE id = ?").use { stmt ->
+            stmt.setObject(1, UUID.fromString(created.id))
+            stmt.executeQuery().use { rs ->
+                assertTrue(rs.next(), "Created course must exist in database")
+                assertEquals("دورة تطوير تطبيقات أندرويد", rs.getString("title"))
+                assertEquals("تعلم لغة كوتلن مع جيت باك كومبوز", rs.getString("description"))
+                assertEquals("تطوير البرمجيات", rs.getString("category"))
+                assertEquals("متوسط", rs.getString("level"))
+                assertEquals(120, rs.getInt("duration_minutes"))
+            }
+        }
+    }
 }
+

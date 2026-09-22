@@ -3,6 +3,18 @@ package com.rtiqa.backend.courses
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class CreateCourseRequestDto(
+    val title: String,
+    val description: String? = null,
+    val category: String? = null,
+    val difficulty: String? = null,
+    val level: String? = null,
+    val durationMinutes: Int? = null,
+    val iconUrl: String? = null,
+    val imageUrl: String? = null
+)
+
+@Serializable
 data class CourseResponseDto(
     val id: String,
     val title: String,

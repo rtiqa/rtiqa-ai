@@ -6,30 +6,51 @@ import java.util.UUID
 class CourseRepository {
 
     fun getCoursesForTenant(conn: Connection, tenantId: UUID, userId: UUID, category: String? = null): List<CourseResponseDto> {
-        val baseSql = """
-            SELECT 
-                c.id,
-                c.title,
-                c.description,
-                c.category,
-                c.level,
-                COUNT(DISTINCT l.id) AS total_lessons,
-                COALESCE(e.completed_lessons, 0) AS completed_lessons,
-                COALESCE(e.progress_percent, 0.0) AS progress_percent
-            FROM courses c
-            LEFT JOIN lessons l ON l.course_id = c.id
-            LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = ?
-            WHERE c.organization_id = ?
-            ${if (!category.isNullOrBlank()) "AND c.category = ?" else ""}
-            GROUP BY c.id, c.title, c.description, c.category, c.level, e.completed_lessons, e.progress_percent
-            ORDER BY c.created_at ASC
-        """.trimIndent()
+        val hasCategory = !category.isNullOrBlank()
+        val sql = if (hasCategory) {
+            """
+                SELECT 
+                    c.id,
+                    c.title,
+                    c.description,
+                    c.category,
+                    c.level,
+                    COUNT(DISTINCT l.id) AS total_lessons,
+                    COALESCE(e.completed_lessons, 0) AS completed_lessons,
+                    COALESCE(e.progress_percent, 0.0) AS progress_percent
+                FROM courses c
+                LEFT JOIN lessons l ON l.course_id = c.id
+                LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = ?
+                WHERE c.organization_id = ? AND c.category = ?
+                GROUP BY c.id, c.title, c.description, c.category, c.level, e.completed_lessons, e.progress_percent
+                ORDER BY c.created_at ASC
+            """.trimIndent()
+        } else {
+            """
+                SELECT 
+                    c.id,
+                    c.title,
+                    c.description,
+                    c.category,
+                    c.level,
+                    COUNT(DISTINCT l.id) AS total_lessons,
+                    COALESCE(e.completed_lessons, 0) AS completed_lessons,
+                    COALESCE(e.progress_percent, 0.0) AS progress_percent
+                FROM courses c
+                LEFT JOIN lessons l ON l.course_id = c.id
+                LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = ?
+                WHERE c.organization_id = ?
+                GROUP BY c.id, c.title, c.description, c.category, c.level, e.completed_lessons, e.progress_percent
+                ORDER BY c.created_at ASC
+            """.trimIndent()
+        }
 
-        conn.prepareStatement(baseSql).use { stmt ->
-            stmt.setObject(1, userId)
-            stmt.setObject(2, tenantId)
-            if (!category.isNullOrBlank()) {
-                stmt.setString(3, category)
+        conn.prepareStatement(sql).use { stmt ->
+            var idx = 1
+            stmt.setObject(idx++, userId)
+            stmt.setObject(idx++, tenantId)
+            if (hasCategory) {
+                stmt.setString(idx++, category)
             }
 
             stmt.executeQuery().use { rs ->
@@ -259,6 +280,49 @@ class CourseRepository {
                 completedLessons = completedLessons,
                 totalLessons = totalLessons
             )
+        )
+    }
+
+    fun createCourse(
+        conn: Connection,
+        tenantId: UUID,
+        request: CreateCourseRequestDto,
+        courseId: UUID = UUID.randomUUID()
+    ): CourseResponseDto {
+        val trimmedTitle = request.title.trim()
+        val resolvedDescription = request.description?.trim() ?: ""
+        val resolvedCategory = request.category?.trim()?.ifBlank { "عام" } ?: "عام"
+        val resolvedLevel = (request.difficulty ?: request.level)?.trim()?.ifBlank { "مبتدئ" } ?: "مبتدئ"
+        val durationMinutes = request.durationMinutes ?: 0
+        val iconUrl = request.iconUrl ?: request.imageUrl
+
+        val sql = """
+            INSERT INTO courses (id, organization_id, title, description, category, level, duration_minutes, icon_url, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        """.trimIndent()
+
+        conn.prepareStatement(sql).use { stmt ->
+            var idx = 1
+            stmt.setObject(idx++, courseId)
+            stmt.setObject(idx++, tenantId)
+            stmt.setString(idx++, trimmedTitle)
+            stmt.setString(idx++, resolvedDescription)
+            stmt.setString(idx++, resolvedCategory)
+            stmt.setString(idx++, resolvedLevel)
+            stmt.setInt(idx++, durationMinutes)
+            stmt.setString(idx++, iconUrl)
+            stmt.executeUpdate()
+        }
+
+        return CourseResponseDto(
+            id = courseId.toString(),
+            title = trimmedTitle,
+            description = resolvedDescription,
+            category = resolvedCategory,
+            difficulty = resolvedLevel,
+            totalModules = 0,
+            completedModules = 0,
+            progressPercent = 0.0f
         )
     }
 }

@@ -1,54 +1,26 @@
 package com.rtiqa.feature.auth
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rtiqa.core.ui.button.RdsPrimaryButton
-import com.rtiqa.core.ui.input.RdsTextField
-
-import androidx.compose.ui.res.stringResource
 import com.rtiqa.feature.auth.R
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(
     viewModel: LoginViewModel,
@@ -72,127 +44,42 @@ fun ForgotPasswordScreen(
         modifier = modifier.testTag("forgot_password_screen"),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.reset_password)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack, modifier = Modifier.testTag("forgot_password_back_button")) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+            AuthTopAppBar(
+                title = stringResource(R.string.reset_password),
+                onBack = onBack,
+                backButtonTestTag = "forgot_password_back_button"
             )
         }
     ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
-                        )
-                    )
-                )
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = "استعادة كلمة المرور",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(44.dp)
-                    )
-                }
+        AuthScreenLayout(innerPadding = innerPadding) {
+            AuthHeader(
+                icon = Icons.Default.Lock,
+                iconContentDescription = "استعادة كلمة المرور",
+                title = stringResource(R.string.forgot_password_question),
+                subtitle = stringResource(R.string.reset_password_instruction),
+                titleFontSize = 24.sp
+            )
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Text(
-                    text = stringResource(R.string.forgot_password_question),
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center
+            AuthCard {
+                AuthEmailField(
+                    value = uiState.email,
+                    onValueChange = { viewModel.onAction(LoginUiAction.EmailChanged(it)) },
+                    isError = uiState.emailError != null,
+                    errorMessage = uiState.emailError,
+                    testTag = "forgot_password_email_input"
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                AuthErrorMessage(message = uiState.errorMessage)
 
-                Text(
-                    text = stringResource(R.string.reset_password_instruction),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Card(
+                RdsPrimaryButton(
+                    text = stringResource(R.string.send_reset_link),
+                    onClick = { viewModel.onAction(LoginUiAction.RequestPasswordReset) },
+                    isLoading = uiState.isLoading,
                     modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        RdsTextField(
-                            value = uiState.email,
-                            onValueChange = { viewModel.onAction(LoginUiAction.EmailChanged(it)) },
-                            label = stringResource(R.string.email),
-                            placeholder = "مثال: user@rtiqa.com",
-                            leadingIcon = Icons.Default.Email,
-                            isError = uiState.emailError != null,
-                            errorMessage = uiState.emailError,
-                            testTag = "forgot_password_email_input"
-                        )
-
-                        if (uiState.errorMessage != null) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = uiState.errorMessage ?: "",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        RdsPrimaryButton(
-                            text = stringResource(R.string.send_reset_link),
-                            onClick = { viewModel.onAction(LoginUiAction.RequestPasswordReset) },
-                            isLoading = uiState.isLoading,
-                            modifier = Modifier.fillMaxWidth(),
-                            testTag = "forgot_password_submit_button"
-                        )
-                    }
-                }
+                    testTag = "forgot_password_submit_button"
+                )
             }
         }
     }

@@ -12,6 +12,7 @@ import com.rtiqa.core.domain.repository.RemoteSyncDataSource
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.logging.RtiqaLog
 import com.rtiqa.core.network.api.LoginRequestDto
+import com.rtiqa.core.network.api.NetworkUserDto
 import com.rtiqa.core.network.api.RegisterRequestDto
 import com.rtiqa.core.network.api.RtiqaApiService
 import com.rtiqa.core.security.SecurityManager
@@ -44,6 +45,54 @@ class AuthRepositoryImpl(
 
     override fun observeUserSession(): Flow<UserProfile?> {
         return userProfileDao.getUserProfile().map { it?.toDomain() }
+    }
+
+    private suspend fun persistAuthenticatedUser(
+        token: String,
+        netUser: NetworkUserDto
+    ): RtiqaResult.Success<UserProfile> {
+        sessionStore.saveSession(token, null)
+        securityManager.putEncryptedString(KEY_USER_ID, netUser.id)
+        preferencesDataStore.setActiveUserId(netUser.id)
+
+        val entity = UserProfileEntity(
+            id = netUser.id,
+            name = netUser.name,
+            email = netUser.email,
+            levelXp = netUser.totalXp,
+            streakDays = netUser.streakCount
+        )
+        userProfileDao.insertOrUpdateProfile(entity)
+        sessionStore.generateAndSaveSessionId()
+        return RtiqaResult.Success(entity.toDomain())
+    }
+
+    private suspend fun findAndActivateOfflineProfile(email: String): UserProfile? {
+        val existingLocalProfile = userProfileDao.getUserProfile().firstOrNull()?.toDomain()
+        if (existingLocalProfile != null && existingLocalProfile.email.equals(email, ignoreCase = true)) {
+            preferencesDataStore.setActiveUserId(existingLocalProfile.id)
+            securityManager.putEncryptedString(KEY_USER_ID, existingLocalProfile.id)
+            sessionStore.generateAndSaveSessionId()
+            return existingLocalProfile
+        }
+        return null
+    }
+
+    private suspend fun createOfflineProfile(name: String, email: String): RtiqaResult.Success<UserProfile> {
+        val newUserId = UUID.randomUUID().toString()
+        val entity = UserProfileEntity(
+            id = newUserId,
+            name = name,
+            email = email,
+            levelXp = 0,
+            streakDays = 1
+        )
+        userProfileDao.insertOrUpdateProfile(entity)
+        preferencesDataStore.setActiveUserId(newUserId)
+        securityManager.putEncryptedString(KEY_USER_ID, newUserId)
+        sessionStore.saveSession("offline_token_$newUserId", null)
+        sessionStore.generateAndSaveSessionId()
+        return RtiqaResult.Success(entity.toDomain())
     }
 
     override suspend fun login(email: String, pass: String): RtiqaResult<UserProfile> {
@@ -81,42 +130,21 @@ class AuthRepositoryImpl(
             val response = apiService.login(LoginRequestDto(email = email, passwordHash = pass))
             if (response.isSuccessful && response.body() != null) {
                 val authBody = response.body()!!
-                val netUser = authBody.user
-
-                sessionStore.saveSession(authBody.token, null)
-                securityManager.putEncryptedString(KEY_USER_ID, netUser.id)
-                preferencesDataStore.setActiveUserId(netUser.id)
-
-                val entity = UserProfileEntity(
-                    id = netUser.id,
-                    name = netUser.name,
-                    email = netUser.email,
-                    levelXp = netUser.totalXp,
-                    streakDays = netUser.streakCount
-                )
-                userProfileDao.insertOrUpdateProfile(entity)
-                sessionStore.generateAndSaveSessionId()
-                RtiqaResult.Success(entity.toDomain())
+                persistAuthenticatedUser(authBody.token, authBody.user)
             } else {
                 // Offline fallback authentication check
-                val existingLocalProfile = userProfileDao.getUserProfile().firstOrNull()?.toDomain()
-                if (existingLocalProfile != null && existingLocalProfile.email.equals(email, ignoreCase = true)) {
-                    preferencesDataStore.setActiveUserId(existingLocalProfile.id)
-                    securityManager.putEncryptedString(KEY_USER_ID, existingLocalProfile.id)
-                    sessionStore.generateAndSaveSessionId()
-                    RtiqaResult.Success(existingLocalProfile)
+                val offlineProfile = findAndActivateOfflineProfile(email)
+                if (offlineProfile != null) {
+                    RtiqaResult.Success(offlineProfile)
                 } else {
                     RtiqaResult.Error(RtiqaError.AuthError("Invalid credentials or user not found offline."))
                 }
             }
         } catch (e: Exception) {
             // Network failure fallback
-            val existingLocalProfile = userProfileDao.getUserProfile().firstOrNull()?.toDomain()
-            if (existingLocalProfile != null && existingLocalProfile.email.equals(email, ignoreCase = true)) {
-                preferencesDataStore.setActiveUserId(existingLocalProfile.id)
-                securityManager.putEncryptedString(KEY_USER_ID, existingLocalProfile.id)
-                sessionStore.generateAndSaveSessionId()
-                RtiqaResult.Success(existingLocalProfile)
+            val offlineProfile = findAndActivateOfflineProfile(email)
+            if (offlineProfile != null) {
+                RtiqaResult.Success(offlineProfile)
             } else {
                 RtiqaResult.Error(RtiqaError.NetworkError("Authentication failed due to connectivity.", cause = e))
             }
@@ -153,55 +181,14 @@ class AuthRepositoryImpl(
             val response = apiService.register(RegisterRequestDto(name = name, email = email, passwordHash = pass))
             if (response.isSuccessful && response.body() != null) {
                 val authBody = response.body()!!
-                val netUser = authBody.user
-
-                sessionStore.saveSession(authBody.token, null)
-                securityManager.putEncryptedString(KEY_USER_ID, netUser.id)
-                preferencesDataStore.setActiveUserId(netUser.id)
-
-                val entity = UserProfileEntity(
-                    id = netUser.id,
-                    name = netUser.name,
-                    email = netUser.email,
-                    levelXp = netUser.totalXp,
-                    streakDays = netUser.streakCount
-                )
-                userProfileDao.insertOrUpdateProfile(entity)
-                sessionStore.generateAndSaveSessionId()
-                RtiqaResult.Success(entity.toDomain())
+                persistAuthenticatedUser(authBody.token, authBody.user)
             } else {
                 // Local registration creation for offline availability
-                val newUserId = UUID.randomUUID().toString()
-                val entity = UserProfileEntity(
-                    id = newUserId,
-                    name = name,
-                    email = email,
-                    levelXp = 0,
-                    streakDays = 1
-                )
-                userProfileDao.insertOrUpdateProfile(entity)
-                preferencesDataStore.setActiveUserId(newUserId)
-                securityManager.putEncryptedString(KEY_USER_ID, newUserId)
-                sessionStore.saveSession("offline_token_$newUserId", null)
-                sessionStore.generateAndSaveSessionId()
-                RtiqaResult.Success(entity.toDomain())
+                createOfflineProfile(name, email)
             }
         } catch (e: Exception) {
             // Local offline registration creation
-            val newUserId = UUID.randomUUID().toString()
-            val entity = UserProfileEntity(
-                id = newUserId,
-                name = name,
-                email = email,
-                levelXp = 0,
-                streakDays = 1
-            )
-            userProfileDao.insertOrUpdateProfile(entity)
-            preferencesDataStore.setActiveUserId(newUserId)
-            securityManager.putEncryptedString(KEY_USER_ID, newUserId)
-            sessionStore.saveSession("offline_token_$newUserId", null)
-            sessionStore.generateAndSaveSessionId()
-            RtiqaResult.Success(entity.toDomain())
+            createOfflineProfile(name, email)
         }
     }
 

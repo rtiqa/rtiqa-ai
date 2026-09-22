@@ -4,6 +4,7 @@ import com.rtiqa.backend.auth.EnterpriseRole
 import com.rtiqa.backend.auth.TenantContext
 import com.rtiqa.backend.auth.TenantContextKey
 import com.rtiqa.backend.auth.isUUID
+import com.rtiqa.backend.auth.requireRole
 import com.rtiqa.backend.auth.tenantAuthorization
 import com.rtiqa.backend.database.DatabaseFactory
 import io.ktor.http.HttpStatusCode
@@ -70,6 +71,59 @@ fun Route.courseRoutes(
                         HttpStatusCode.InternalServerError,
                         ErrorResponseDto(500, "Internal server error fetching courses")
                     )
+                }
+            }
+
+            // POST /api/v1/courses
+            requireRole(EnterpriseRole.TEACHER, EnterpriseRole.ORG_ADMIN, EnterpriseRole.PRINCIPAL, EnterpriseRole.SUPER_ADMIN) {
+                post {
+                    val tenantContext = call.attributes.getOrNull(TenantContextKey)
+                    if (tenantContext == null) {
+                        call.respond(
+                            HttpStatusCode.Forbidden,
+                            ErrorResponseDto(403, "Tenant context missing")
+                        )
+                        return@post
+                    }
+
+                    val request = try {
+                        call.receiveNullable<CreateCourseRequestDto>()
+                    } catch (e: Exception) {
+                        null
+                    }
+
+                    if (request == null || request.title.isBlank()) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponseDto(400, "Course title is required and cannot be blank")
+                        )
+                        return@post
+                    }
+
+                    try {
+                        val createdCourse = runTransaction(tenantContext) { conn ->
+                            courseRepository.createCourse(
+                                conn = conn,
+                                tenantId = tenantContext.orgId,
+                                request = request
+                            )
+                        } as? CourseResponseDto
+
+                        if (createdCourse != null) {
+                            call.respond(HttpStatusCode.Created, createdCourse)
+                        } else {
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponseDto(500, "Failed to create course")
+                            )
+                        }
+                    } catch (e: Exception) {
+                        logger.error("Failed to create course for tenant ${tenantContext.orgId}", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            ErrorResponseDto(500, "Internal server error creating course")
+                        )
+                    }
                 }
             }
 
