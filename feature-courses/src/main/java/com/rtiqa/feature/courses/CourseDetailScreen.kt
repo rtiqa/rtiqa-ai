@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -104,6 +105,9 @@ fun CourseDetailScreen(
             }
             uiState.course != null -> {
                 val course = uiState.course!!
+                val isCourseCompleted = course.isFullyCompleted() || (uiState.lessons.isNotEmpty() && uiState.lessons.all { it.isCompleted })
+                val displayProgress = if (isCourseCompleted) 1.0f else course.progressPercent
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -120,10 +124,22 @@ fun CourseDetailScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    RdsBadge(
-                                        text = course.category,
-                                        type = RdsBadgeType.INFO
-                                    )
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        RdsBadge(
+                                            text = course.category,
+                                            type = RdsBadgeType.INFO
+                                        )
+                                        if (isCourseCompleted) {
+                                            RdsBadge(
+                                                text = "تم إكمال المقرر",
+                                                type = RdsBadgeType.SUCCESS,
+                                                testTag = "course_completed_badge"
+                                            )
+                                        }
+                                    }
                                     if (course.isDownloaded) {
                                         RdsBadge(
                                             text = "محمل لعدم الاتصال",
@@ -156,7 +172,7 @@ fun CourseDetailScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = "نسبة الإنجاز: ${(course.progressPercent * 100).toInt()}%",
+                                        text = if (isCourseCompleted) "نسبة الإنجاز: 100% (تم إكمال المقرر)" else "نسبة الإنجاز: ${(displayProgress * 100).toInt()}%",
                                         style = MaterialTheme.typography.labelLarge,
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.primary
@@ -171,13 +187,50 @@ fun CourseDetailScreen(
                                 Spacer(modifier = Modifier.height(6.dp))
 
                                 LinearProgressIndicator(
-                                    progress = { course.progressPercent },
+                                    progress = { displayProgress },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(8.dp),
                                     color = MaterialTheme.colorScheme.primary,
                                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                                 )
+
+                                if (isCourseCompleted) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    androidx.compose.material3.Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("course_completed_banner"),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = RdsIcons.Success,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(24.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Column {
+                                                Text(
+                                                    text = "تم إكمال المقرر بنجاح! 🎉",
+                                                    style = MaterialTheme.typography.titleSmall,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                )
+                                                Text(
+                                                    text = "أحسنت! لقد أتممت جميع دروس هذا المقرر بنجاح.",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -204,7 +257,7 @@ fun CourseDetailScreen(
                                 Spacer(modifier = Modifier.height(8.dp))
 
                                 RdsPrimaryButton(
-                                    text = "بدء اختبار المقرر",
+                                    text = if (isCourseCompleted) "مراجعة اختبار المقرر 🎯" else "بدء اختبار المقرر",
                                     onClick = {
                                         viewModel.onAction(CourseDetailUiAction.StartQuizClicked)
                                         onNavigateToQuiz(course.id)

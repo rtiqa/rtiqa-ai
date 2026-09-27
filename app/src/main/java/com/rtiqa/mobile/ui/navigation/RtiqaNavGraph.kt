@@ -255,7 +255,12 @@ fun RtiqaApp(
                         navController.navigate("lesson_player/$lessonId")
                     },
                     onNavigateToQuiz = { cId ->
-                        navController.navigate("quiz")
+                        val targetCourseId = if (cId.isNotBlank()) cId else courseId
+                        if (targetCourseId.isNotBlank()) {
+                            navController.navigate("quiz/play/$targetCourseId")
+                        } else {
+                            navController.navigate("quiz")
+                        }
                     }
                 )
             }
@@ -264,42 +269,115 @@ fun RtiqaApp(
                 route = "lesson_player/{lessonId}",
                 arguments = listOf(navArgument("lessonId") { type = NavType.StringType })
             ) { backStack ->
-                val lessonId = backStack.arguments?.getString("lessonId") ?: "l_ai_1"
+                val lessonId = backStack.arguments?.getString("lessonId") ?: ""
                 val allLessons by courseViewModel.allLessons.collectAsState()
-                
-                val selectedLesson = allLessons.find { it.id == lessonId } ?: allLessons.firstOrNull()
-                
-                // Keep selected course and lesson IDs updated in ViewModel
-                selectedLesson?.let { lesson ->
-                    courseViewModel.selectCourse(lesson.courseId)
-                    courseViewModel.selectLesson(lesson.id)
+                val matchingLesson = allLessons.find { it.id == lessonId }
+                val courseId = matchingLesson?.courseId
+                val isQuizPassed = matchingLesson?.isQuizPassed == true
+
+                val viewerViewModel: com.rtiqa.feature.lessons.LessonViewerViewModel = viewModel(
+                    key = "lesson_viewer_$lessonId",
+                    factory = com.rtiqa.feature.lessons.LessonViewerViewModelFactory(
+                        completeLessonUseCase = appDiContainer.domainUseCasesContainer.completeLessonUseCase,
+                        getLessonDetailUseCase = appDiContainer.domainUseCasesContainer.getLessonDetailUseCase,
+                        getNextLessonUseCase = appDiContainer.domainUseCasesContainer.getNextLessonUseCase,
+                        saveLessonProgressUseCase = appDiContainer.domainUseCasesContainer.saveLessonProgressUseCase,
+                        getLessonsForCourseUseCase = appDiContainer.domainUseCasesContainer.getLessonsForCourseUseCase
+                    )
+                )
+
+                androidx.compose.runtime.LaunchedEffect(lessonId, courseId) {
+                    if (lessonId.isNotBlank() && !courseId.isNullOrBlank()) {
+                        viewerViewModel.onAction(
+                            com.rtiqa.feature.lessons.LessonViewerUiAction.InitializeLesson(
+                                lessonId = lessonId,
+                                courseId = courseId
+                            )
+                        )
+                    }
                 }
 
-                val courseLessons = if (selectedLesson != null) {
-                    allLessons.filter { it.courseId == selectedLesson.courseId }
+                val uiState by viewerViewModel.uiState.collectAsState()
+
+                val effectiveUiState = if (courseId.isNullOrBlank()) {
+                    uiState.copy(isLoading = true)
                 } else {
-                    emptyList()
+                    uiState
                 }
-                val currentIndex = courseLessons.indexOfFirst { it.id == selectedLesson?.id }
-                val nextLesson = if (currentIndex != -1 && currentIndex + 1 < courseLessons.size) courseLessons[currentIndex + 1] else null
 
-                LessonPlayerScreen(
-                    lesson = selectedLesson,
+                com.rtiqa.feature.lessons.LessonDetailsScreen(
+                    uiState = effectiveUiState,
+                    onAction = { viewerViewModel.onAction(it) },
                     onBack = { navController.popBackStack() },
-                    onToggleComplete = { status ->
-                        selectedLesson?.let {
-                            courseViewModel.toggleLessonCompletion(it.id, it.courseId, status)
+                    onStartQuiz = {
+                        val targetCourseId = courseId ?: ""
+                        if (targetCourseId.isNotBlank()) {
+                            navController.navigate("quiz/play/$targetCourseId?lessonId=$lessonId")
+                        } else {
+                            navController.navigate("quiz")
                         }
                     },
-                    onAskAiAboutLesson = { prompt ->
-                        aiTutorViewModel.sendMessage(prompt, isArabic)
-                        navController.navigate("ai_tutor")
+                    onNavigateToLesson = { targetLessonId ->
+                        navController.navigate("lesson_player/$targetLessonId")
                     },
-                    onNextLesson = if (nextLesson != null) {
-                        { navController.navigate("lesson_player/${nextLesson.id}") }
-                    } else null,
-                    onStartQuiz = { navController.navigate("quiz") },
-                    hasNextLesson = nextLesson != null,
+                    isQuizPassed = isQuizPassed,
+                    durationMinutes = matchingLesson?.durationMinutes
+                )
+            }
+
+            composable(
+                route = "quiz/play/{courseId}?lessonId={lessonId}",
+                arguments = listOf(
+                    navArgument("courseId") { type = NavType.StringType },
+                    navArgument("lessonId") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                        nullable = true
+                    }
+                )
+            ) { backStack ->
+                val courseId = backStack.arguments?.getString("courseId") ?: ""
+                val lessonId = backStack.arguments?.getString("lessonId") ?: ""
+                val allLessons by courseViewModel.allLessons.collectAsState()
+                val wasAlreadyPassed = allLessons.find { it.id == lessonId }?.isQuizPassed == true
+
+                val quizPlayViewModel: com.rtiqa.feature.quiz.QuizPlayViewModel = viewModel(
+                    key = "quiz_play_${courseId}_$lessonId",
+                    factory = com.rtiqa.feature.quiz.QuizPlayViewModelFactory(
+                        getQuizForCourseUseCase = appDiContainer.domainUseCasesContainer.getQuizForCourseUseCase,
+                        submitQuizResultUseCase = appDiContainer.domainUseCasesContainer.submitQuizResultUseCase,
+                        evaluateQuizAnswersUseCase = appDiContainer.domainUseCasesContainer.evaluateQuizAnswersUseCase
+                    )
+                )
+
+                androidx.compose.runtime.LaunchedEffect(courseId, lessonId) {
+                    if (courseId.isNotBlank()) {
+                        quizPlayViewModel.onAction(
+                            com.rtiqa.feature.quiz.QuizPlayUiAction.LoadQuizForCourse(
+                                courseId = courseId,
+                                lessonId = lessonId
+                            )
+                        )
+                    }
+                }
+
+                val quizState by quizPlayViewModel.uiState.collectAsState()
+
+                com.rtiqa.feature.quiz.QuizPlayScreen(
+                    uiState = quizState,
+                    onAction = { quizPlayViewModel.onAction(it) },
+                    onBack = { navController.popBackStack() },
+                    onQuizCompleted = { isPassed, xpEarned ->
+                        if (isPassed && lessonId.isNotBlank()) {
+                            courseViewModel.markLessonQuizPassed(lessonId, courseId, true)
+                            scope.launch {
+                                appDiContainer.courseRepository.markLessonCompleted(lessonId, courseId)
+                            }
+                        }
+                        if (isPassed && !wasAlreadyPassed && xpEarned > 0) {
+                            mainViewModel.addRewards(xpEarned, 0)
+                        }
+                    },
                     isArabic = isArabic
                 )
             }
@@ -318,26 +396,39 @@ fun RtiqaApp(
             }
 
             composable("quiz") {
-                val courseLessons by courseViewModel.getLessonsForCourse(courseViewModel.selectedCourseId.value).collectAsState()
-                val selectedLessonId by courseViewModel.selectedLessonId.collectAsState()
-                val selectedLesson = courseLessons.find { it.id == selectedLessonId } ?: courseLessons.firstOrNull()
+                val selectedCourseId by courseViewModel.selectedCourseId.collectAsState()
+                val allCourses by courseViewModel.filteredCourses.collectAsState()
+                val effectiveCourseId = selectedCourseId.ifBlank { allCourses.firstOrNull()?.id ?: "" }
 
-                QuizScreen(
-                    uiState = quizUiState,
-                    question = quizViewModel.currentQuestion,
-                    onSelectOption = { idx -> quizViewModel.selectOption(idx) },
-                    onSubmitAnswer = { quizViewModel.submitAnswer() },
-                    onNextQuestion = { quizViewModel.nextQuestion() },
-                    onToggleHint = { quizViewModel.toggleHint() },
-                    onRestartQuiz = { quizViewModel.restartQuiz() },
-                    onClaimRewards = { xp, coins ->
-                        mainViewModel.addRewards(xp, coins)
-                        if (quizUiState.isPassed) {
-                            selectedLesson?.let {
-                                courseViewModel.markLessonQuizPassed(it.id, it.courseId, true)
-                            }
+                val quizPlayViewModel: com.rtiqa.feature.quiz.QuizPlayViewModel = viewModel(
+                    key = "quiz_play_tab_$effectiveCourseId",
+                    factory = com.rtiqa.feature.quiz.QuizPlayViewModelFactory(
+                        getQuizForCourseUseCase = appDiContainer.domainUseCasesContainer.getQuizForCourseUseCase,
+                        submitQuizResultUseCase = appDiContainer.domainUseCasesContainer.submitQuizResultUseCase,
+                        evaluateQuizAnswersUseCase = appDiContainer.domainUseCasesContainer.evaluateQuizAnswersUseCase
+                    )
+                )
+
+                androidx.compose.runtime.LaunchedEffect(effectiveCourseId) {
+                    if (effectiveCourseId.isNotBlank()) {
+                        quizPlayViewModel.onAction(
+                            com.rtiqa.feature.quiz.QuizPlayUiAction.LoadQuizForCourse(
+                                courseId = effectiveCourseId
+                            )
+                        )
+                    }
+                }
+
+                val quizState by quizPlayViewModel.uiState.collectAsState()
+
+                com.rtiqa.feature.quiz.QuizPlayScreen(
+                    uiState = quizState,
+                    onAction = { quizPlayViewModel.onAction(it) },
+                    onBack = { navController.popBackStack() },
+                    onQuizCompleted = { isPassed, xpEarned ->
+                        if (xpEarned > 0) {
+                            mainViewModel.addRewards(xpEarned, 0)
                         }
-                        navController.popBackStack()
                     },
                     isArabic = isArabic
                 )
@@ -522,7 +613,8 @@ fun RtiqaApp(
                         completeLessonUseCase = appDiContainer.domainUseCasesContainer.completeLessonUseCase,
                         getLessonDetailUseCase = appDiContainer.domainUseCasesContainer.getLessonDetailUseCase,
                         getNextLessonUseCase = appDiContainer.domainUseCasesContainer.getNextLessonUseCase,
-                        saveLessonProgressUseCase = appDiContainer.domainUseCasesContainer.saveLessonProgressUseCase
+                        saveLessonProgressUseCase = appDiContainer.domainUseCasesContainer.saveLessonProgressUseCase,
+                        getLessonsForCourseUseCase = appDiContainer.domainUseCasesContainer.getLessonsForCourseUseCase
                     )
                 )
                 
@@ -537,7 +629,10 @@ fun RtiqaApp(
                     uiState = uiState,
                     onAction = { viewModel.onAction(it) },
                     onBack = { navController.popBackStack() },
-                    onStartQuiz = { /* No-op for now based on requirements */ }
+                    onStartQuiz = { /* No-op for now based on requirements */ },
+                    onNavigateToLesson = { targetId ->
+                        navController.navigate("lesson_player/$targetId")
+                    }
                 )
             }
 

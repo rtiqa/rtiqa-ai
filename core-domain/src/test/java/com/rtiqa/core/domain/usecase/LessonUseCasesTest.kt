@@ -128,4 +128,17 @@ class LessonUseCasesTest {
         assertEquals("l1", courseRepo.markedCompletedId)
         assertEquals(25, userRepo.xpAdded)
     }
+
+    @Test
+    fun completeLesson_doesNotRewardDuplicateXp_whenAlreadyCompleted() = runBlocking {
+        // First completion awards 25 XP
+        val firstResult = completeLessonUseCase("l1", "c1")
+        assertTrue(firstResult is RtiqaResult.Success)
+        assertEquals(25, userRepo.xpAdded)
+
+        // Second completion of same lesson does NOT award additional XP
+        val secondResult = completeLessonUseCase("l1", "c1")
+        assertTrue(secondResult is RtiqaResult.Success)
+        assertEquals(25, userRepo.xpAdded) // Still 25, not 50!
+    }
 }

@@ -3,6 +3,8 @@ package com.rtiqa.backend.courses
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -85,8 +87,9 @@ class CourseDatabaseProgressTest {
                     content TEXT,
                     module_order INT NOT NULL,
                     estimated_minutes INT DEFAULT 10,
-                    created_at TIMESTAMP NOT NULL,
-                    updated_at TIMESTAMP NOT NULL
+                    audio_url TEXT,
+                    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
                 )
                 """.trimIndent(),
                 """
@@ -379,6 +382,301 @@ class CourseDatabaseProgressTest {
                 assertEquals(120, rs.getInt("duration_minutes"))
             }
         }
+    }
+
+    @Test
+    fun `createLesson persists lesson in database and links to correct course`() {
+        val request = CreateLessonRequestDto(
+            title = "المتغيرات وأنواع البيانات",
+            content = "شرح تفصيلي للمتغيرات في كوتلن",
+            moduleOrder = 3,
+            estimatedMinutes = 25
+        )
+        val result = repository.createLesson(connection, courseId, tenantA, request)
+
+        assertTrue(result is CreateLessonResult.Success)
+        val createdLesson = (result as CreateLessonResult.Success).lesson
+        assertEquals("المتغيرات وأنواع البيانات", createdLesson.title)
+        assertEquals("شرح تفصيلي للمتغيرات في كوتلن", createdLesson.content)
+        assertEquals(3, createdLesson.moduleOrder)
+        assertEquals(25, createdLesson.estimatedMinutes)
+        assertEquals(courseId.toString(), createdLesson.courseId)
+        assertFalse(createdLesson.isCompleted)
+
+        // Verify direct database row
+        connection.prepareStatement("SELECT id, course_id, title, content, module_order, estimated_minutes FROM lessons WHERE id = ?").use { stmt ->
+            stmt.setObject(1, UUID.fromString(createdLesson.id))
+            stmt.executeQuery().use { rs ->
+                assertTrue(rs.next(), "Lesson must be found in database")
+                assertEquals(courseId.toString(), rs.getString("course_id"))
+                assertEquals("المتغيرات وأنواع البيانات", rs.getString("title"))
+                assertEquals("شرح تفصيلي للمتغيرات في كوتلن", rs.getString("content"))
+                assertEquals(3, rs.getInt("module_order"))
+                assertEquals(25, rs.getInt("estimated_minutes"))
+            }
+        }
+    }
+
+    @Test
+    fun `createLesson returns CourseNotFound when course does not exist`() {
+        val nonExistentCourse = UUID.randomUUID()
+        val request = CreateLessonRequestDto(title = "درس تجريبي")
+        val result = repository.createLesson(connection, nonExistentCourse, tenantA, request)
+
+        assertTrue(result is CreateLessonResult.CourseNotFound)
+    }
+
+    @Test
+    fun `createLesson calculates next module order when not provided`() {
+        val request = CreateLessonRequestDto(title = "الدرس التالي التلقائي")
+        val result = repository.createLesson(connection, courseId, tenantA, request)
+
+        assertTrue(result is CreateLessonResult.Success)
+        val createdLesson = (result as CreateLessonResult.Success).lesson
+        // courseId already has lesson 1 (order 1) and lesson 2 (order 2)
+        assertEquals(3, createdLesson.moduleOrder)
+    }
+
+    @Test
+    fun `student progress update persists score changes and updates enrollment progress`() {
+        // Initial completion with score 70
+        val initialResult = repository.completeLesson(
+            conn = connection,
+            courseId = courseId,
+            lessonId = lesson1Id,
+            tenantId = tenantA,
+            userId = userA,
+            score = 70
+        )
+        assertTrue(initialResult is CompleteLessonResult.Success)
+
+        // Repeat with higher score 95
+        val updatedResult = repository.completeLesson(
+            conn = connection,
+            courseId = courseId,
+            lessonId = lesson1Id,
+            tenantId = tenantA,
+            userId = userA,
+            score = 95
+        )
+        assertTrue(updatedResult is CompleteLessonResult.Success)
+
+        // Verify score updated in database
+        connection.prepareStatement("SELECT score, completed FROM progress_records WHERE user_id = ? AND lesson_id = ?").use { stmt ->
+            stmt.setObject(1, userA)
+            stmt.setObject(2, lesson1Id)
+            stmt.executeQuery().use { rs ->
+                assertTrue(rs.next())
+                assertEquals(95, rs.getInt("score"))
+                assertTrue(rs.getBoolean("completed"))
+            }
+        }
+
+        // Verify reflected in getLessonsForCourse
+        val lessons = repository.getLessonsForCourse(
+            conn = connection,
+            courseId = courseId,
+            tenantId = tenantA,
+            userId = userA
+        )
+        val completedLesson = lessons.first { it.id == lesson1Id.toString() }
+        assertTrue(completedLesson.isCompleted)
+    }
+
+    @Test
+    fun `cannot complete lesson from another course`() {
+        val otherCourseId = UUID.randomUUID()
+        val result = repository.completeLesson(
+            conn = connection,
+            courseId = otherCourseId,
+            lessonId = lesson1Id,
+            tenantId = tenantA,
+            userId = userA,
+            score = 100
+        )
+        assertTrue(result is CompleteLessonResult.CourseNotFound)
+    }
+
+    @Test
+    fun `getCourseById returns existing course with lessons count and student progress`() {
+        // Complete lesson 1 for userA
+        repository.completeLesson(
+            conn = connection,
+            courseId = courseId,
+            lessonId = lesson1Id,
+            tenantId = tenantA,
+            userId = userA,
+            score = 100
+        )
+
+        val course = repository.getCourseById(
+            conn = connection,
+            courseId = courseId,
+            tenantId = tenantA,
+            userId = userA
+        )
+
+        assertNotNull(course)
+        assertEquals(courseId.toString(), course!!.id)
+        assertEquals("AI Track", course.title)
+        assertEquals("Intro course", course.description)
+        assertEquals("AI", course.category)
+        assertEquals(2, course.totalModules)
+        assertEquals(1, course.completedModules)
+        assertEquals(50.0f, course.progressPercent)
+    }
+
+    @Test
+    fun `getCourseById progress isolates querying student from other students`() {
+        // Complete lesson 1 for userA only
+        repository.completeLesson(
+            conn = connection,
+            courseId = courseId,
+            lessonId = lesson1Id,
+            tenantId = tenantA,
+            userId = userA,
+            score = 100
+        )
+
+        val courseForUserB = repository.getCourseById(
+            conn = connection,
+            courseId = courseId,
+            tenantId = tenantA,
+            userId = userB
+        )
+
+        assertNotNull(courseForUserB)
+        assertEquals(courseId.toString(), courseForUserB!!.id)
+        assertEquals(2, courseForUserB.totalModules)
+        assertEquals(0, courseForUserB.completedModules)
+        assertEquals(0.0f, courseForUserB.progressPercent)
+    }
+
+    @Test
+    fun `getCourseById returns null when course belongs to another tenant`() {
+        val course = repository.getCourseById(
+            conn = connection,
+            courseId = courseId,
+            tenantId = tenantB,
+            userId = userA
+        )
+        assertNull(course)
+    }
+
+    @Test
+    fun `getCourseById returns null when course does not exist`() {
+        val nonExistentCourseId = UUID.randomUUID()
+        val course = repository.getCourseById(
+            conn = connection,
+            courseId = nonExistentCourseId,
+            tenantId = tenantA,
+            userId = userA
+        )
+        assertNull(course)
+    }
+
+    @Test
+    fun `getLesson returns existing lesson with completion true for completed student`() {
+        // Complete lesson 1 for userA
+        repository.completeLesson(
+            conn = connection,
+            courseId = courseId,
+            lessonId = lesson1Id,
+            tenantId = tenantA,
+            userId = userA,
+            score = 100
+        )
+
+        val result = repository.getLesson(
+            conn = connection,
+            courseId = courseId,
+            lessonId = lesson1Id,
+            tenantId = tenantA,
+            userId = userA
+        )
+
+        assertTrue(result is GetLessonResult.Success)
+        val lesson = (result as GetLessonResult.Success).lesson
+        assertEquals(lesson1Id.toString(), lesson.id)
+        assertEquals(courseId.toString(), lesson.courseId)
+        assertEquals("Lesson 1", lesson.title)
+        assertEquals("Content 1", lesson.content)
+        assertEquals(1, lesson.moduleOrder)
+        assertEquals(15, lesson.estimatedMinutes)
+        assertTrue(lesson.isCompleted)
+    }
+
+    @Test
+    fun `getLesson completion status is false for student who has not completed it`() {
+        // userB has not completed lesson 1
+        val result = repository.getLesson(
+            conn = connection,
+            courseId = courseId,
+            lessonId = lesson1Id,
+            tenantId = tenantA,
+            userId = userB
+        )
+
+        assertTrue(result is GetLessonResult.Success)
+        val lesson = (result as GetLessonResult.Success).lesson
+        assertEquals(lesson1Id.toString(), lesson.id)
+        assertFalse(lesson.isCompleted)
+    }
+
+    @Test
+    fun `getLesson returns CourseNotFound when course does not exist`() {
+        val nonExistentCourseId = UUID.randomUUID()
+        val result = repository.getLesson(
+            conn = connection,
+            courseId = nonExistentCourseId,
+            lessonId = lesson1Id,
+            tenantId = tenantA,
+            userId = userA
+        )
+        assertTrue(result is GetLessonResult.CourseNotFound)
+    }
+
+    @Test
+    fun `getLesson returns CourseNotFound when course belongs to another tenant`() {
+        val result = repository.getLesson(
+            conn = connection,
+            courseId = courseId,
+            lessonId = lesson1Id,
+            tenantId = tenantB,
+            userId = userA
+        )
+        assertTrue(result is GetLessonResult.CourseNotFound)
+    }
+
+    @Test
+    fun `getLesson returns LessonNotFound when lesson does not exist`() {
+        val nonExistentLessonId = UUID.randomUUID()
+        val result = repository.getLesson(
+            conn = connection,
+            courseId = courseId,
+            lessonId = nonExistentLessonId,
+            tenantId = tenantA,
+            userId = userA
+        )
+        assertTrue(result is GetLessonResult.LessonNotFound)
+    }
+
+    @Test
+    fun `getLesson returns LessonNotFound when lesson belongs to another course`() {
+        val course2Id = UUID.randomUUID()
+        connection.createStatement().use { stmt ->
+            stmt.execute("INSERT INTO courses (id, organization_id, title, description, category, difficulty, total_modules, status, created_at, updated_at) VALUES ('$course2Id', '$tenantA', 'Course 2', 'Desc 2', 'General', 'Beginner', 0, 'published', NOW(), NOW())")
+        }
+
+        // lesson1Id belongs to courseId, not course2Id
+        val result = repository.getLesson(
+            conn = connection,
+            courseId = course2Id,
+            lessonId = lesson1Id,
+            tenantId = tenantA,
+            userId = userA
+        )
+        assertTrue(result is GetLessonResult.LessonNotFound)
     }
 }
 

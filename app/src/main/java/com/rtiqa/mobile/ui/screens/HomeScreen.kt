@@ -267,7 +267,11 @@ fun HomeScreen(
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = if (isArabic) "%${(course.progressPercent * 100).toInt()}" else "${(course.progressPercent * 100).toInt()}%",
+                                text = if (course.progressPercent >= 1.0f) {
+                                    if (isArabic) "%100 (مكتمل)" else "100% (Completed)"
+                                } else {
+                                    if (isArabic) "%${(course.progressPercent * 100).toInt()}" else "${(course.progressPercent * 100).toInt()}%"
+                                },
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontSize = 13.sp
@@ -276,7 +280,11 @@ fun HomeScreen(
 
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = if (isArabic) "الدرس الحالي: الخلية العصبية الاصطناعية ومعمارية Deep Learning" else "Current Lesson: Artificial Neuron & Deep Learning Architecture",
+                            text = if (course.progressPercent >= 1.0f) {
+                                if (isArabic) "🎉 تم إكمال جميع دروس هذا المقرر بنجاح!" else "🎉 All lessons in this course completed!"
+                            } else {
+                                if (isArabic) "الدرس الحالي: الخلية العصبية الاصطناعية ومعمارية Deep Learning" else "Current Lesson: Artificial Neuron & Deep Learning Architecture"
+                            },
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -303,7 +311,11 @@ fun HomeScreen(
                             Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "متابعة")
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = if (isArabic) "متابعة التعلم ➔" else "Continue Lesson ➔",
+                                text = if (course.progressPercent >= 1.0f) {
+                                    if (isArabic) "مراجعة المقرر ➔" else "Review Course ➔"
+                                } else {
+                                    if (isArabic) "متابعة التعلم ➔" else "Continue Lesson ➔"
+                                },
                                 fontWeight = FontWeight.Bold
                             )
                         }

@@ -124,8 +124,12 @@ class FakeRtiqaApiService : RtiqaApiService {
     override suspend fun register(request: RegisterRequestDto): Response<AuthResponseDto> = throw NotImplementedError()
     override suspend fun getUserProfile(): Response<NetworkUserDto> = throw NotImplementedError()
     override suspend fun getCourses(category: String?): Response<List<NetworkCourseDto>> = Response.success(emptyList())
+    override suspend fun getCourse(courseId: String): Response<NetworkCourseDto> = throw NotImplementedError()
     override suspend fun getCourseLessons(courseId: String): Response<List<NetworkLessonDto>> = Response.success(emptyList())
+    override suspend fun getLesson(courseId: String, lessonId: String): Response<NetworkLessonDto> = throw NotImplementedError()
     override suspend fun completeLesson(courseId: String, lessonId: String): Response<LessonCompletionResponseDto> =
+        Response.success(LessonCompletionResponseDto(true, lessonId, courseId, true, 100.0f, 1, 1))
+    override suspend fun updateLessonProgress(courseId: String, lessonId: String, request: com.rtiqa.core.network.api.LessonProgressRequestDto): Response<com.rtiqa.core.network.api.LessonProgressResponseDto> =
         Response.success(LessonCompletionResponseDto(true, lessonId, courseId, true, 100.0f, 1, 1))
     override suspend fun syncOfflineData(payload: NetworkSyncPayloadDto): Response<NetworkSyncResponseDto> = throw NotImplementedError()
 }

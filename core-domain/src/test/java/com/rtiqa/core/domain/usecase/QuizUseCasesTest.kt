@@ -163,4 +163,17 @@ class QuizUseCasesTest {
         assertTrue(data.isPassed)
         assertEquals(50, userRepo.addedXp)
     }
+
+    @Test
+    fun submitQuizResult_doesNotRewardXpTwiceOnRetake() = runBlocking {
+        // First pass rewards 50 XP
+        val result1 = submitQuizResultUseCase("q1", 2, 2)
+        assertTrue(result1 is RtiqaResult.Success)
+        assertEquals(50, userRepo.addedXp)
+
+        // Retake and passing again should not reward XP again
+        val result2 = submitQuizResultUseCase("q1", 2, 2)
+        assertTrue(result2 is RtiqaResult.Success)
+        assertEquals(50, userRepo.addedXp)
+    }
 }

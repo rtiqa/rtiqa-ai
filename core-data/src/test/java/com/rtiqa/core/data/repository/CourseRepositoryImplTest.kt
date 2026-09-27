@@ -156,4 +156,62 @@ class CourseRepositoryImplTest {
         val result = repository.updateLessonProgress("l1", "c1", 0.8f)
         assertEquals(com.rtiqa.core.domain.result.RtiqaResult.Success(Unit), result)
     }
+
+    @Test
+    fun getCourseById_returnsMappedDomainCourse() = runTest {
+        val repository = CourseRepositoryImpl(FakeCourseDao(), FakeLessonDao())
+        val course = repository.getCourseById("1").first()
+
+        assertNotNull(course)
+        assertEquals("1", course?.id)
+        assertEquals("Kotlin Basics", course?.title)
+    }
+
+    @Test
+    fun getLessonById_withCourseId_returnsCorrespondingLesson() = runTest {
+        val repository = CourseRepositoryImpl(FakeCourseDao(), FakeLessonDao())
+        val lesson = repository.getLessonById("c1", "l1").first()
+
+        assertNotNull(lesson)
+        assertEquals("Lesson 1", lesson?.title)
+    }
+
+    @Test
+    fun markLessonCompleted_calculatesCourseProgress_andReachesOneHundredPercent() = runTest {
+        val fakeCourseDao = FakeCourseDao()
+        fakeCourseDao.insertCourse(CourseEntity("c1", "Course 1", "Desc", "Mobile", 2, 60, null, false, 0f))
+        val fakeLessonDao = FakeLessonDao()
+        val repository = CourseRepositoryImpl(fakeCourseDao, fakeLessonDao)
+
+        // Complete lesson 1 of 2 -> 50% course progress
+        repository.markLessonCompleted("l1", "c1")
+        val courseAfterFirst = fakeCourseDao.getAllCoursesList().find { it.id == "c1" }
+        assertNotNull(courseAfterFirst)
+        assertEquals(0.5f, courseAfterFirst!!.progressPercent, 0.01f)
+
+        // Complete lesson 2 of 2 -> 100% course progress (all lessons completed)
+        repository.markLessonCompleted("l2", "c1")
+        val courseAfterSecond = fakeCourseDao.getAllCoursesList().find { it.id == "c1" }
+        assertNotNull(courseAfterSecond)
+        assertEquals(1.0f, courseAfterSecond!!.progressPercent, 0.01f)
+    }
+
+    @Test
+    fun updateLessonProgress_neverDowngradesCourseProgress_whenReopeningOrPartialProgress() = runTest {
+        val fakeCourseDao = FakeCourseDao()
+        fakeCourseDao.insertCourse(CourseEntity("c1", "Course 1", "Desc", "Mobile", 2, 60, null, false, 0f))
+        val fakeLessonDao = FakeLessonDao()
+        val repository = CourseRepositoryImpl(fakeCourseDao, fakeLessonDao)
+
+        // Complete both lessons so course is 100%
+        repository.markLessonCompleted("l1", "c1")
+        repository.markLessonCompleted("l2", "c1")
+        val courseCompleted = fakeCourseDao.getAllCoursesList().find { it.id == "c1" }
+        assertEquals(1.0f, courseCompleted!!.progressPercent, 0.01f)
+
+        // Reopening lesson 1 with partial progress (e.g. 0.2f) MUST NOT downgrade course progress
+        repository.updateLessonProgress("l1", "c1", 0.2f)
+        val courseAfterReopening = fakeCourseDao.getAllCoursesList().find { it.id == "c1" }
+        assertEquals(1.0f, courseAfterReopening!!.progressPercent, 0.01f)
+    }
 }

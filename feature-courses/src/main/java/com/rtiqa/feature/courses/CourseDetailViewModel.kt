@@ -69,9 +69,17 @@ class CourseDetailViewModel(
             getCourseDetailUseCase(id),
             getLessonsForCourseUseCase(id)
         ) { course, lessons ->
+            val computedProgress = if (course != null && lessons.isNotEmpty()) {
+                val completedCount = lessons.count { it.isCompleted }
+                val calculated = completedCount.toFloat() / lessons.size.toFloat()
+                maxOf(course.progressPercent, calculated)
+            } else {
+                course?.progressPercent ?: 0f
+            }
+            val effectiveCourse = course?.copy(progressPercent = computedProgress)
             setState {
                 copy(
-                    course = course,
+                    course = effectiveCourse,
                     lessons = lessons,
                     isLoading = false,
                     errorMessage = if (course == null) "لم يتم العثور على الدورة" else null
@@ -106,6 +114,10 @@ class CourseDetailViewModel(
     private fun markLessonCompleted(lessonId: String) {
         val courseId = currentState.courseId
         if (courseId.isBlank() || lessonId.isBlank()) return
+        // Prevent duplicate completion calls for already completed lessons
+        val existingLesson = currentState.lessons.find { it.id == lessonId }
+        if (existingLesson?.isCompleted == true) return
+
         viewModelScope.launch {
             when (val result = completeLessonUseCase?.invoke(lessonId, courseId)) {
                 is com.rtiqa.core.domain.result.RtiqaResult.Success -> {

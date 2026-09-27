@@ -1,5 +1,7 @@
 package com.rtiqa.feature.quiz
 
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.rtiqa.core.domain.model.Quiz
 import com.rtiqa.core.domain.model.QuizResult
@@ -19,6 +21,7 @@ import kotlinx.coroutines.launch
 
 data class QuizPlayUiState(
     val courseId: String = "",
+    val lessonId: String = "",
     val quiz: Quiz? = null,
     val currentQuestionIndex: Int = 0,
     val selectedAnswers: Map<Int, Int> = emptyMap(),
@@ -35,7 +38,7 @@ data class QuizPlayUiState(
 ) : ViewUiState
 
 sealed interface QuizPlayUiAction : ViewUiAction {
-    data class LoadQuizForCourse(val courseId: String) : QuizPlayUiAction
+    data class LoadQuizForCourse(val courseId: String, val lessonId: String = "") : QuizPlayUiAction
     data class AnswerSelected(val questionIndex: Int, val optionIndex: Int) : QuizPlayUiAction
     object NextQuestionClicked : QuizPlayUiAction
     object PreviousQuestionClicked : QuizPlayUiAction
@@ -58,7 +61,7 @@ class QuizPlayViewModel(
 
     override fun onAction(action: QuizPlayUiAction) {
         when (action) {
-            is QuizPlayUiAction.LoadQuizForCourse -> loadQuiz(action.courseId)
+            is QuizPlayUiAction.LoadQuizForCourse -> loadQuiz(action.courseId, action.lessonId)
             is QuizPlayUiAction.AnswerSelected -> {
                 if (currentState.isSubmitted) return
                 val updated = currentState.selectedAnswers.toMutableMap()
@@ -83,9 +86,23 @@ class QuizPlayViewModel(
         }
     }
 
-    private fun loadQuiz(courseId: String) {
+    private fun loadQuiz(courseId: String, lessonId: String = "") {
         timerJob?.cancel()
-        setState { copy(courseId = courseId, isLoading = true) }
+        setState {
+            copy(
+                courseId = courseId,
+                lessonId = lessonId,
+                isLoading = true,
+                isSubmitted = false,
+                selectedAnswers = emptyMap(),
+                currentQuestionIndex = 0,
+                score = 0,
+                scorePercent = 0,
+                isPassed = false,
+                xpEarned = 0,
+                errorMessage = null
+            )
+        }
         getQuizForCourseUseCase(courseId)
             .onEach { quiz ->
                 val timeLimit = quiz?.timeLimitSeconds ?: 300
@@ -167,5 +184,23 @@ class QuizPlayViewModel(
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+    }
+}
+
+class QuizPlayViewModelFactory(
+    private val getQuizForCourseUseCase: GetQuizForCourseUseCase,
+    private val submitQuizResultUseCase: SubmitQuizResultUseCase,
+    private val evaluateQuizAnswersUseCase: EvaluateQuizAnswersUseCase = EvaluateQuizAnswersUseCase()
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(QuizPlayViewModel::class.java)) {
+            return QuizPlayViewModel(
+                getQuizForCourseUseCase = getQuizForCourseUseCase,
+                submitQuizResultUseCase = submitQuizResultUseCase,
+                evaluateQuizAnswersUseCase = evaluateQuizAnswersUseCase
+            ) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

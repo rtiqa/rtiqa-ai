@@ -39,8 +39,29 @@ data class LessonResponseDto(
 
 @Serializable
 data class CompleteLessonRequestDto(
+    val completed: Boolean? = true,
     val score: Int? = null
 )
+
+@Serializable
+data class CreateLessonRequestDto(
+    val title: String,
+    val content: String? = null,
+    val moduleOrder: Int? = null,
+    val estimatedMinutes: Int? = null,
+    val audioUrl: String? = null
+)
+
+sealed class CreateLessonResult {
+    data class Success(val lesson: LessonResponseDto) : CreateLessonResult()
+    object CourseNotFound : CreateLessonResult()
+}
+
+sealed class GetLessonResult {
+    data class Success(val lesson: LessonResponseDto) : GetLessonResult()
+    object CourseNotFound : GetLessonResult()
+    object LessonNotFound : GetLessonResult()
+}
 
 @Serializable
 data class LessonCompletionResponseDto(

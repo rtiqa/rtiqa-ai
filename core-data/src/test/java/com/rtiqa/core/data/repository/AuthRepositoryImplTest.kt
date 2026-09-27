@@ -65,8 +65,16 @@ class AuthRepositoryImplTest {
             return Response.success(emptyList())
         }
 
+        override suspend fun getCourse(courseId: String): Response<NetworkCourseDto> {
+            throw NotImplementedError()
+        }
+
         override suspend fun getCourseLessons(courseId: String): Response<List<NetworkLessonDto>> {
             return Response.success(emptyList())
+        }
+
+        override suspend fun getLesson(courseId: String, lessonId: String): Response<NetworkLessonDto> {
+            throw NotImplementedError()
         }
 
         override suspend fun syncOfflineData(payload: NetworkSyncPayloadDto): Response<NetworkSyncResponseDto> {
@@ -74,6 +82,24 @@ class AuthRepositoryImplTest {
         }
 
         override suspend fun completeLesson(courseId: String, lessonId: String): Response<LessonCompletionResponseDto> {
+            return Response.success(
+                LessonCompletionResponseDto(
+                    success = true,
+                    lessonId = lessonId,
+                    courseId = courseId,
+                    completed = true,
+                    courseProgressPercent = 100.0f,
+                    completedLessons = 1,
+                    totalLessons = 1
+                )
+            )
+        }
+
+        override suspend fun updateLessonProgress(
+            courseId: String,
+            lessonId: String,
+            request: com.rtiqa.core.network.api.LessonProgressRequestDto
+        ): Response<com.rtiqa.core.network.api.LessonProgressResponseDto> {
             return Response.success(
                 LessonCompletionResponseDto(
                     success = true,

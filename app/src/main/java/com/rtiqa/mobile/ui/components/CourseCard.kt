@@ -173,7 +173,11 @@ fun CourseCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (isArabic) "%${(course.progressPercent * 100).toInt()}" else "${(course.progressPercent * 100).toInt()}%",
+                            text = if (course.progressPercent >= 1.0f) {
+                                if (isArabic) "100% (مكتمل)" else "100% (Completed)"
+                            } else {
+                                if (isArabic) "%${(course.progressPercent * 100).toInt()}" else "${(course.progressPercent * 100).toInt()}%"
+                            },
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary

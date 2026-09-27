@@ -10,6 +10,7 @@ import com.rtiqa.core.domain.repository.DownloadManagerContract
 import com.rtiqa.core.domain.repository.UserRepositoryContract
 import com.rtiqa.core.domain.result.RtiqaResult
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 
 /**
  * Use case to retrieve all available courses.
@@ -62,13 +63,17 @@ class CompleteLessonUseCase(
     private val courseRepository: CourseRepositoryContract,
     private val userRepository: UserRepositoryContract
 ) {
+    private val completedLessonIds = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
     suspend operator fun invoke(lessonId: String, courseId: String): RtiqaResult<Unit> {
         if (lessonId.isBlank() || courseId.isBlank()) {
             return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Invalid lesson or course identifier.")))
         }
+        val wasAlreadyCompleted = completedLessonIds.contains(lessonId)
         val completeResult = courseRepository.markLessonCompleted(lessonId, courseId)
-        if (completeResult is RtiqaResult.Success) {
-            // Reward 25 XP for completing a lesson
+        if (completeResult is RtiqaResult.Success && !wasAlreadyCompleted) {
+            completedLessonIds.add(lessonId)
+            // Reward 25 XP only once for newly completed lesson
             userRepository.addXp(25)
         }
         return completeResult

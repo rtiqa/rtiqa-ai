@@ -48,7 +48,7 @@ data class NetworkLessonDto(
     val title: String,
     val content: String,
     val moduleOrder: Int,
-    val estimatedMinutes: Int,
+    val estimatedMinutes: Int = 10,
     val isCompleted: Boolean = false
 )
 
@@ -60,6 +60,13 @@ data class LessonCompletionResponseDto(
     val courseProgressPercent: Float,
     val completedLessons: Int,
     val totalLessons: Int
+)
+
+typealias LessonProgressResponseDto = LessonCompletionResponseDto
+
+data class LessonProgressRequestDto(
+    val completed: Boolean? = true,
+    val score: Int? = null
 )
 
 data class NetworkSyncPayloadDto(
@@ -97,16 +104,34 @@ interface RtiqaApiService {
         @Query("category") category: String? = null
     ): Response<List<NetworkCourseDto>>
 
+    @GET("api/v1/courses/{courseId}")
+    suspend fun getCourse(
+        @Path("courseId") courseId: String
+    ): Response<NetworkCourseDto>
+
     @GET("api/v1/courses/{courseId}/lessons")
     suspend fun getCourseLessons(
         @Path("courseId") courseId: String
     ): Response<List<NetworkLessonDto>>
+
+    @GET("api/v1/courses/{courseId}/lessons/{lessonId}")
+    suspend fun getLesson(
+        @Path("courseId") courseId: String,
+        @Path("lessonId") lessonId: String
+    ): Response<NetworkLessonDto>
 
     @POST("api/v1/courses/{courseId}/lessons/{lessonId}/complete")
     suspend fun completeLesson(
         @Path("courseId") courseId: String,
         @Path("lessonId") lessonId: String
     ): Response<LessonCompletionResponseDto>
+
+    @POST("api/v1/courses/{courseId}/lessons/{lessonId}/progress")
+    suspend fun updateLessonProgress(
+        @Path("courseId") courseId: String,
+        @Path("lessonId") lessonId: String,
+        @Body request: LessonProgressRequestDto = LessonProgressRequestDto()
+    ): Response<LessonProgressResponseDto>
 
     @POST("api/v1/sync")
     suspend fun syncOfflineData(

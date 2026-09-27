@@ -209,7 +209,13 @@ fun CourseListItemCard(
                     modifier = Modifier.weight(1f)
                 )
 
-                Row {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (course.isFullyCompleted()) {
+                        RdsBadge(text = "تم إكمال المقرر", type = RdsBadgeType.SUCCESS)
+                    }
                     if (course.isDownloaded) {
                         RdsBadge(text = "متاح أوفلاين", type = RdsBadgeType.OFFLINE)
                     }
@@ -240,7 +246,7 @@ fun CourseListItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "التقدم: ${(course.progressPercent * 100).toInt()}%",
+                    text = if (course.isFullyCompleted()) "التقدم: 100% (مكتمل)" else "التقدم: ${(course.progressPercent * 100).toInt()}%",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary
                 )

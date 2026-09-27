@@ -17,6 +17,7 @@ import com.rtiqa.core.data.mapper.toEntity
 
 import com.rtiqa.core.database.entity.CourseEntity
 import com.rtiqa.core.database.entity.LessonEntity
+import com.rtiqa.core.network.api.LessonProgressRequestDto
 import com.rtiqa.core.network.api.NetworkCourseDto
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -75,6 +76,23 @@ class CourseRepositoryImpl(
         }
     }
 
+    private fun refreshRemoteCourse(courseId: String) {
+        val service = apiService ?: return
+        if (courseId.isBlank()) return
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = service.getCourse(courseId)
+                if (response.isSuccessful) {
+                    response.body()?.let { dto ->
+                        saveNetworkCoursesToDatabase(listOf(dto))
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignore network error to keep local offline cache
+            }
+        }
+    }
+
     private fun refreshRemoteLessons(courseId: String) {
         val service = apiService ?: return
         CoroutineScope(Dispatchers.IO).launch {
@@ -104,6 +122,66 @@ class CourseRepositoryImpl(
         }
     }
 
+    private fun refreshRemoteLesson(courseId: String? = null, lessonId: String) {
+        val service = apiService ?: return
+        if (lessonId.isBlank()) return
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val resolvedCourseId = courseId
+                    ?: lessonDao.getLessonById(lessonId)?.courseId
+                    ?: findCourseIdForLesson(lessonId)
+                if (resolvedCourseId.isNullOrBlank()) return@launch
+
+                val response = service.getLesson(courseId = resolvedCourseId, lessonId = lessonId)
+                if (response.isSuccessful) {
+                    val dto = response.body() ?: return@launch
+                    val existing = lessonDao.getLessonById(lessonId)
+                    val entity = LessonEntity(
+                        id = dto.id,
+                        courseId = dto.courseId,
+                        title = dto.title,
+                        content = dto.content,
+                        order = dto.moduleOrder,
+                        isCompleted = dto.isCompleted || (existing?.isCompleted ?: false),
+                        audioUrl = existing?.audioUrl,
+                        schoolId = existing?.schoolId
+                    )
+                    lessonDao.insertLesson(entity)
+                }
+            } catch (e: Exception) {
+                // Ignore network error to keep local offline cache
+            }
+        }
+    }
+
+    private suspend fun findCourseIdForLesson(lessonId: String): String? {
+        val courses = courseDao.getAllCoursesList()
+        for (course in courses) {
+            try {
+                val resp = apiService?.getLesson(courseId = course.id, lessonId = lessonId)
+                if (resp != null && resp.isSuccessful) {
+                    val dto = resp.body()
+                    if (dto != null) {
+                        val existing = lessonDao.getLessonById(lessonId)
+                        val entity = LessonEntity(
+                            id = dto.id,
+                            courseId = dto.courseId,
+                            title = dto.title,
+                            content = dto.content,
+                            order = dto.moduleOrder,
+                            isCompleted = dto.isCompleted || (existing?.isCompleted ?: false),
+                            audioUrl = existing?.audioUrl,
+                            schoolId = existing?.schoolId
+                        )
+                        lessonDao.insertLesson(entity)
+                        return course.id
+                    }
+                }
+            } catch (_: Exception) {}
+        }
+        return null
+    }
+
     override fun getCourses(): Flow<List<Course>> {
         refreshRemoteCourses()
         return courseDao.getAllCourses().map { entities ->
@@ -118,6 +196,7 @@ class CourseRepositoryImpl(
     }
 
     override fun getCourseById(courseId: String): Flow<Course?> {
+        refreshRemoteCourse(courseId)
         return courseDao.getCourseById(courseId).map { it?.toDomain() }
     }
 
@@ -129,6 +208,12 @@ class CourseRepositoryImpl(
     }
 
     override fun getLessonById(lessonId: String): Flow<Lesson?> {
+        refreshRemoteLesson(courseId = null, lessonId = lessonId)
+        return lessonDao.observeLessonById(lessonId).map { it?.toDomain() }
+    }
+
+    fun getLessonById(courseId: String, lessonId: String): Flow<Lesson?> {
+        refreshRemoteLesson(courseId = courseId, lessonId = lessonId)
         return lessonDao.observeLessonById(lessonId).map { it?.toDomain() }
     }
 
@@ -206,7 +291,9 @@ class CourseRepositoryImpl(
                     } else {
                         completion.courseProgressPercent
                     }
-                    courseDao.updateCourseProgress(courseId, normalizedProgress)
+                    val existingCourse = courseDao.getAllCoursesList().find { it.id == courseId }
+                    val finalProgress = maxOf(existingCourse?.progressPercent ?: 0f, normalizedProgress)
+                    courseDao.updateCourseProgress(courseId, finalProgress)
 
                     // Trigger background refresh to sync PostgreSQL state across caches
                     refreshRemoteCourses()
@@ -221,14 +308,16 @@ class CourseRepositoryImpl(
                 val totalCount = lessons.size.coerceAtLeast(1)
                 val progressPercent = completedCount.toFloat() / totalCount.toFloat()
 
-                courseDao.updateCourseProgress(courseId, progressPercent)
+                val existingCourse = courseDao.getAllCoursesList().find { it.id == courseId }
+                val finalProgress = maxOf(existingCourse?.progressPercent ?: 0f, progressPercent)
+                courseDao.updateCourseProgress(courseId, finalProgress)
 
                 val userId = currentUserIdProvider?.invoke()
                 if (userId != null) {
                     remoteSyncDataSource?.syncCourseProgressToCloud(
                         userId = userId,
                         courseId = courseId,
-                        progressPercent = progressPercent,
+                        progressPercent = finalProgress,
                         completedLessonsCount = completedCount
                     )
                 }
@@ -246,19 +335,99 @@ class CourseRepositoryImpl(
         progressPercent: Float
     ): RtiqaResult<Unit> {
         return try {
-            val userId = currentUserIdProvider?.invoke()
-            if (userId != null) {
-                remoteSyncDataSource?.syncCourseProgressToCloud(
-                    userId = userId,
-                    courseId = courseId,
-                    progressPercent = progressPercent,
-                    completedLessonsCount = lessonDao.getCompletedLessonsCount(courseId)
+            val normalizedProgress = if (progressPercent > 1f) {
+                (progressPercent / 100f).coerceIn(0f, 1f)
+            } else {
+                progressPercent.coerceIn(0f, 1f)
+            }
+            val score = (normalizedProgress * 100).toInt().coerceIn(0, 100)
+            val existingLesson = lessonDao.getLessonById(lessonId)
+            val shouldBeCompleted = normalizedProgress >= 1.0f || (existingLesson?.isCompleted == true)
+
+            var remoteSuccess = false
+            if (apiService != null) {
+                try {
+                    val requestDto = LessonProgressRequestDto(
+                        completed = shouldBeCompleted,
+                        score = score
+                    )
+                    val response = apiService.updateLessonProgress(
+                        courseId = courseId,
+                        lessonId = lessonId,
+                        request = requestDto
+                    )
+                    if (response.isSuccessful) {
+                        val completion = response.body()
+                        if (completion != null) {
+                            if (existingLesson != null) {
+                                val finalCompleted = existingLesson.isCompleted || shouldBeCompleted
+                                lessonDao.updateLessonCompletion(lessonId, finalCompleted)
+                            } else {
+                                lessonDao.insertLesson(
+                                    LessonEntity(
+                                        id = lessonId,
+                                        courseId = courseId,
+                                        title = "الدرس $lessonId",
+                                        content = "",
+                                        order = 1,
+                                        isCompleted = shouldBeCompleted,
+                                        audioUrl = null
+                                    )
+                                )
+                            }
+                            val serverProgress = if (completion.courseProgressPercent > 1f) {
+                                completion.courseProgressPercent / 100f
+                            } else {
+                                completion.courseProgressPercent
+                            }
+                            val existingCourse = courseDao.getAllCoursesList().find { it.id == courseId }
+                            val finalProgress = maxOf(existingCourse?.progressPercent ?: 0f, serverProgress)
+                            courseDao.updateCourseProgress(courseId, finalProgress)
+
+                            refreshRemoteCourses()
+                            refreshRemoteLessons(courseId)
+                            remoteSuccess = true
+                        }
+                    }
+                } catch (e: Exception) {
+                    // Network failure: fallback to local Room update and offline action queue
+                }
+            }
+
+            if (!remoteSuccess) {
+                // Local-first fallback when offline or when network call fails
+                if (existingLesson != null) {
+                    val finalCompleted = existingLesson.isCompleted || shouldBeCompleted
+                    lessonDao.updateLessonCompletion(lessonId, finalCompleted)
+                } else {
+                    lessonDao.insertLesson(
+                        LessonEntity(
+                            id = lessonId,
+                            courseId = courseId,
+                            title = "الدرس $lessonId",
+                            content = "",
+                            order = 1,
+                            isCompleted = shouldBeCompleted,
+                            audioUrl = null
+                        )
+                    )
+                }
+
+                // Recalculate course progress from completed lessons without overwriting with individual lesson progress
+                val lessons = lessonDao.getLessonsForCourseList(courseId)
+                val completedCount = lessons.count { it.isCompleted }
+                val totalCount = lessons.size.coerceAtLeast(1)
+                val calculatedProgress = completedCount.toFloat() / totalCount.toFloat()
+                val existingCourse = courseDao.getAllCoursesList().find { it.id == courseId }
+                val finalProgress = maxOf(existingCourse?.progressPercent ?: 0f, calculatedProgress)
+                courseDao.updateCourseProgress(courseId, finalProgress)
+
+                offlineSyncManager?.enqueueOfflineAction(
+                    actionType = "LESSON_PROGRESS_UPDATE",
+                    payloadJson = "{\"lessonId\":\"$lessonId\",\"courseId\":\"$courseId\",\"progress\":$progressPercent}"
                 )
             }
-            offlineSyncManager?.enqueueOfflineAction(
-                actionType = "LESSON_PROGRESS_UPDATE",
-                payloadJson = "{\"lessonId\":\"$lessonId\",\"courseId\":\"$courseId\",\"progress\":$progressPercent}"
-            )
+
             RtiqaResult.Success(Unit)
         } catch (e: Exception) {
             RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Failed to update lesson progress", e))

@@ -74,6 +74,47 @@ class CourseRepository {
         }
     }
 
+    fun getCourseById(conn: Connection, courseId: UUID, tenantId: UUID, userId: UUID): CourseResponseDto? {
+        val sql = """
+            SELECT 
+                c.id,
+                c.title,
+                c.description,
+                c.category,
+                c.level,
+                COUNT(DISTINCT l.id) AS total_lessons,
+                COALESCE(e.completed_lessons, 0) AS completed_lessons,
+                COALESCE(e.progress_percent, 0.0) AS progress_percent
+            FROM courses c
+            LEFT JOIN lessons l ON l.course_id = c.id
+            LEFT JOIN enrollments e ON e.course_id = c.id AND e.user_id = ?
+            WHERE c.id = ? AND c.organization_id = ?
+            GROUP BY c.id, c.title, c.description, c.category, c.level, e.completed_lessons, e.progress_percent
+        """.trimIndent()
+
+        conn.prepareStatement(sql).use { stmt ->
+            stmt.setObject(1, userId)
+            stmt.setObject(2, courseId)
+            stmt.setObject(3, tenantId)
+
+            stmt.executeQuery().use { rs ->
+                if (rs.next()) {
+                    return CourseResponseDto(
+                        id = rs.getString("id"),
+                        title = rs.getString("title") ?: "",
+                        description = rs.getString("description") ?: "",
+                        category = rs.getString("category") ?: "عام",
+                        difficulty = rs.getString("level") ?: "مبتدئ",
+                        totalModules = rs.getInt("total_lessons"),
+                        completedModules = rs.getInt("completed_lessons"),
+                        progressPercent = rs.getFloat("progress_percent")
+                    )
+                }
+                return null
+            }
+        }
+    }
+
     fun courseExistsInTenant(conn: Connection, courseId: UUID, tenantId: UUID): Boolean {
         val sql = "SELECT 1 FROM courses WHERE id = ? AND organization_id = ?"
         conn.prepareStatement(sql).use { stmt ->
@@ -142,6 +183,77 @@ class CourseRepository {
                     )
                 }
                 return lessons
+            }
+        }
+    }
+
+    fun getLesson(
+        conn: Connection,
+        courseId: UUID,
+        lessonId: UUID,
+        tenantId: UUID,
+        userId: UUID? = null
+    ): GetLessonResult {
+        // 1. Verify course belongs to tenant
+        if (!courseExistsInTenant(conn, courseId, tenantId)) {
+            return GetLessonResult.CourseNotFound
+        }
+
+        // 2. Fetch lesson if it belongs to course and tenant
+        val sql = if (userId != null) {
+            """
+                SELECT 
+                    l.id,
+                    l.course_id,
+                    l.title,
+                    l.content,
+                    l.module_order,
+                    l.estimated_minutes,
+                    COALESCE(pr.completed, false) AS is_completed
+                FROM lessons l
+                INNER JOIN courses c ON c.id = l.course_id
+                LEFT JOIN progress_records pr ON pr.lesson_id = l.id AND pr.user_id = ?
+                WHERE l.id = ? AND l.course_id = ? AND c.organization_id = ?
+            """.trimIndent()
+        } else {
+            """
+                SELECT 
+                    l.id,
+                    l.course_id,
+                    l.title,
+                    l.content,
+                    l.module_order,
+                    l.estimated_minutes,
+                    false AS is_completed
+                FROM lessons l
+                INNER JOIN courses c ON c.id = l.course_id
+                WHERE l.id = ? AND l.course_id = ? AND c.organization_id = ?
+            """.trimIndent()
+        }
+
+        conn.prepareStatement(sql).use { stmt ->
+            var idx = 1
+            if (userId != null) {
+                stmt.setObject(idx++, userId)
+            }
+            stmt.setObject(idx++, lessonId)
+            stmt.setObject(idx++, courseId)
+            stmt.setObject(idx++, tenantId)
+
+            stmt.executeQuery().use { rs ->
+                if (rs.next()) {
+                    val lesson = LessonResponseDto(
+                        id = rs.getString("id"),
+                        courseId = rs.getString("course_id"),
+                        title = rs.getString("title") ?: "",
+                        content = rs.getString("content") ?: "",
+                        moduleOrder = rs.getInt("module_order"),
+                        estimatedMinutes = rs.getInt("estimated_minutes"),
+                        isCompleted = rs.getBoolean("is_completed")
+                    )
+                    return GetLessonResult.Success(lesson)
+                }
+                return GetLessonResult.LessonNotFound
             }
         }
     }
@@ -323,6 +435,72 @@ class CourseRepository {
             totalModules = 0,
             completedModules = 0,
             progressPercent = 0.0f
+        )
+    }
+
+    fun createLesson(
+        conn: Connection,
+        courseId: UUID,
+        tenantId: UUID,
+        request: CreateLessonRequestDto,
+        lessonId: UUID = UUID.randomUUID()
+    ): CreateLessonResult {
+        // 1. Verify course belongs to tenant
+        val checkCourseSql = "SELECT id FROM courses WHERE id = ? AND organization_id = ?"
+        val courseExists = conn.prepareStatement(checkCourseSql).use { stmt ->
+            stmt.setObject(1, courseId)
+            stmt.setObject(2, tenantId)
+            stmt.executeQuery().use { it.next() }
+        }
+        if (!courseExists) return CreateLessonResult.CourseNotFound
+
+        val trimmedTitle = request.title.trim()
+        val resolvedContent = request.content?.trim() ?: ""
+        val estimatedMinutes = if (request.estimatedMinutes != null && request.estimatedMinutes > 0) {
+            request.estimatedMinutes
+        } else {
+            15
+        }
+
+        val resolvedOrder = if (request.moduleOrder != null && request.moduleOrder > 0) {
+            request.moduleOrder
+        } else {
+            val nextOrderSql = "SELECT COALESCE(MAX(module_order), 0) + 1 FROM lessons WHERE course_id = ?"
+            conn.prepareStatement(nextOrderSql).use { stmt ->
+                stmt.setObject(1, courseId)
+                stmt.executeQuery().use { rs ->
+                    if (rs.next()) rs.getInt(1) else 1
+                }
+            }
+        }
+
+        val insertSql = """
+            INSERT INTO lessons (id, course_id, title, content, module_order, estimated_minutes, audio_url, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+        """.trimIndent()
+
+        conn.prepareStatement(insertSql).use { stmt ->
+            var idx = 1
+            stmt.setObject(idx++, lessonId)
+            stmt.setObject(idx++, courseId)
+            stmt.setString(idx++, trimmedTitle)
+            stmt.setString(idx++, resolvedContent)
+            stmt.setInt(idx++, resolvedOrder)
+            stmt.setInt(idx++, estimatedMinutes)
+            stmt.setString(idx++, request.audioUrl)
+            stmt.executeUpdate()
+        }
+
+        return CreateLessonResult.Success(
+            LessonResponseDto(
+                id = lessonId.toString(),
+                courseId = courseId.toString(),
+                title = trimmedTitle,
+                content = resolvedContent,
+                moduleOrder = resolvedOrder,
+                estimatedMinutes = estimatedMinutes,
+                isCompleted = false
+            )
         )
     }
 }

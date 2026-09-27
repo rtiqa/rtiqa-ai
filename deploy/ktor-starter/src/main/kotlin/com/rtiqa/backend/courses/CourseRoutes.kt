@@ -8,6 +8,7 @@ import com.rtiqa.backend.auth.requireRole
 import com.rtiqa.backend.auth.tenantAuthorization
 import com.rtiqa.backend.database.DatabaseFactory
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.auth.authenticate
 import io.ktor.server.request.receiveNullable
@@ -127,6 +128,55 @@ fun Route.courseRoutes(
                 }
             }
 
+            // GET /api/v1/courses/{courseId}
+            get("/{courseId}") {
+                val tenantContext = call.attributes.getOrNull(TenantContextKey)
+                if (tenantContext == null) {
+                    call.respond(
+                        HttpStatusCode.Forbidden,
+                        ErrorResponseDto(403, "Tenant context missing")
+                    )
+                    return@get
+                }
+
+                val courseIdParam = call.parameters["courseId"]
+                if (!isUUID(courseIdParam)) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponseDto(400, "Invalid course ID format")
+                    )
+                    return@get
+                }
+
+                val courseId = UUID.fromString(courseIdParam)
+
+                try {
+                    val course = runTransaction(tenantContext) { conn ->
+                        courseRepository.getCourseById(
+                            conn = conn,
+                            courseId = courseId,
+                            tenantId = tenantContext.orgId,
+                            userId = tenantContext.userId
+                        )
+                    } as? CourseResponseDto
+
+                    if (course != null) {
+                        call.respond(HttpStatusCode.OK, course)
+                    } else {
+                        call.respond(
+                            HttpStatusCode.NotFound,
+                            ErrorResponseDto(404, "Course not found")
+                        )
+                    }
+                } catch (e: Exception) {
+                    logger.error("Failed to fetch course $courseIdParam for tenant ${tenantContext.orgId}", e)
+                    call.respond(
+                        HttpStatusCode.InternalServerError,
+                        ErrorResponseDto(500, "Internal server error fetching course")
+                    )
+                }
+            }
+
             // GET /api/v1/courses/{courseId}/lessons
             get("/{courseId}/lessons") {
                 val tenantContext = call.attributes.getOrNull(TenantContextKey)
@@ -186,74 +236,246 @@ fun Route.courseRoutes(
                 }
             }
 
-            // POST /api/v1/courses/{courseId}/lessons/{lessonId}/complete
-            post("/{courseId}/lessons/{lessonId}/complete") {
+            // GET /api/v1/courses/{courseId}/lessons/{lessonId}
+            get("/{courseId}/lessons/{lessonId}") {
                 val tenantContext = call.attributes.getOrNull(TenantContextKey)
                 if (tenantContext == null) {
                     call.respond(
                         HttpStatusCode.Forbidden,
                         ErrorResponseDto(403, "Tenant context missing")
                     )
-                    return@post
+                    return@get
                 }
 
                 val courseIdParam = call.parameters["courseId"]
                 val lessonIdParam = call.parameters["lessonId"]
-                if (!isUUID(courseIdParam) || !isUUID(lessonIdParam)) {
+                if (!isUUID(courseIdParam)) {
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        ErrorResponseDto(400, "Invalid UUID format for courseId or lessonId")
+                        ErrorResponseDto(400, "Invalid course ID format")
                     )
-                    return@post
+                    return@get
+                }
+                if (!isUUID(lessonIdParam)) {
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ErrorResponseDto(400, "Invalid lesson ID format")
+                    )
+                    return@get
                 }
 
                 val courseId = UUID.fromString(courseIdParam)
                 val lessonId = UUID.fromString(lessonIdParam)
 
-                val reqDto = try {
-                    call.receiveNullable<CompleteLessonRequestDto>()
-                } catch (e: Exception) {
-                    null
-                }
-                val score = reqDto?.score ?: 100
-
                 try {
                     val result = runTransaction(tenantContext) { conn ->
-                        courseRepository.completeLesson(
+                        courseRepository.getLesson(
                             conn = conn,
                             courseId = courseId,
                             lessonId = lessonId,
                             tenantId = tenantContext.orgId,
-                            userId = tenantContext.userId,
-                            score = score
+                            userId = tenantContext.userId
                         )
-                    } as? CompleteLessonResult
+                    } as? GetLessonResult
 
                     when (result) {
-                        is CompleteLessonResult.Success -> {
-                            call.respond(HttpStatusCode.OK, result.completion)
+                        is GetLessonResult.Success -> {
+                            call.respond(HttpStatusCode.OK, result.lesson)
                         }
-                        is CompleteLessonResult.CourseNotFound -> {
-                            call.respond(HttpStatusCode.NotFound, ErrorResponseDto(404, "Course not found"))
+                        is GetLessonResult.CourseNotFound -> {
+                            call.respond(
+                                HttpStatusCode.NotFound,
+                                ErrorResponseDto(404, "Course not found")
+                            )
                         }
-                        is CompleteLessonResult.LessonNotFound -> {
-                            call.respond(HttpStatusCode.NotFound, ErrorResponseDto(404, "Lesson not found"))
-                        }
-                        is CompleteLessonResult.NotEnrolled -> {
-                            call.respond(HttpStatusCode.Forbidden, ErrorResponseDto(403, "User is not enrolled in this course"))
+                        is GetLessonResult.LessonNotFound -> {
+                            call.respond(
+                                HttpStatusCode.NotFound,
+                                ErrorResponseDto(404, "Lesson not found")
+                            )
                         }
                         null -> {
-                            call.respond(HttpStatusCode.InternalServerError, ErrorResponseDto(500, "Transaction execution failed"))
+                            call.respond(
+                                HttpStatusCode.InternalServerError,
+                                ErrorResponseDto(500, "Transaction execution failed")
+                            )
                         }
                     }
                 } catch (e: Exception) {
-                    logger.error("Failed to complete lesson $lessonIdParam for course $courseIdParam", e)
+                    logger.error("Failed to fetch lesson $lessonIdParam for course $courseIdParam", e)
                     call.respond(
                         HttpStatusCode.InternalServerError,
-                        ErrorResponseDto(500, "Internal server error completing lesson")
+                        ErrorResponseDto(500, "Internal server error fetching lesson")
                     )
                 }
             }
+
+            // POST /api/v1/courses/{courseId}/lessons
+            requireRole(EnterpriseRole.TEACHER, EnterpriseRole.ORG_ADMIN, EnterpriseRole.PRINCIPAL, EnterpriseRole.SUPER_ADMIN) {
+                post("/{courseId}/lessons") {
+                    val tenantContext = call.attributes.getOrNull(TenantContextKey)
+                    if (tenantContext == null) {
+                        call.respond(
+                            HttpStatusCode.Forbidden,
+                            ErrorResponseDto(403, "Tenant context missing")
+                        )
+                        return@post
+                    }
+
+                    val courseIdParam = call.parameters["courseId"]
+                    if (!isUUID(courseIdParam)) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponseDto(400, "Invalid course ID format")
+                        )
+                        return@post
+                    }
+
+                    val courseId = UUID.fromString(courseIdParam)
+
+                    val request = try {
+                        call.receiveNullable<CreateLessonRequestDto>()
+                    } catch (e: Exception) {
+                        null
+                    }
+
+                    if (request == null || request.title.isBlank()) {
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            ErrorResponseDto(400, "Lesson title is required and cannot be blank")
+                        )
+                        return@post
+                    }
+
+                    try {
+                        val result = runTransaction(tenantContext) { conn ->
+                            courseRepository.createLesson(
+                                conn = conn,
+                                courseId = courseId,
+                                tenantId = tenantContext.orgId,
+                                request = request
+                            )
+                        } as? CreateLessonResult
+
+                        when (result) {
+                            is CreateLessonResult.Success -> {
+                                call.respond(HttpStatusCode.Created, result.lesson)
+                            }
+                            is CreateLessonResult.CourseNotFound -> {
+                                call.respond(
+                                    HttpStatusCode.NotFound,
+                                    ErrorResponseDto(404, "Course not found")
+                                )
+                            }
+                            null -> {
+                                call.respond(
+                                    HttpStatusCode.InternalServerError,
+                                    ErrorResponseDto(500, "Failed to create lesson")
+                                )
+                            }
+                        }
+                    } catch (e: Exception) {
+                        logger.error("Failed to create lesson for course $courseIdParam in tenant ${tenantContext.orgId}", e)
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            ErrorResponseDto(500, "Internal server error creating lesson")
+                        )
+                    }
+                }
+            }
+
+            // POST /api/v1/courses/{courseId}/lessons/{lessonId}/complete
+            // POST /api/v1/courses/{courseId}/lessons/{lessonId}/progress
+            requireRole(EnterpriseRole.STUDENT) {
+                post("/{courseId}/lessons/{lessonId}/complete") {
+                    handleLessonCompletion(call, runTransaction, courseRepository)
+                }
+
+                post("/{courseId}/lessons/{lessonId}/progress") {
+                    handleLessonCompletion(call, runTransaction, courseRepository)
+                }
+            }
         }
+    }
+}
+
+private suspend fun handleLessonCompletion(
+    call: ApplicationCall,
+    runTransaction: suspend (TenantContext, suspend (Connection) -> Any?) -> Any?,
+    courseRepository: CourseRepository
+) {
+    val tenantContext = call.attributes.getOrNull(TenantContextKey)
+    if (tenantContext == null) {
+        call.respond(
+            HttpStatusCode.Forbidden,
+            ErrorResponseDto(403, "Tenant context missing")
+        )
+        return
+    }
+
+    val courseIdParam = call.parameters["courseId"]
+    val lessonIdParam = call.parameters["lessonId"]
+    if (!isUUID(courseIdParam) || !isUUID(lessonIdParam)) {
+        call.respond(
+            HttpStatusCode.BadRequest,
+            ErrorResponseDto(400, "Invalid UUID format for courseId or lessonId")
+        )
+        return
+    }
+
+    val courseId = UUID.fromString(courseIdParam)
+    val lessonId = UUID.fromString(lessonIdParam)
+
+    val reqDto = try {
+        call.receiveNullable<CompleteLessonRequestDto>()
+    } catch (e: Exception) {
+        null
+    }
+
+    if (reqDto?.score != null && reqDto.score < 0) {
+        call.respond(
+            HttpStatusCode.BadRequest,
+            ErrorResponseDto(400, "Score cannot be negative")
+        )
+        return
+    }
+
+    val score = reqDto?.score ?: 100
+
+    try {
+        val result = runTransaction(tenantContext) { conn ->
+            courseRepository.completeLesson(
+                conn = conn,
+                courseId = courseId,
+                lessonId = lessonId,
+                tenantId = tenantContext.orgId,
+                userId = tenantContext.userId,
+                score = score
+            )
+        } as? CompleteLessonResult
+
+        when (result) {
+            is CompleteLessonResult.Success -> {
+                call.respond(HttpStatusCode.OK, result.completion)
+            }
+            is CompleteLessonResult.CourseNotFound -> {
+                call.respond(HttpStatusCode.NotFound, ErrorResponseDto(404, "Course not found"))
+            }
+            is CompleteLessonResult.LessonNotFound -> {
+                call.respond(HttpStatusCode.NotFound, ErrorResponseDto(404, "Lesson not found"))
+            }
+            is CompleteLessonResult.NotEnrolled -> {
+                call.respond(HttpStatusCode.Forbidden, ErrorResponseDto(403, "User is not enrolled in this course"))
+            }
+            null -> {
+                call.respond(HttpStatusCode.InternalServerError, ErrorResponseDto(500, "Transaction execution failed"))
+            }
+        }
+    } catch (e: Exception) {
+        logger.error("Failed to complete lesson $lessonIdParam for course $courseIdParam", e)
+        call.respond(
+            HttpStatusCode.InternalServerError,
+            ErrorResponseDto(500, "Internal server error completing lesson")
+        )
     }
 }

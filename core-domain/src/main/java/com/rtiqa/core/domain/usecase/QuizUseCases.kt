@@ -8,6 +8,7 @@ import com.rtiqa.core.domain.repository.UserRepositoryContract
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.domain.validation.QuizSubmissionValidator
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 
 /**
  * Use case to retrieve all quizzes for a course.
@@ -94,11 +95,16 @@ class SubmitQuizResultUseCase(
             return RtiqaResult.Error(RtiqaError.ValidationError(validation.getErrorsOrEmpty()))
         }
 
+        val userProfile = userRepository.getUserProfile().firstOrNull()
+        val userId = userProfile?.id ?: "u1"
+        val previousAttempts = quizRepository.getQuizResultsForUser(quizId, userId).firstOrNull() ?: emptyList()
+        val alreadyPassed = previousAttempts.any { it.isPassed }
+
         val submitResult = quizRepository.submitQuizResult(quizId, score, total)
         if (submitResult is RtiqaResult.Success) {
             val resultData = submitResult.data
-            if (resultData.isPassed) {
-                // Reward 50 XP for passing quiz
+            // Reward 50 XP only once upon the first successful pass
+            if (resultData.isPassed && !alreadyPassed) {
                 userRepository.addXp(50)
                 userRepository.incrementStreak()
             }
