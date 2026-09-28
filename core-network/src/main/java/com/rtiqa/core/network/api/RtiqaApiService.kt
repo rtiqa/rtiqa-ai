@@ -49,7 +49,8 @@ data class NetworkLessonDto(
     val content: String,
     val moduleOrder: Int,
     val estimatedMinutes: Int = 10,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val audioUrl: String? = null
 )
 
 data class LessonCompletionResponseDto(

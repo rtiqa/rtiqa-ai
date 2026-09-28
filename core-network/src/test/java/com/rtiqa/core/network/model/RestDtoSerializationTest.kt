@@ -71,7 +71,8 @@ class RestDtoSerializationTest {
               "content": "شرح مبسط للبنية الأساسية للشبكة العصبية",
               "moduleOrder": 1,
               "estimatedMinutes": 25,
-              "isCompleted": true
+              "isCompleted": true,
+              "audioUrl": "https://example.com/audio/lesson1.mp3"
             }
         """.trimIndent()
 
@@ -86,6 +87,7 @@ class RestDtoSerializationTest {
         assertEquals(1, dto?.moduleOrder)
         assertEquals(25, dto?.estimatedMinutes)
         assertTrue(dto?.isCompleted == true)
+        assertEquals("https://example.com/audio/lesson1.mp3", dto?.audioUrl)
     }
 
     @Test
@@ -107,6 +109,7 @@ class RestDtoSerializationTest {
         assertNotNull(dto)
         assertEquals("l_mod_02", dto?.id)
         assertFalse(dto?.isCompleted ?: true)
+        assertNull(dto?.audioUrl)
     }
 
     @Test

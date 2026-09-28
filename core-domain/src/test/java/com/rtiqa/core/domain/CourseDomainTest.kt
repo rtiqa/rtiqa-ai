@@ -1,7 +1,10 @@
 package com.rtiqa.core.domain
 
 import com.rtiqa.core.domain.model.Course
+import com.rtiqa.core.domain.model.Lesson
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -47,5 +50,53 @@ class CourseDomainTest {
         )
 
         assertTrue(course.isFullyCompleted())
+    }
+
+    @Test
+    fun courseAndLesson_defaultSchoolId_isNullAndNotHardcoded() {
+        val course = Course(
+            id = "c-default",
+            title = "Title",
+            description = "Desc",
+            category = "Cat",
+            totalLessons = 1,
+            durationMinutes = 10
+        )
+        assertNull(course.schoolId)
+        assertNotEquals("school_001", course.schoolId)
+
+        val lesson = Lesson(
+            id = "l-default",
+            courseId = "c-default",
+            title = "Lesson Title",
+            content = "Content",
+            order = 1
+        )
+        assertNull(lesson.schoolId)
+        assertNotEquals("school_001", lesson.schoolId)
+    }
+
+    @Test
+    fun courseAndLesson_explicitSchoolId_isPreserved() {
+        val course = Course(
+            id = "c-school",
+            title = "Title",
+            description = "Desc",
+            category = "Cat",
+            totalLessons = 1,
+            durationMinutes = 10,
+            schoolId = "school_international_42"
+        )
+        assertEquals("school_international_42", course.schoolId)
+
+        val lesson = Lesson(
+            id = "l-school",
+            courseId = "c-school",
+            title = "Lesson Title",
+            content = "Content",
+            order = 1,
+            schoolId = "school_international_42"
+        )
+        assertEquals("school_international_42", lesson.schoolId)
     }
 }

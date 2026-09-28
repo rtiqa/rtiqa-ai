@@ -10,6 +10,7 @@ import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.logging.RtiqaLog
 import com.rtiqa.core.network.api.RtiqaApiService
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 
@@ -56,8 +57,12 @@ class OfflineSyncManager(
                 RtiqaLog.w(tag, "Refusing to enqueue offline action: No active session")
                 return@withLock RtiqaResult.Error(RtiqaError.AuthError("No active session"))
             }
+            val userId = securityManager?.getEncryptedString("user_id")
+            if (userId.isNullOrBlank()) {
+                RtiqaLog.w(tag, "Refusing to enqueue offline action: No authenticated user ID")
+                return@withLock RtiqaResult.Error(RtiqaError.AuthError("No authenticated user ID"))
+            }
             try {
-                val userId = securityManager?.getEncryptedString("user_id") ?: "legacy_user"
                 var finalPayload = payloadJson
                 val orgId = sessionStore.getActiveOrganizationId()
                 if (!orgId.isNullOrBlank()) {
@@ -91,12 +96,13 @@ class OfflineSyncManager(
         // It's outside mutex in the caller.
         try {
             val sessionId = sessionStore.getSessionId() ?: return RtiqaResult.Success(Unit)
-            val userId = securityManager?.getEncryptedString("user_id") ?: "legacy_user"
+            val userId = securityManager?.getEncryptedString("user_id")
+            if (userId.isNullOrBlank()) return RtiqaResult.Success(Unit)
             val pendingItems = syncDao.getPendingSyncItemsList(userId, sessionId)
             if (pendingItems.isEmpty()) return RtiqaResult.Success(Unit)
             
             val payload = com.rtiqa.core.network.api.NetworkSyncPayloadDto(
-                userId = securityManager?.getEncryptedString("user_id") ?: "legacy_user", // In a real app this uses the actual user ID
+                userId = userId,
                 progressUpdates = pendingItems.map { item ->
                     mapOf("id" to item.id, "type" to item.actionType, "payload" to item.payloadJson)
                 },
@@ -114,8 +120,11 @@ class OfflineSyncManager(
     }
 
     override fun observePendingSyncCount(): Flow<Int> {
-        val sessionId = sessionStore.getSessionId() ?: "legacy_session"
-        val userId = securityManager?.getEncryptedString("user_id") ?: "legacy_user"
+        val sessionId = sessionStore.getSessionId()
+        val userId = securityManager?.getEncryptedString("user_id")
+        if (sessionId.isNullOrBlank() || userId.isNullOrBlank()) {
+            return flowOf(0)
+        }
         return syncDao.getAllPendingSyncItems(userId, sessionId).map { it.size }
     }
 }

@@ -8,14 +8,20 @@ import com.rtiqa.core.network.api.RtiqaApiService
 import com.rtiqa.core.network.session.RestSessionStore
 import com.rtiqa.core.security.SecurityManager
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import com.rtiqa.core.data.repository.FakeRtiqaApiService
+import com.rtiqa.core.domain.error.RtiqaError
+import com.rtiqa.core.domain.result.RtiqaResult
+import com.rtiqa.core.logging.RtiqaLog
+import com.rtiqa.core.logging.RtiqaLogger
 
 class FakeIsolationSyncDao : SyncDao {
     val items = mutableListOf<SyncQueueEntity>()
@@ -45,6 +51,13 @@ class OfflineSyncManagerIsolationTest {
 
     @Before
     fun setUp() {
+        RtiqaLog.initialize(object : RtiqaLogger {
+            override fun d(tag: String, message: String) {}
+            override fun i(tag: String, message: String) {}
+            override fun w(tag: String, message: String, throwable: Throwable?) {}
+            override fun e(tag: String, message: String, throwable: Throwable?) {}
+        })
+
         syncDao = FakeIsolationSyncDao()
 
         val apiService = FakeRtiqaApiService()
@@ -115,5 +128,112 @@ class OfflineSyncManagerIsolationTest {
         
         val pendingForA = syncDao.getPendingSyncItemsList("user_A", "session_A")
         assertEquals(1, pendingForA.size)
+    }
+
+    @Test
+    fun `missing userId does not create legacy_user and refuses enqueue with AuthError`() = runTest {
+        val sessionStore = object : RestSessionStore {
+            override fun saveSession(token: String, organizationId: String?) {}
+            override fun getSessionToken() = null
+            override fun getActiveOrganizationId() = null
+            override fun updateActiveOrganizationId(organizationId: String?) {}
+            override fun generateAndSaveSessionId() = "session_valid"
+            override fun getSessionId() = "session_valid"
+            override fun clearSession() {}
+        }
+        val securityManagerWithoutUser = object : SecurityManager {
+            override fun putEncryptedString(key: String, value: String) {}
+            override fun getEncryptedString(key: String, defaultValue: String?): String? = null
+            override fun removeKey(key: String) {}
+            override fun clearAll() {}
+        }
+
+        val unauthenticatedManager = OfflineSyncManager(
+            apiService = FakeRtiqaApiService(),
+            courseDao = com.rtiqa.core.data.repository.FakeCourseDao(),
+            syncDao = syncDao,
+            syncMutex = Mutex(),
+            sessionStore = sessionStore,
+            securityManager = securityManagerWithoutUser
+        )
+
+        val result = unauthenticatedManager.enqueueOfflineAction("TEST_NO_USER", "{}")
+        assertTrue(result is RtiqaResult.Error)
+        val error = (result as RtiqaResult.Error).error
+        assertTrue(error is RtiqaError.AuthError)
+        assertEquals("No authenticated user ID", error.message)
+
+        // Verify no sync items were inserted with legacy_user or fake ownership
+        assertTrue(syncDao.items.isEmpty())
+        assertTrue(syncDao.items.none { it.ownerUserId == "legacy_user" })
+    }
+
+    @Test
+    fun `missing sessionId does not enqueue action and returns AuthError`() = runTest {
+        val sessionStoreWithoutSession = object : RestSessionStore {
+            override fun saveSession(token: String, organizationId: String?) {}
+            override fun getSessionToken() = null
+            override fun getActiveOrganizationId() = null
+            override fun updateActiveOrganizationId(organizationId: String?) {}
+            override fun generateAndSaveSessionId() = ""
+            override fun getSessionId() = null
+            override fun clearSession() {}
+        }
+        val securityManagerWithUser = object : SecurityManager {
+            override fun putEncryptedString(key: String, value: String) {}
+            override fun getEncryptedString(key: String, defaultValue: String?): String? = if (key == "user_id") "valid_user_1" else defaultValue
+            override fun removeKey(key: String) {}
+            override fun clearAll() {}
+        }
+
+        val noSessionManager = OfflineSyncManager(
+            apiService = FakeRtiqaApiService(),
+            courseDao = com.rtiqa.core.data.repository.FakeCourseDao(),
+            syncDao = syncDao,
+            syncMutex = Mutex(),
+            sessionStore = sessionStoreWithoutSession,
+            securityManager = securityManagerWithUser
+        )
+
+        val result = noSessionManager.enqueueOfflineAction("TEST_NO_SESSION", "{}")
+        assertTrue(result is RtiqaResult.Error)
+        val error = (result as RtiqaResult.Error).error
+        assertTrue(error is RtiqaError.AuthError)
+        assertEquals("No active session", error.message)
+
+        assertTrue(syncDao.items.isEmpty())
+    }
+
+    @Test
+    fun `observePendingSyncCount returns zero without fabricating legacy_user or legacy_session`() = runTest {
+        val nullSessionStore = object : RestSessionStore {
+            override fun saveSession(token: String, organizationId: String?) {}
+            override fun getSessionToken() = null
+            override fun getActiveOrganizationId() = null
+            override fun updateActiveOrganizationId(organizationId: String?) {}
+            override fun generateAndSaveSessionId() = ""
+            override fun getSessionId() = null
+            override fun clearSession() {}
+        }
+        val nullSecurityManager = object : SecurityManager {
+            override fun putEncryptedString(key: String, value: String) {}
+            override fun getEncryptedString(key: String, defaultValue: String?): String? = null
+            override fun removeKey(key: String) {}
+            override fun clearAll() {}
+        }
+
+        val emptyManager = OfflineSyncManager(
+            apiService = FakeRtiqaApiService(),
+            courseDao = com.rtiqa.core.data.repository.FakeCourseDao(),
+            syncDao = syncDao,
+            syncMutex = Mutex(),
+            sessionStore = nullSessionStore,
+            securityManager = nullSecurityManager
+        )
+
+        val count = emptyManager.observePendingSyncCount().first()
+        assertEquals(0, count)
+        // Verify no queries were executed for "legacy_user" or "legacy_session"
+        assertTrue(syncDao.items.none { it.ownerUserId == "legacy_user" || it.ownerSessionId == "legacy_session" })
     }
 }

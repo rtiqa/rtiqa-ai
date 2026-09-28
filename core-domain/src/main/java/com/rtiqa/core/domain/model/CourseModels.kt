@@ -19,7 +19,7 @@ data class Course(
     val level: String = "مبتدئ",
     val titleAr: String? = null,
     val descriptionAr: String? = null,
-    val schoolId: String = "school_001"
+    val schoolId: String? = null
 ) {
     /**
      * Business rule: Checks whether the course is 100% completed.
@@ -47,7 +47,7 @@ data class Lesson(
     val order: Int,
     val isCompleted: Boolean = false,
     val audioUrl: String? = null,
-    val schoolId: String = "school_001"
+    val schoolId: String? = null
 )
 
 /**

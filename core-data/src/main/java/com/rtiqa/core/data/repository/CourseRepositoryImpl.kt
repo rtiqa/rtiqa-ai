@@ -110,7 +110,7 @@ class CourseRepositoryImpl(
                             content = dto.content,
                             order = dto.moduleOrder,
                             isCompleted = dto.isCompleted || (existing?.isCompleted ?: false),
-                            audioUrl = existing?.audioUrl,
+                            audioUrl = dto.audioUrl?.takeIf { it.isNotBlank() } ?: existing?.audioUrl,
                             schoolId = existing?.schoolId
                         )
                     }
@@ -143,7 +143,7 @@ class CourseRepositoryImpl(
                         content = dto.content,
                         order = dto.moduleOrder,
                         isCompleted = dto.isCompleted || (existing?.isCompleted ?: false),
-                        audioUrl = existing?.audioUrl,
+                        audioUrl = dto.audioUrl?.takeIf { it.isNotBlank() } ?: existing?.audioUrl,
                         schoolId = existing?.schoolId
                     )
                     lessonDao.insertLesson(entity)
@@ -170,7 +170,7 @@ class CourseRepositoryImpl(
                             content = dto.content,
                             order = dto.moduleOrder,
                             isCompleted = dto.isCompleted || (existing?.isCompleted ?: false),
-                            audioUrl = existing?.audioUrl,
+                            audioUrl = dto.audioUrl?.takeIf { it.isNotBlank() } ?: existing?.audioUrl,
                             schoolId = existing?.schoolId
                         )
                         lessonDao.insertLesson(entity)

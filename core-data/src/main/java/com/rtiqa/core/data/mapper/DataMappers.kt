@@ -21,7 +21,7 @@ fun CourseEntity.toDomain(): Course = Course(
     progressPercent = progressPercent,
     isEnrolled = isEnrolled,
     isBookmarked = isBookmarked,
-    schoolId = schoolId ?: ""
+    schoolId = schoolId
 )
 
 fun Course.toEntity(): CourseEntity = CourseEntity(
@@ -36,10 +36,10 @@ fun Course.toEntity(): CourseEntity = CourseEntity(
     progressPercent = progressPercent,
     isEnrolled = isEnrolled,
     isBookmarked = isBookmarked,
-    schoolId = schoolId ?: ""
+    schoolId = schoolId
 )
 
-fun CourseDto.toEntity(): CourseEntity = CourseEntity(
+fun CourseDto.toEntity(existingSchoolId: String? = null): CourseEntity = CourseEntity(
     id = id,
     title = title,
     description = description,
@@ -51,10 +51,10 @@ fun CourseDto.toEntity(): CourseEntity = CourseEntity(
     progressPercent = 0f,
     isEnrolled = false,
     isBookmarked = false,
-    schoolId = "school_001"
+    schoolId = existingSchoolId
 )
 
-fun com.rtiqa.core.network.api.NetworkCourseDto.toEntity(): CourseEntity = CourseEntity(
+fun com.rtiqa.core.network.api.NetworkCourseDto.toEntity(existingSchoolId: String? = null): CourseEntity = CourseEntity(
     id = id,
     title = title,
     description = description,
@@ -66,29 +66,29 @@ fun com.rtiqa.core.network.api.NetworkCourseDto.toEntity(): CourseEntity = Cours
     progressPercent = progressPercent,
     isEnrolled = false,
     isBookmarked = false,
-    schoolId = "school_001"
+    schoolId = existingSchoolId
 )
 
-fun com.rtiqa.core.network.api.NetworkLessonDto.toEntity(): LessonEntity = LessonEntity(
+fun com.rtiqa.core.network.api.NetworkLessonDto.toEntity(existingSchoolId: String? = null): LessonEntity = LessonEntity(
     id = id,
     courseId = courseId,
     title = title,
     content = content,
     order = moduleOrder,
     isCompleted = isCompleted,
-    audioUrl = null,
-    schoolId = null
+    audioUrl = audioUrl,
+    schoolId = existingSchoolId
 )
 
-fun com.rtiqa.core.network.api.NetworkLessonDto.toDomain(): Lesson = Lesson(
+fun com.rtiqa.core.network.api.NetworkLessonDto.toDomain(schoolId: String? = null): Lesson = Lesson(
     id = id,
     courseId = courseId,
     title = title,
     content = content,
     order = moduleOrder,
     isCompleted = isCompleted,
-    audioUrl = null,
-    schoolId = ""
+    audioUrl = audioUrl,
+    schoolId = schoolId
 )
 
 fun LessonEntity.toDomain(): Lesson = Lesson(
@@ -99,7 +99,7 @@ fun LessonEntity.toDomain(): Lesson = Lesson(
     order = order,
     isCompleted = isCompleted,
     audioUrl = audioUrl,
-    schoolId = schoolId ?: ""
+    schoolId = schoolId
 )
 
 fun Lesson.toEntity(): LessonEntity = LessonEntity(
@@ -110,7 +110,7 @@ fun Lesson.toEntity(): LessonEntity = LessonEntity(
     order = order,
     isCompleted = isCompleted,
     audioUrl = audioUrl,
-    schoolId = schoolId ?: ""
+    schoolId = schoolId
 )
 
 fun UserProfileEntity.toDomain(): UserProfile = UserProfile(

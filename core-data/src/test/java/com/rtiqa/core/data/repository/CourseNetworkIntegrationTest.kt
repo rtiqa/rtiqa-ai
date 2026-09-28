@@ -23,7 +23,9 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -1021,5 +1023,323 @@ class CourseNetworkIntegrationTest {
 
         // Verify offline sync action was queued
         assertEquals("LESSON_PROGRESS_UPDATE", enqueuedAction)
+    }
+
+    @Test
+    fun getLessonById_serverAudioUrl_reachesStoredRoomEntityAndDomainLesson() = runTest {
+        val ktorJsonResponse = """
+            {
+              "id": "l_audio_101",
+              "courseId": "c_ai_101",
+              "title": "درس الذكاء الاصطناعي مع صوت",
+              "content": "شرح الدرس المرفق به مقطع صوتي",
+              "moduleOrder": 1,
+              "estimatedMinutes": 15,
+              "isCompleted": false,
+              "audioUrl": "https://example.com/audio/server_ai_101.mp3"
+            }
+        """.trimIndent()
+
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(ktorJsonResponse)
+                .addHeader("Content-Type", "application/json")
+        )
+
+        // Seed course in fakeCourseDao so findCourseIdForLesson can locate it if needed
+        fakeCourseDao.insertCourse(
+            CourseEntity(
+                id = "c_ai_101",
+                title = "ذكاء اصطناعي",
+                description = "مقدمة",
+                category = "AI",
+                totalLessons = 1,
+                durationMinutes = 60,
+                iconUrl = null,
+                isDownloaded = false,
+                progressPercent = 0f,
+                isEnrolled = true
+            )
+        )
+
+        val repository = CourseRepositoryImpl(
+            courseDao = fakeCourseDao,
+            lessonDao = fakeLessonDao,
+            apiService = apiService
+        )
+
+        // Observe lesson flow until audioUrl is emitted from remote fetch
+        val lessonFlow = repository.getLessonById(courseId = "c_ai_101", lessonId = "l_audio_101")
+        val lesson = lessonFlow.filter { it?.audioUrl != null }.first()
+
+        assertNotNull(lesson)
+        assertEquals("https://example.com/audio/server_ai_101.mp3", lesson?.audioUrl)
+
+        // Verify stored in Room database entity as well
+        val storedEntity = fakeLessonDao.getLessonById("l_audio_101")
+        assertNotNull(storedEntity)
+        assertEquals("https://example.com/audio/server_ai_101.mp3", storedEntity?.audioUrl)
+    }
+
+    @Test
+    fun getLessonById_preservesExistingLocalAudioUrl_whenServerReturnsNoAudioUrl() = runTest {
+        // Given existing local cached lesson with audioUrl
+        fakeLessonDao.insertLesson(
+            LessonEntity(
+                id = "l_cached_01",
+                courseId = "c_ai_101",
+                title = "عنوان قديم",
+                content = "محتوى قديم",
+                order = 1,
+                isCompleted = false,
+                audioUrl = "https://example.com/audio/local_cached.mp3"
+            )
+        )
+
+        // When server returns updated title but omits audioUrl
+        val ktorJsonResponse = """
+            {
+              "id": "l_cached_01",
+              "courseId": "c_ai_101",
+              "title": "عنوان محدث من السيرفر",
+              "content": "محتوى محدث من السيرفر",
+              "moduleOrder": 1,
+              "estimatedMinutes": 15,
+              "isCompleted": false
+            }
+        """.trimIndent()
+
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(ktorJsonResponse)
+                .addHeader("Content-Type", "application/json")
+        )
+
+        val repository = CourseRepositoryImpl(
+            courseDao = fakeCourseDao,
+            lessonDao = fakeLessonDao,
+            apiService = apiService
+        )
+
+        val lessonFlow = repository.getLessonById("l_cached_01")
+        val lesson = lessonFlow.filter { it?.title == "عنوان محدث من السيرفر" }.first()
+
+        // Then verify local audioUrl is preserved in both Domain and Room
+        assertNotNull(lesson)
+        assertEquals("https://example.com/audio/local_cached.mp3", lesson?.audioUrl)
+
+        val storedEntity = fakeLessonDao.getLessonById("l_cached_01")
+        assertNotNull(storedEntity)
+        assertEquals("https://example.com/audio/local_cached.mp3", storedEntity?.audioUrl)
+    }
+
+    @Test
+    fun getCourseLessons_serverAudioUrl_reachesStoredAndDomainLessons() = runTest {
+        val ktorJsonResponse = """
+            [
+              {
+                "id": "l_course_audio_1",
+                "courseId": "c_course_audio",
+                "title": "الدرس الصوتي الأول",
+                "content": "محتوى الدرس الصوتي",
+                "moduleOrder": 1,
+                "estimatedMinutes": 10,
+                "audioUrl": "https://example.com/audio/course_stream.mp3"
+              }
+            ]
+        """.trimIndent()
+
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(ktorJsonResponse)
+                .addHeader("Content-Type", "application/json")
+        )
+
+        val repository = CourseRepositoryImpl(
+            courseDao = fakeCourseDao,
+            lessonDao = fakeLessonDao,
+            apiService = apiService
+        )
+
+        val lessonsFlow = repository.getLessonsForCourse("c_course_audio")
+        val lessons = lessonsFlow.filter { it.isNotEmpty() && it[0].audioUrl != null }.first()
+
+        assertEquals(1, lessons.size)
+        assertEquals("https://example.com/audio/course_stream.mp3", lessons[0].audioUrl)
+
+        val storedLessons = fakeLessonDao.getLessonsForCourseList("c_course_audio")
+        assertEquals(1, storedLessons.size)
+        assertEquals("https://example.com/audio/course_stream.mp3", storedLessons[0].audioUrl)
+    }
+
+    @Test
+    fun remoteCourses_withNoSchoolIdentity_areNotStoredAsSchool001_andHaveNullSchoolId() = runTest {
+        val ktorJsonResponse = """
+            [
+              {
+                "id": "c_no_school_1",
+                "title": "دورة عامة بدون مدرسة",
+                "description": "وصف الدورة",
+                "category": "Technology",
+                "difficulty": "BEGINNER",
+                "totalModules": 3,
+                "completedModules": 0,
+                "progressPercent": 0.0
+              }
+            ]
+        """.trimIndent()
+
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(ktorJsonResponse)
+                .addHeader("Content-Type", "application/json")
+        )
+
+        val repository = CourseRepositoryImpl(
+            courseDao = fakeCourseDao,
+            lessonDao = fakeLessonDao,
+            apiService = apiService
+        )
+
+        val coursesFlow = repository.getCourses()
+        val courses = coursesFlow.filter { it.isNotEmpty() }.first()
+
+        assertEquals(1, courses.size)
+        val course = courses[0]
+        assertNull(course.schoolId)
+        assertNotEquals("school_001", course.schoolId)
+
+        val stored = fakeCourseDao.getAllCoursesList().find { it.id == "c_no_school_1" }
+        assertNotNull(stored)
+        assertNull(stored?.schoolId)
+        assertNotEquals("school_001", stored?.schoolId)
+    }
+
+    @Test
+    fun remoteLesson_withNoSchoolIdentity_isNotAssignedSchool001_andHasNullSchoolId() = runTest {
+        val ktorJsonResponse = """
+            {
+              "id": "l_no_school_1",
+              "courseId": "c_no_school_1",
+              "title": "درس بدون مدرسة",
+              "content": "محتوى الدرس",
+              "moduleOrder": 1,
+              "estimatedMinutes": 10,
+              "isCompleted": false
+            }
+        """.trimIndent()
+
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(ktorJsonResponse)
+                .addHeader("Content-Type", "application/json")
+        )
+
+        fakeCourseDao.insertCourse(
+            CourseEntity(
+                id = "c_no_school_1",
+                title = "دورة عامة",
+                description = "وصف",
+                category = "Technology",
+                totalLessons = 1,
+                durationMinutes = 10,
+                iconUrl = null,
+                isDownloaded = false,
+                progressPercent = 0f,
+                isEnrolled = true,
+                schoolId = null
+            )
+        )
+
+        val repository = CourseRepositoryImpl(
+            courseDao = fakeCourseDao,
+            lessonDao = fakeLessonDao,
+            apiService = apiService
+        )
+
+        val lessonFlow = repository.getLessonById(courseId = "c_no_school_1", lessonId = "l_no_school_1")
+        val lesson = lessonFlow.filterNotNull().first()
+
+        assertNull(lesson.schoolId)
+        assertNotEquals("school_001", lesson.schoolId)
+
+        val stored = fakeLessonDao.getLessonById("l_no_school_1")
+        assertNotNull(stored)
+        assertNull(stored?.schoolId)
+        assertNotEquals("school_001", stored?.schoolId)
+    }
+
+    @Test
+    fun remoteRefresh_preservesExistingLocalSchoolId_whenServerPayloadHasNoSchoolIdentity() = runTest {
+        fakeCourseDao.insertCourse(
+            CourseEntity(
+                id = "c_legit_school",
+                title = "دورة خاصة بمدرسة النور",
+                description = "وصف قديم",
+                category = "Science",
+                totalLessons = 2,
+                durationMinutes = 45,
+                iconUrl = null,
+                isDownloaded = false,
+                progressPercent = 0f,
+                isEnrolled = true,
+                schoolId = "school_al_noor_999"
+            )
+        )
+        fakeLessonDao.insertLesson(
+            LessonEntity(
+                id = "l_legit_school",
+                courseId = "c_legit_school",
+                title = "الدرس الأول القديم",
+                content = "محتوى محلي",
+                order = 1,
+                isCompleted = false,
+                audioUrl = "https://example.com/audio/al_noor_intro.mp3",
+                schoolId = "school_al_noor_999"
+            )
+        )
+
+        val ktorJsonResponse = """
+            {
+              "id": "l_legit_school",
+              "courseId": "c_legit_school",
+              "title": "الدرس الأول المحدث من السيرفر",
+              "content": "محتوى محدث من السيرفر بدون حقل مدرسة",
+              "moduleOrder": 1,
+              "estimatedMinutes": 20,
+              "isCompleted": false
+            }
+        """.trimIndent()
+
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(ktorJsonResponse)
+                .addHeader("Content-Type", "application/json")
+        )
+
+        val repository = CourseRepositoryImpl(
+            courseDao = fakeCourseDao,
+            lessonDao = fakeLessonDao,
+            apiService = apiService
+        )
+
+        val lessonFlow = repository.getLessonById(courseId = "c_legit_school", lessonId = "l_legit_school")
+        val lesson = lessonFlow.filter { it?.title == "الدرس الأول المحدث من السيرفر" }.first()
+
+        assertNotNull(lesson)
+        assertEquals("school_al_noor_999", lesson?.schoolId)
+        assertNotEquals("school_001", lesson?.schoolId)
+        assertEquals("https://example.com/audio/al_noor_intro.mp3", lesson?.audioUrl)
+
+        val stored = fakeLessonDao.getLessonById("l_legit_school")
+        assertNotNull(stored)
+        assertEquals("school_al_noor_999", stored?.schoolId)
+        assertEquals("https://example.com/audio/al_noor_intro.mp3", stored?.audioUrl)
     }
 }
