@@ -214,7 +214,7 @@ class SchoolViewModelTest {
                     activeSchoolId = "school_001"
                 )
             )
-            override suspend fun setActiveSchoolId(schoolId: String) {}
+            override suspend fun setActiveSchoolId(schoolId: String?) {}
         }
 
         viewModel = SchoolViewModel(

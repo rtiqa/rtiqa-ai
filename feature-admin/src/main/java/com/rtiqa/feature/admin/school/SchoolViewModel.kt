@@ -223,7 +223,7 @@ class SchoolViewModel(
         val activeSchoolIdFlow = preferencesDataStore.userPreferencesFlow
 
         combine(schoolsFlow, activeSchoolIdFlow) { schools, userPrefs ->
-            val activeId = userPrefs.activeSchoolId
+            val activeId = userPrefs.activeSchoolId.orEmpty()
             val activeSchool = schools.find { it.id == activeId } ?: schools.firstOrNull()
             setState {
                 copy(

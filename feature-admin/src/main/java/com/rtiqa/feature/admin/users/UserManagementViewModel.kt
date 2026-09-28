@@ -171,7 +171,7 @@ class UserManagementViewModel(
         val userPrefsFlow = preferencesDataStore.userPreferencesFlow
 
         combine(schoolsFlow, userPrefsFlow) { schools, userPrefs ->
-            val activeId = userPrefs.activeSchoolId.ifEmpty { schools.firstOrNull()?.id ?: "school_001" }
+            val activeId = userPrefs.activeSchoolId.orEmpty().ifEmpty { schools.firstOrNull()?.id ?: "school_001" }
             val activeSchool = schools.find { it.id == activeId } ?: schools.firstOrNull()
             setState {
                 copy(

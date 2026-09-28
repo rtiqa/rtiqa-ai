@@ -21,7 +21,7 @@ data class UserPreferences(
     val isOfflineModeEnabled: Boolean,
     val activeUserId: String?,
     val lastSyncTimestamp: Long,
-    val activeSchoolId: String = "school_001"
+    val activeSchoolId: String? = null
 )
 
 /**
@@ -47,13 +47,17 @@ open class RtiqaPreferencesDataStore(
                     isOfflineModeEnabled = preferences[KEY_OFFLINE_MODE] ?: false,
                     activeUserId = preferences[KEY_ACTIVE_USER_ID],
                     lastSyncTimestamp = preferences[KEY_LAST_SYNC_TIMESTAMP] ?: 0L,
-                    activeSchoolId = preferences[KEY_ACTIVE_SCHOOL_ID] ?: "school_001"
+                    activeSchoolId = preferences[KEY_ACTIVE_SCHOOL_ID]?.takeIf { it.isNotBlank() }
                 )
             }
 
-    open suspend fun setActiveSchoolId(schoolId: String) {
+    open suspend fun setActiveSchoolId(schoolId: String?) {
         dataStore.edit { preferences ->
-            preferences[KEY_ACTIVE_SCHOOL_ID] = schoolId
+            if (!schoolId.isNullOrBlank()) {
+                preferences[KEY_ACTIVE_SCHOOL_ID] = schoolId
+            } else {
+                preferences.remove(KEY_ACTIVE_SCHOOL_ID)
+            }
         }
     }
 

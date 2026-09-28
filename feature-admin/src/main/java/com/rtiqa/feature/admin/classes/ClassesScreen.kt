@@ -293,7 +293,7 @@ fun ClassesScreen(
 @Composable
 private fun ActiveSchoolSelector(
     schools: List<com.rtiqa.core.domain.model.School>,
-    activeSchoolId: String,
+    activeSchoolId: String?,
     activeSchoolName: String,
     isExpanded: Boolean,
     onToggleDropdown: () -> Unit,

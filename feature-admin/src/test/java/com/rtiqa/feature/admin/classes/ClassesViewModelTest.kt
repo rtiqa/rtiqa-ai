@@ -23,7 +23,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -123,7 +126,7 @@ class ClassesViewModelTest {
                     activeSchoolId = "school_001"
                 )
             )
-            override suspend fun setActiveSchoolId(schoolId: String) {}
+            override suspend fun setActiveSchoolId(schoolId: String?) {}
         }
 
         viewModel = ClassesViewModel(
@@ -181,5 +184,151 @@ class ClassesViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(null, fakeClasses.find { it.id == "cls_1" })
+    }
+
+    @Test
+    fun emptySchoolList_doesNotCreateFakeSchoolId_andRemainsNull() = runTest {
+        val emptyEnterpriseRepo = object : EnterpriseRepository by fakeEnterpriseRepo {
+            override fun getSchools(): Flow<List<School>> = flowOf(emptyList())
+        }
+        val emptyPrefsDataStore = object : RtiqaPreferencesDataStore(RuntimeEnvironment.getApplication()) {
+            override val userPreferencesFlow: Flow<UserPreferences> = flowOf(
+                UserPreferences(
+                    isDarkTheme = false,
+                    isOfflineModeEnabled = false,
+                    activeUserId = null,
+                    lastSyncTimestamp = 0L,
+                    activeSchoolId = null
+                )
+            )
+            override suspend fun setActiveSchoolId(schoolId: String?) {}
+        }
+
+        val noSchoolVm = ClassesViewModel(
+            getClassesForSchoolUseCase = GetClassesForSchoolUseCase(fakeClassRepo),
+            saveClassUseCase = SaveClassUseCase(fakeClassRepo),
+            deleteClassUseCase = DeleteClassUseCase(fakeClassRepo),
+            reorderClassesUseCase = ReorderClassesUseCase(fakeClassRepo),
+            getSchoolsUseCase = GetSchoolsUseCase(emptyEnterpriseRepo),
+            preferencesDataStore = emptyPrefsDataStore
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = noSchoolVm.uiState.value
+        assertNull(state.activeSchoolId)
+        assertNull(state.activeSchool)
+        assertNotEquals("school_001", state.activeSchoolId)
+    }
+
+    @Test
+    fun realSavedSchoolId_isPreserved_whenInLoadedSchools() = runTest {
+        val multiSchools = listOf(
+            School(id = "sch_alpha", orgId = "org_1", name = "مدرسة ألفا", code = "SCH-A"),
+            School(id = "sch_beta", orgId = "org_1", name = "مدرسة بيتا", code = "SCH-B")
+        )
+        val multiEnterpriseRepo = object : EnterpriseRepository by fakeEnterpriseRepo {
+            override fun getSchools(): Flow<List<School>> = flowOf(multiSchools)
+        }
+        val prefsWithBeta = object : RtiqaPreferencesDataStore(RuntimeEnvironment.getApplication()) {
+            override val userPreferencesFlow: Flow<UserPreferences> = flowOf(
+                UserPreferences(
+                    isDarkTheme = false,
+                    isOfflineModeEnabled = false,
+                    activeUserId = null,
+                    lastSyncTimestamp = 0L,
+                    activeSchoolId = "sch_beta"
+                )
+            )
+            override suspend fun setActiveSchoolId(schoolId: String?) {}
+        }
+
+        val vm = ClassesViewModel(
+            getClassesForSchoolUseCase = GetClassesForSchoolUseCase(fakeClassRepo),
+            saveClassUseCase = SaveClassUseCase(fakeClassRepo),
+            deleteClassUseCase = DeleteClassUseCase(fakeClassRepo),
+            reorderClassesUseCase = ReorderClassesUseCase(fakeClassRepo),
+            getSchoolsUseCase = GetSchoolsUseCase(multiEnterpriseRepo),
+            preferencesDataStore = prefsWithBeta
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertEquals("sch_beta", state.activeSchoolId)
+        assertEquals("مدرسة بيتا", state.activeSchool?.name)
+    }
+
+    @Test
+    fun noSavedSchool_usesFirstLoadedSchool_withoutFabricatingId() = runTest {
+        val multiSchools = listOf(
+            School(id = "sch_first", orgId = "org_1", name = "المدرسة الأولى", code = "SCH-1"),
+            School(id = "sch_second", orgId = "org_1", name = "المدرسة الثانية", code = "SCH-2")
+        )
+        val multiEnterpriseRepo = object : EnterpriseRepository by fakeEnterpriseRepo {
+            override fun getSchools(): Flow<List<School>> = flowOf(multiSchools)
+        }
+        val prefsNoSchool = object : RtiqaPreferencesDataStore(RuntimeEnvironment.getApplication()) {
+            override val userPreferencesFlow: Flow<UserPreferences> = flowOf(
+                UserPreferences(
+                    isDarkTheme = false,
+                    isOfflineModeEnabled = false,
+                    activeUserId = null,
+                    lastSyncTimestamp = 0L,
+                    activeSchoolId = null
+                )
+            )
+            override suspend fun setActiveSchoolId(schoolId: String?) {}
+        }
+
+        val vm = ClassesViewModel(
+            getClassesForSchoolUseCase = GetClassesForSchoolUseCase(fakeClassRepo),
+            saveClassUseCase = SaveClassUseCase(fakeClassRepo),
+            deleteClassUseCase = DeleteClassUseCase(fakeClassRepo),
+            reorderClassesUseCase = ReorderClassesUseCase(fakeClassRepo),
+            getSchoolsUseCase = GetSchoolsUseCase(multiEnterpriseRepo),
+            preferencesDataStore = prefsNoSchool
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = vm.uiState.value
+        assertEquals("sch_first", state.activeSchoolId)
+        assertEquals("المدرسة الأولى", state.activeSchool?.name)
+    }
+
+    @Test
+    fun realLoadedSchool_canBeSelected_andStoredInDataStore() = runTest {
+        var savedSchoolId: String? = null
+        val recordingPrefs = object : RtiqaPreferencesDataStore(RuntimeEnvironment.getApplication()) {
+            override val userPreferencesFlow: Flow<UserPreferences> = flowOf(
+                UserPreferences(
+                    isDarkTheme = false,
+                    isOfflineModeEnabled = false,
+                    activeUserId = null,
+                    lastSyncTimestamp = 0L,
+                    activeSchoolId = null
+                )
+            )
+            override suspend fun setActiveSchoolId(schoolId: String?) {
+                savedSchoolId = schoolId
+            }
+        }
+
+        val vm = ClassesViewModel(
+            getClassesForSchoolUseCase = GetClassesForSchoolUseCase(fakeClassRepo),
+            saveClassUseCase = SaveClassUseCase(fakeClassRepo),
+            deleteClassUseCase = DeleteClassUseCase(fakeClassRepo),
+            reorderClassesUseCase = ReorderClassesUseCase(fakeClassRepo),
+            getSchoolsUseCase = GetSchoolsUseCase(fakeEnterpriseRepo),
+            preferencesDataStore = recordingPrefs
+        )
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        vm.onAction(ClassesUiAction.SelectActiveSchool("school_real_456"))
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("school_real_456", savedSchoolId)
     }
 }

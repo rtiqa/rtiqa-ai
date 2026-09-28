@@ -10,7 +10,7 @@ data class ClassesUiState(
     val rawClasses: List<SchoolClass> = emptyList(),
     val filteredClasses: List<SchoolClass> = emptyList(),
     val schools: List<School> = emptyList(),
-    val activeSchoolId: String = "school_001",
+    val activeSchoolId: String? = null,
     val activeSchool: School? = null,
     val searchQuery: String = "",
     val selectedGradeFilter: String? = null,

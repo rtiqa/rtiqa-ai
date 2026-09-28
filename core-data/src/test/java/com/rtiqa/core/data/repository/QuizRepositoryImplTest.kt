@@ -34,6 +34,8 @@ import com.rtiqa.core.network.api.NetworkSyncResponseDto
 import com.rtiqa.core.network.api.NetworkUserDto
 import com.rtiqa.core.network.api.RegisterRequestDto
 import com.rtiqa.core.network.api.RtiqaApiService
+import com.rtiqa.core.network.session.RestSessionStore
+import com.rtiqa.core.security.SecurityManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -145,21 +147,29 @@ class QuizRepositoryImplTest {
     fun setUp() {
         fakeDao = FakeAcademicDao()
         fakeSyncDao = FakeSyncDao()
+        val testSecurityManager = object : SecurityManager {
+            override fun putEncryptedString(key: String, value: String) {}
+            override fun getEncryptedString(key: String, defaultValue: String?): String? =
+                if (key == "user_id") "user_123" else defaultValue
+            override fun removeKey(key: String) {}
+            override fun clearAll() {}
+        }
         offlineSyncManager = OfflineSyncManager(
             apiService = FakeRtiqaApiService(),
             courseDao = FakeCourseDao(),
             syncDao = fakeSyncDao,
             syncMutex = kotlinx.coroutines.sync.Mutex(),
-            sessionStore = object : com.rtiqa.core.network.session.RestSessionStore {
+            sessionStore = object : RestSessionStore {
                 var _sessionId: String? = "test_session_id"
-                override fun saveSession(t: String, o: String?) {}
+                override fun saveSession(token: String, organizationId: String?) {}
                 override fun getSessionToken() = null
                 override fun getActiveOrganizationId() = null
-                override fun updateActiveOrganizationId(o: String?) {}
+                override fun updateActiveOrganizationId(organizationId: String?) {}
                 override fun generateAndSaveSessionId() = "new_id".also { _sessionId = it }
                 override fun getSessionId() = _sessionId
                 override fun clearSession() { _sessionId = null }
-            }
+            },
+            securityManager = testSecurityManager
         )
         repository = QuizRepositoryImpl(
             academicDao = fakeDao,
@@ -211,5 +221,7 @@ class QuizRepositoryImplTest {
         assertEquals(1, queuedItems.size)
         assertEquals("SUBMIT_QUIZ_RESULT", queuedItems[0].actionType)
         assertTrue(queuedItems[0].payloadJson.contains("\"isPassed\":true"))
+        assertEquals("user_123", queuedItems[0].ownerUserId)
+        assertEquals("test_session_id", queuedItems[0].ownerSessionId)
     }
 }

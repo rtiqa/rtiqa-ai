@@ -12,6 +12,7 @@ import com.rtiqa.core.ui.base.BaseViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -36,11 +37,15 @@ class ClassesViewModel(
         val userPrefsFlow = preferencesDataStore.userPreferencesFlow
 
         combine(schoolsFlow, userPrefsFlow) { schools, userPrefs ->
-            val activeId = userPrefs.activeSchoolId.ifBlank { "school_001" }
-            val activeSchool = schools.find { it.id == activeId } ?: schools.firstOrNull()
-            schools to (activeSchool ?: schools.firstOrNull())
+            val savedActiveId = userPrefs.activeSchoolId?.takeIf { it.isNotBlank() }
+            val activeSchool = if (savedActiveId != null) {
+                schools.find { it.id == savedActiveId } ?: schools.firstOrNull()
+            } else {
+                schools.firstOrNull()
+            }
+            schools to activeSchool
         }.flatMapLatest { (schools, activeSchool) ->
-            val activeId = activeSchool?.id ?: "school_001"
+            val activeId = activeSchool?.id
             setState {
                 copy(
                     schools = schools,
@@ -48,10 +53,15 @@ class ClassesViewModel(
                     activeSchool = activeSchool
                 )
             }
-            getClassesForSchoolUseCase(activeId)
+            if (activeId != null) {
+                getClassesForSchoolUseCase(activeId)
+            } else {
+                flowOf(emptyList())
+            }
         }.onEach { classes ->
-            if (classes.isEmpty()) {
-                seedInitialClasses(currentState.activeSchoolId)
+            val activeId = currentState.activeSchoolId
+            if (classes.isEmpty() && activeId != null) {
+                seedInitialClasses(activeId)
             } else {
                 setState {
                     copy(
@@ -191,6 +201,13 @@ class ClassesViewModel(
     }
 
     private fun saveClass(action: ClassesUiAction.SaveClass) {
+        val currentSchoolId = currentState.activeSchoolId
+        if (currentSchoolId.isNullOrBlank()) {
+            val errorText = "لا توجد مدرسة نشطة لحفظ الصف فيها"
+            setState { copy(errorMessage = errorText) }
+            sendEvent(ClassesUiEvent.ShowToast(errorText))
+            return
+        }
         viewModelScope.launch {
             val existingId = action.id ?: "cls_${UUID.randomUUID()}"
             val existingClass = currentState.rawClasses.find { it.id == existingId }
@@ -198,7 +215,7 @@ class ClassesViewModel(
 
             val newClass = SchoolClass(
                 id = existingId,
-                schoolId = currentState.activeSchoolId,
+                schoolId = currentSchoolId,
                 name = action.name.trim(),
                 gradeLevel = action.gradeLevel.trim(),
                 sectionName = action.sectionName.trim(),
