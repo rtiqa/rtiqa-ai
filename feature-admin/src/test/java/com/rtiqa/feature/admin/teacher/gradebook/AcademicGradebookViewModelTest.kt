@@ -175,6 +175,22 @@ class AcademicGradebookViewModelTest {
         assertEquals("", viewModel.uiState.value.selectedClassId)
         assertTrue(viewModel.uiState.value.students.isEmpty())
         assertFalse(viewModel.uiState.value.isLoading)
+        assertEquals(0.0, viewModel.uiState.value.classAverage, 0.001)
+        assertEquals(0.0, viewModel.uiState.value.highestScore, 0.001)
+        assertEquals(0.0, viewModel.uiState.value.lowestScore, 0.001)
+        assertEquals(0, viewModel.uiState.value.passRatePercentage)
+    }
+
+    @Test
+    fun academicGradebookUiState_defaultValuesAreSafeAndZero() {
+        val defaultState = AcademicGradebookUiState()
+        assertEquals("", defaultState.selectedClassId)
+        assertEquals(0.0, defaultState.classAverage, 0.001)
+        assertEquals(0.0, defaultState.highestScore, 0.001)
+        assertEquals(0.0, defaultState.lowestScore, 0.001)
+        assertEquals(0, defaultState.passRatePercentage)
+        assertTrue(defaultState.students.isEmpty())
+        assertTrue(defaultState.columns.isEmpty())
     }
 
     @Test

@@ -72,7 +72,7 @@ data class GradebookClassOption(
  * Academic Gradebook UI State for Jetpack Compose.
  */
 data class AcademicGradebookUiState(
-    val selectedClassId: String = "cls-101",
+    val selectedClassId: String = "",
     val availableClasses: List<GradebookClassOption> = emptyList(),
     val selectedTerm: String = "الفصل الدراسي الثاني 1447هـ",
     val columns: List<AssessmentColumn> = emptyList(),
@@ -82,10 +82,10 @@ data class AcademicGradebookUiState(
     val selectedViewMode: Int = 0, // 0: Matrix (Table/Cards), 1: Statistics/Distribution, 2: At-Risk Students
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val classAverage: Double = 84.5,
-    val highestScore: Double = 98.0,
-    val lowestScore: Double = 58.0,
-    val passRatePercentage: Int = 92,
+    val classAverage: Double = 0.0,
+    val highestScore: Double = 0.0,
+    val lowestScore: Double = 0.0,
+    val passRatePercentage: Int = 0,
     val editingStudentScore: Pair<StudentGradeRow, AssessmentColumn>? = null,
     val currentEditScoreValue: String = "",
     val showAddAssessmentDialog: Boolean = false,
