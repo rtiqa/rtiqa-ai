@@ -124,10 +124,11 @@ fun CreateAcademicYearDialog(uiState: AcademicStructureUiState, onAction: (Acade
         title = "إضافة عام دراسي",
         onDismiss = { onAction(AcademicStructureAction.CloseDialog) },
         onConfirm = {
-            if (name.isNotBlank()) {
+            val orgId = uiState.currentOrgId
+            if (name.isNotBlank() && orgId != null) {
                 onAction(AcademicStructureAction.SaveAcademicYear(AcademicYear(
                     id = UUID.randomUUID().toString(),
-                    orgId = uiState.currentOrgId,
+                    orgId = orgId,
                     name = name,
                     startDate = start,
                     endDate = end,
@@ -166,13 +167,16 @@ fun CreateGradeLevelDialog(uiState: AcademicStructureUiState, onAction: (Academi
         title = "إضافة مرحلة دراسية",
         onDismiss = { onAction(AcademicStructureAction.CloseDialog) },
         onSave = { name ->
-            onAction(AcademicStructureAction.SaveGradeLevel(GradeLevel(
-                id = UUID.randomUUID().toString(),
-                schoolId = uiState.currentSchoolId,
-                name = name,
-                code = "G1",
-                levelSequence = 1
-            )))
+            val schoolId = uiState.currentSchoolId
+            if (schoolId != null) {
+                onAction(AcademicStructureAction.SaveGradeLevel(GradeLevel(
+                    id = UUID.randomUUID().toString(),
+                    schoolId = schoolId,
+                    name = name,
+                    code = "G1",
+                    levelSequence = 1
+                )))
+            }
         }
     )
 }
@@ -183,13 +187,16 @@ fun CreateDepartmentDialog(uiState: AcademicStructureUiState, onAction: (Academi
         title = "إضافة قسم",
         onDismiss = { onAction(AcademicStructureAction.CloseDialog) },
         onSave = { name, code ->
-            onAction(AcademicStructureAction.SaveDepartment(Department(
-                id = UUID.randomUUID().toString(),
-                orgId = uiState.currentOrgId,
-                name = name,
-                code = code,
-                headName = ""
-            )))
+            val orgId = uiState.currentOrgId
+            if (orgId != null) {
+                onAction(AcademicStructureAction.SaveDepartment(Department(
+                    id = UUID.randomUUID().toString(),
+                    orgId = orgId,
+                    name = name,
+                    code = code,
+                    headName = ""
+                )))
+            }
         }
     )
 }
@@ -219,14 +226,17 @@ fun CreateSubjectDialog(uiState: AcademicStructureUiState, onAction: (AcademicSt
         title = "إضافة مادة",
         onDismiss = { onAction(AcademicStructureAction.CloseDialog) },
         onSave = { name, code ->
-            onAction(AcademicStructureAction.SaveSubject(Subject(
-                id = UUID.randomUUID().toString(),
-                schoolId = uiState.currentSchoolId,
-                majorId = uiState.selectedMajorId ?: "",
-                name = name,
-                code = code,
-                creditHours = 3
-            )))
+            val schoolId = uiState.currentSchoolId
+            if (schoolId != null) {
+                onAction(AcademicStructureAction.SaveSubject(Subject(
+                    id = UUID.randomUUID().toString(),
+                    schoolId = schoolId,
+                    majorId = uiState.selectedMajorId ?: "",
+                    name = name,
+                    code = code,
+                    creditHours = 3
+                )))
+            }
         }
     )
 }
@@ -237,15 +247,18 @@ fun CreateSectionDialog(uiState: AcademicStructureUiState, onAction: (AcademicSt
         title = "إضافة شعبة",
         onDismiss = { onAction(AcademicStructureAction.CloseDialog) },
         onSave = { name ->
-            onAction(AcademicStructureAction.SaveSection(Section(
-                id = UUID.randomUUID().toString(),
-                schoolId = uiState.currentSchoolId,
-                majorId = uiState.selectedMajorId ?: "",
-                semesterId = uiState.selectedYearId ?: "",
-                branchId = "",
-                name = name,
-                capacity = 30
-            )))
+            val schoolId = uiState.currentSchoolId
+            if (schoolId != null) {
+                onAction(AcademicStructureAction.SaveSection(Section(
+                    id = UUID.randomUUID().toString(),
+                    schoolId = schoolId,
+                    majorId = uiState.selectedMajorId ?: "",
+                    semesterId = uiState.selectedYearId ?: "",
+                    branchId = "",
+                    name = name,
+                    capacity = 30
+                )))
+            }
         }
     )
 }

@@ -169,3 +169,12 @@ data class OfflineContentDownload(
     val status: DownloadStatus = DownloadStatus.COMPLETED,
     val progressPercent: Float = 1.0f
 )
+
+/**
+ * Runtime context representing the active academic organization and school.
+ * If unselected or unknown, currentOrgId and currentSchoolId remain null.
+ */
+data class AcademicContext(
+    val currentOrgId: String? = null,
+    val currentSchoolId: String? = null
+)

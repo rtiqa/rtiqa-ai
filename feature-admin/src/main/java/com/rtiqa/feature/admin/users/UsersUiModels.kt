@@ -12,7 +12,7 @@ data class UsersUiState(
     val rawUsers: List<EnterpriseMember> = emptyList(),
     val filteredUsers: List<EnterpriseMember> = emptyList(),
     val schools: List<School> = emptyList(),
-    val activeSchoolId: String = "school_001",
+    val activeSchoolId: String? = null,
     val activeSchool: School? = null,
     val searchQuery: String = "",
     val roleFilter: EnterpriseRole? = null,

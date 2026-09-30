@@ -104,7 +104,7 @@ fun UsersScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = uiState.activeSchool?.name ?: "المدرسة النشطة: ${uiState.activeSchoolId}",
+                            text = uiState.activeSchool?.name ?: uiState.activeSchoolId?.let { "المدرسة النشطة: $it" } ?: "لا توجد مدرسة نشطة",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -244,7 +244,7 @@ fun UsersScreen(
     if (uiState.isAddEditOpen) {
         AddEditUserDialog(
             user = uiState.editingUser,
-            activeSchoolName = uiState.activeSchool?.name ?: uiState.activeSchoolId,
+            activeSchoolName = uiState.activeSchool?.name ?: uiState.activeSchoolId ?: "لا توجد مدرسة نشطة",
             onDismiss = { onAction(UsersUiAction.CloseAddEditDialog) },
             onSave = { name, email, role, department, phone, status ->
                 onAction(
@@ -266,7 +266,7 @@ fun UsersScreen(
     if (uiState.isDetailsOpen && uiState.selectedUserForDetails != null) {
         UserDetailsDialog(
             user = uiState.selectedUserForDetails,
-            schoolName = uiState.activeSchool?.name ?: uiState.activeSchoolId,
+            schoolName = uiState.activeSchool?.name ?: uiState.activeSchoolId ?: "غير محدد",
             onDismiss = { onAction(UsersUiAction.CloseUserDetails) },
             onEdit = {
                 onAction(UsersUiAction.OpenEditUserDialog(uiState.selectedUserForDetails))

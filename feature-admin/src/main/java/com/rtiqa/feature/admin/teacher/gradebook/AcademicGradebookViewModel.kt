@@ -6,7 +6,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class AcademicGradebookViewModel : BaseViewModel<AcademicGradebookUiState, AcademicGradebookUiAction, AcademicGradebookUiEvent>(
-    AcademicGradebookUiState()
+    AcademicGradebookUiState(
+        classAverage = 0.0,
+        highestScore = 0.0,
+        lowestScore = 0.0,
+        passRatePercentage = 0
+    )
 ) {
 
     init {
@@ -153,7 +158,7 @@ class AcademicGradebookViewModel : BaseViewModel<AcademicGradebookUiState, Acade
                 AssessmentColumn("col-final", "المشاركة والحضور", 20.0, 20, "أداء صفي")
             )
 
-            val initialStudents = generateMockStudents(columns)
+            val initialStudents = emptyList<StudentGradeRow>()
             val stats = computeStats(initialStudents)
 
             setState {
@@ -166,7 +171,7 @@ class AcademicGradebookViewModel : BaseViewModel<AcademicGradebookUiState, Acade
                     classAverage = stats.first,
                     highestScore = stats.second,
                     lowestScore = stats.third,
-                    passRatePercentage = 94
+                    passRatePercentage = 0
                 )
             }
         }
@@ -183,59 +188,5 @@ class AcademicGradebookViewModel : BaseViewModel<AcademicGradebookUiState, Acade
             Math.round(high * 10.0) / 10.0,
             Math.round(low * 10.0) / 10.0
         )
-    }
-
-    private fun generateMockStudents(cols: List<AssessmentColumn>): List<StudentGradeRow> {
-        val names = listOf(
-            "أحمد عبد الرحمن الزهراني" to "4410101",
-            "سلطان بن فهد الدوسري" to "4410102",
-            "عمر إبراهيم القحطاني" to "4410103",
-            "محمد عبد العزيز الخالدي" to "4410104",
-            "فيصل منصور الغامدي" to "4410105",
-            "خالد يوسف العتيبي" to "4410106",
-            "عبد الله سعود المالكي" to "4410107",
-            "تركي راشد الشمري" to "4410108",
-            "ياسر ناصر السبيعي" to "4410109",
-            "مشاري بدر المطيري" to "4410110",
-            "سعد وليد القرني" to "4410111",
-            "فهد حسن الحارثي" to "4410112"
-        )
-
-        val sampleScores = listOf(
-            mapOf("col-hw1" to 10.0, "col-hw2" to 9.5, "col-quiz1" to 14.0, "col-midterm" to 24.5, "col-project" to 20.0, "col-final" to 19.0),
-            mapOf("col-hw1" to 9.0, "col-hw2" to 9.0, "col-quiz1" to 13.0, "col-midterm" to 23.0, "col-project" to 19.0, "col-final" to 18.0),
-            mapOf("col-hw1" to 10.0, "col-hw2" to 10.0, "col-quiz1" to 15.0, "col-midterm" to 25.0, "col-project" to 20.0, "col-final" to 20.0),
-            mapOf("col-hw1" to 8.0, "col-hw2" to 8.5, "col-quiz1" to 12.0, "col-midterm" to 20.0, "col-project" to 17.5, "col-final" to 17.0),
-            mapOf("col-hw1" to 7.0, "col-hw2" to 6.5, "col-quiz1" to 9.0, "col-midterm" to 15.0, "col-project" to 14.0, "col-final" to 15.0),
-            mapOf("col-hw1" to 9.5, "col-hw2" to 10.0, "col-quiz1" to 14.5, "col-midterm" to 24.0, "col-project" to 19.5, "col-final" to 19.5),
-            mapOf("col-hw1" to 6.0, "col-hw2" to 7.0, "col-quiz1" to 8.5, "col-midterm" to 14.0, "col-project" to 13.0, "col-final" to 14.0),
-            mapOf("col-hw1" to 10.0, "col-hw2" to 10.0, "col-quiz1" to 15.0, "col-midterm" to 24.0, "col-project" to 19.0, "col-final" to 19.0),
-            mapOf("col-hw1" to 5.0, "col-hw2" to 5.5, "col-quiz1" to 7.0, "col-midterm" to 12.0, "col-project" to 11.0, "col-final" to 12.0),
-            mapOf("col-hw1" to 8.5, "col-hw2" to 9.0, "col-quiz1" to 13.0, "col-midterm" to 22.0, "col-project" to 18.0, "col-final" to 18.0),
-            mapOf("col-hw1" to 9.0, "col-hw2" to 8.0, "col-quiz1" to 12.5, "col-midterm" to 21.0, "col-project" to 17.0, "col-final" to 17.5),
-            mapOf("col-hw1" to 10.0, "col-hw2" to 9.5, "col-quiz1" to 14.0, "col-midterm" to 23.5, "col-project" to 18.5, "col-final" to 19.0)
-        )
-
-        return names.mapIndexed { index, (name, number) ->
-            val scoreMap = sampleScores[index % sampleScores.size]
-            val mappedScores = cols.associate { col ->
-                col.id to StudentAssessmentScore(
-                    columnId = col.id,
-                    score = scoreMap[col.id] ?: (col.maxScore * 0.8)
-                )
-            }
-            val total = mappedScores.values.mapNotNull { it.score }.sum()
-
-            StudentGradeRow(
-                studentId = "std-${1000 + index}",
-                studentName = name,
-                studentNumber = number,
-                scores = mappedScores,
-                totalScore = total,
-                maxPossibleScore = 100.0,
-                percentage = total,
-                attendanceRate = if (total > 80) 0.96f else if (total > 65) 0.90f else 0.82f
-            )
-        }
     }
 }

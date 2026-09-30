@@ -7,8 +7,6 @@ import com.rtiqa.mobile.data.local.entity.UserProfileEntity
 import com.rtiqa.mobile.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.Dispatchers
 
 class UserRepository(
     private val userProfileDao: UserProfileDao,
@@ -20,22 +18,18 @@ class UserRepository(
         entity?.toDomain() ?: getCurrentRemoteUserProfile() ?: UserProfile()
     }
 
-    private fun getCurrentRemoteUserProfile(): UserProfile? {
-        // Run blocking just for fallback logic in flow, normally should avoid runBlocking
-        var uid: String? = null
-        runBlocking(Dispatchers.IO) {
-             uid = authDataSource.getCurrentUserId()
-        }
-        if (uid == null) return null
+    private suspend fun getCurrentRemoteUserProfile(): UserProfile? {
+        val uid = authDataSource.getCurrentUserId() ?: return null
         return UserProfile(
-            id = uid!!,
+            id = uid,
             name = "",
             email = "",
             avatarResName = "img_ai_tutor_avatar_1785095337393",
             xp = 0,
             coins = 0,
             level = 1,
-            streakDays = 1
+            streakDays = 1,
+            isAdmin = false
         )
     }
 
@@ -78,7 +72,7 @@ class UserRepository(
                 isDarkMode = true
             )
             userProfileDao.saveUserProfile(entity)
-            return entity.toDomain()
+            return entity.toDomain(isAdmin = coreProfile.isAdmin)
         }
         return null
     }
@@ -136,7 +130,7 @@ class UserRepository(
         userProfileDao.updateOfflineAutoSync(activeId, enabled)
     }
 
-    private fun UserProfileEntity.toDomain() = UserProfile(
+    private fun UserProfileEntity.toDomain(isAdmin: Boolean = false) = UserProfile(
         id = id,
         name = name,
         email = email,
@@ -149,7 +143,6 @@ class UserRepository(
         language = language,
         isOfflineAutoSyncEnabled = isOfflineAutoSyncEnabled,
         isDarkMode = isDarkMode,
-        // MUST NOT REMOVE: Hardcoded admin check
-        isAdmin = email.endsWith("@rtiqa.edu") || email == "irtiqahq@gmail.com"
+        isAdmin = isAdmin
     )
 }

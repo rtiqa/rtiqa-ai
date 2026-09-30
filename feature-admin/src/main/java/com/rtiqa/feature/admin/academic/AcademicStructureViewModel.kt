@@ -44,35 +44,51 @@ class AcademicStructureViewModel(
         val orgId = _uiState.value.currentOrgId
         val schoolId = _uiState.value.currentSchoolId
 
-        getAcademicYearsUseCase(orgId).onEach { years ->
-            _uiState.update { it.copy(academicYears = years) }
-            if (years.isNotEmpty() && _uiState.value.selectedYearId == null) {
-                onAction(AcademicStructureAction.SelectAcademicYear(years.first().id))
-            }
-        }.launchIn(viewModelScope)
+        if (orgId != null) {
+            getAcademicYearsUseCase(orgId).onEach { years ->
+                _uiState.update { it.copy(academicYears = years) }
+                if (years.isNotEmpty() && _uiState.value.selectedYearId == null) {
+                    onAction(AcademicStructureAction.SelectAcademicYear(years.first().id))
+                }
+            }.launchIn(viewModelScope)
 
-        getGradeLevelsForSchoolUseCase(schoolId).onEach { levels ->
-            _uiState.update { it.copy(gradeLevels = levels) }
-        }.launchIn(viewModelScope)
+            getDepartmentsUseCase(orgId).onEach { depts ->
+                _uiState.update { it.copy(departments = depts) }
+                if (depts.isNotEmpty() && _uiState.value.selectedDepartmentId == null) {
+                    onAction(AcademicStructureAction.SelectDepartment(depts.first().id))
+                }
+            }.launchIn(viewModelScope)
+        } else {
+            _uiState.update { it.copy(academicYears = emptyList(), departments = emptyList()) }
+        }
 
-        getDepartmentsUseCase(orgId).onEach { depts ->
-            _uiState.update { it.copy(departments = depts) }
-            if (depts.isNotEmpty() && _uiState.value.selectedDepartmentId == null) {
-                onAction(AcademicStructureAction.SelectDepartment(depts.first().id))
-            }
-        }.launchIn(viewModelScope)
+        if (schoolId != null) {
+            getGradeLevelsForSchoolUseCase(schoolId).onEach { levels ->
+                _uiState.update { it.copy(gradeLevels = levels) }
+            }.launchIn(viewModelScope)
 
-        getSubjectsForSchoolUseCase(schoolId).onEach { subs ->
-            _uiState.update { it.copy(subjects = subs) }
-        }.launchIn(viewModelScope)
+            getSubjectsForSchoolUseCase(schoolId).onEach { subs ->
+                _uiState.update { it.copy(subjects = subs) }
+            }.launchIn(viewModelScope)
 
-        getSectionsForSchoolUseCase(schoolId).onEach { secs ->
-            _uiState.update { it.copy(sections = secs) }
-        }.launchIn(viewModelScope)
+            getSectionsForSchoolUseCase(schoolId).onEach { secs ->
+                _uiState.update { it.copy(sections = secs) }
+            }.launchIn(viewModelScope)
+        } else {
+            _uiState.update { it.copy(gradeLevels = emptyList(), subjects = emptyList(), sections = emptyList()) }
+        }
     }
 
     fun onAction(action: AcademicStructureAction) {
         when (action) {
+            is AcademicStructureAction.SetOrganization -> {
+                _uiState.update { it.copy(currentOrgId = action.orgId) }
+                loadRootData()
+            }
+            is AcademicStructureAction.SetSchool -> {
+                _uiState.update { it.copy(currentSchoolId = action.schoolId) }
+                loadRootData()
+            }
             is AcademicStructureAction.SelectTab -> {
                 _uiState.update { it.copy(currentTab = action.tab) }
             }

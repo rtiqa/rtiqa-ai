@@ -25,8 +25,8 @@ data class AcademicStructureUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     
-    val currentOrgId: String = "org_001",
-    val currentSchoolId: String = "school_001",
+    val currentOrgId: String? = null,
+    val currentSchoolId: String? = null,
     
     // Parent selections for drill-down
     val selectedYearId: String? = null,
@@ -48,6 +48,8 @@ data class AcademicStructureUiState(
 
 sealed class AcademicStructureAction {
     data class SelectTab(val tab: AcademicTab) : AcademicStructureAction()
+    data class SetOrganization(val orgId: String?) : AcademicStructureAction()
+    data class SetSchool(val schoolId: String?) : AcademicStructureAction()
     
     data class SelectAcademicYear(val id: String?) : AcademicStructureAction()
     data class SelectDepartment(val id: String?) : AcademicStructureAction()

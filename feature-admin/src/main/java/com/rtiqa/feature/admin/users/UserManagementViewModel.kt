@@ -14,6 +14,7 @@ import com.rtiqa.core.ui.base.BaseViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -29,150 +30,21 @@ class UserManagementViewModel(
 ) : BaseViewModel<UsersUiState, UsersUiAction, UsersUiEvent>(UsersUiState()) {
 
     init {
-        seedInitialUsersIfEmpty()
         observeData()
     }
-
-    private fun seedInitialUsersIfEmpty() {
-        val initialMembers = listOf(
-            // School 001
-            createSeedMember(
-                id = "usr_p1",
-                name = "د. محمد بن سلمان العتيبي",
-                email = "principal@school1.edu",
-                role = EnterpriseRole.PRINCIPAL,
-                department = "إدارة المدرسة",
-                phone = "+966501112233",
-                schoolId = "school_001"
-            ),
-            createSeedMember(
-                id = "usr_vp1",
-                name = "أ. عبد الرحمن الغامدي",
-                email = "vp@school1.edu",
-                role = EnterpriseRole.VICE_PRINCIPAL,
-                department = "الشؤون التعليمية",
-                phone = "+966502223344",
-                schoolId = "school_001"
-            ),
-            createSeedMember(
-                id = "usr_t1",
-                name = "أ.د. عبد الله الشهري",
-                email = "abdullah@school1.edu",
-                role = EnterpriseRole.TEACHER,
-                department = "الرياضيات والعلوم",
-                phone = "+966503334455",
-                schoolId = "school_001"
-            ),
-            createSeedMember(
-                id = "usr_s1",
-                name = "علي أحمد المظفر",
-                email = "ali@school1.edu",
-                role = EnterpriseRole.STUDENT,
-                department = "الصف الأول الثانوي",
-                phone = "+966504445566",
-                schoolId = "school_001"
-            ),
-            createSeedMember(
-                id = "usr_pr1",
-                name = "أحمد المظفر (ولي أمر)",
-                email = "ahmed.parent@school1.edu",
-                role = EnterpriseRole.PARENT,
-                department = "أولياء الأمور",
-                phone = "+966505556677",
-                schoolId = "school_001"
-            ),
-            // School 002
-            createSeedMember(
-                id = "usr_p2",
-                name = "د. نورة الزهراني",
-                email = "principal@school2.edu",
-                role = EnterpriseRole.PRINCIPAL,
-                department = "الإدارة العليا",
-                phone = "+966506667788",
-                schoolId = "school_002"
-            ),
-            createSeedMember(
-                id = "usr_vp2",
-                name = "م. خالد القحطاني",
-                email = "vp@school2.edu",
-                role = EnterpriseRole.VICE_PRINCIPAL,
-                department = "الشؤون الإدارية",
-                phone = "+966507778899",
-                schoolId = "school_002"
-            ),
-            createSeedMember(
-                id = "usr_t2",
-                name = "م. ريم الشمري",
-                email = "reem@school2.edu",
-                role = EnterpriseRole.TEACHER,
-                department = "الكيمياء والفيزياء",
-                phone = "+966508889900",
-                schoolId = "school_002"
-            ),
-            createSeedMember(
-                id = "usr_s2",
-                name = "سارة خالد العتيبي",
-                email = "sara@school2.edu",
-                role = EnterpriseRole.STUDENT,
-                department = "الصف الثاني الثانوي",
-                phone = "+966509990011",
-                schoolId = "school_002"
-            ),
-            createSeedMember(
-                id = "usr_pr2",
-                name = "خالد العتيبي (ولي أمر)",
-                email = "khalid.parent@school2.edu",
-                role = EnterpriseRole.PARENT,
-                department = "أولياء الأمور",
-                phone = "+966500001122",
-                schoolId = "school_002"
-            )
-        )
-
-        for ((schoolId, members) in initialMembers.groupBy { it.schoolId }) {
-            seedSchoolUsers(schoolId, members)
-        }
-    }
-
-    private fun seedSchoolUsers(schoolId: String, members: List<EnterpriseMember>) {
-        viewModelScope.launch {
-            getUsersForSchoolUseCase(schoolId).collect { schoolUsers ->
-                if (schoolUsers.isEmpty()) {
-                    members.forEach { member ->
-                        saveEnterpriseMemberUseCase(member)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun createSeedMember(
-        id: String,
-        name: String,
-        email: String,
-        role: EnterpriseRole,
-        department: String,
-        phone: String,
-        schoolId: String
-    ): EnterpriseMember = EnterpriseMember(
-        id = id,
-        orgId = "org_1",
-        name = name,
-        email = email,
-        role = role,
-        department = department,
-        status = MemberStatus.ACTIVE,
-        phone = phone,
-        schoolId = schoolId
-    )
 
     private fun observeData() {
         val schoolsFlow = getSchoolsUseCase()
         val userPrefsFlow = preferencesDataStore.userPreferencesFlow
 
         combine(schoolsFlow, userPrefsFlow) { schools, userPrefs ->
-            val activeId = userPrefs.activeSchoolId.orEmpty().ifEmpty { schools.firstOrNull()?.id ?: "school_001" }
-            val activeSchool = schools.find { it.id == activeId } ?: schools.firstOrNull()
+            val savedActiveId = userPrefs.activeSchoolId?.takeIf { it.isNotBlank() }
+            val activeSchool = if (savedActiveId != null) {
+                schools.find { it.id == savedActiveId } ?: schools.firstOrNull()
+            } else {
+                schools.firstOrNull()
+            }
+            val activeId = activeSchool?.id
             setState {
                 copy(
                     schools = schools,
@@ -182,7 +54,11 @@ class UserManagementViewModel(
             }
             activeId
         }.flatMapLatest { activeSchoolId ->
-            getUsersForSchoolUseCase(activeSchoolId)
+            if (activeSchoolId != null) {
+                getUsersForSchoolUseCase(activeSchoolId)
+            } else {
+                flowOf(emptyList())
+            }
         }.onEach { usersList ->
             setState {
                 val filtered = applyFilterAndSearch(
@@ -261,8 +137,12 @@ class UserManagementViewModel(
     }
 
     private fun saveUser(action: UsersUiAction.SaveUser) {
+        val currentSchoolId = currentState.activeSchoolId
+        if (currentSchoolId.isNullOrBlank()) {
+            sendEvent(UsersUiEvent.ShowToast("لا توجد مدرسة نشطة لإضافة المستخدم إليها"))
+            return
+        }
         viewModelScope.launch {
-            val currentSchoolId = currentState.activeSchoolId
             val userId = action.id ?: "usr_${UUID.randomUUID().toString().take(8)}"
             val member = EnterpriseMember(
                 id = userId,
