@@ -1,12 +1,18 @@
 package com.rtiqa.feature.admin.teacher.gradebook
 
 import androidx.lifecycle.viewModelScope
+import com.rtiqa.core.domain.result.RtiqaResult
+import com.rtiqa.core.domain.usecase.GetClassGradebookUseCase
 import com.rtiqa.core.ui.base.BaseViewModel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
-class AcademicGradebookViewModel : BaseViewModel<AcademicGradebookUiState, AcademicGradebookUiAction, AcademicGradebookUiEvent>(
+class AcademicGradebookViewModel(
+    private val getClassGradebookUseCase: GetClassGradebookUseCase? = null,
+    initialClassId: String? = null
+) : BaseViewModel<AcademicGradebookUiState, AcademicGradebookUiAction, AcademicGradebookUiEvent>(
     AcademicGradebookUiState(
+        selectedClassId = initialClassId ?: "",
         classAverage = 0.0,
         highestScore = 0.0,
         lowestScore = 0.0,
@@ -15,14 +21,29 @@ class AcademicGradebookViewModel : BaseViewModel<AcademicGradebookUiState, Acade
 ) {
 
     init {
-        loadGradebookData()
+        initialClassId?.takeIf { it.isNotBlank() }?.let { loadGradebookData(it) }
     }
 
     override fun onAction(action: AcademicGradebookUiAction) {
         when (action) {
             is AcademicGradebookUiAction.SelectClass -> {
-                setState { copy(selectedClassId = action.classId) }
-                loadGradebookData(action.classId)
+                if (action.classId.isNotBlank()) {
+                    setState { copy(selectedClassId = action.classId) }
+                    loadGradebookData(action.classId)
+                } else {
+                    setState {
+                        copy(
+                            selectedClassId = "",
+                            students = emptyList(),
+                            columns = emptyList(),
+                            classAverage = 0.0,
+                            highestScore = 0.0,
+                            lowestScore = 0.0,
+                            passRatePercentage = 0,
+                            errorMessage = null
+                        )
+                    }
+                }
             }
             is AcademicGradebookUiAction.SelectTerm -> {
                 setState { copy(selectedTerm = action.term) }
@@ -37,7 +58,10 @@ class AcademicGradebookViewModel : BaseViewModel<AcademicGradebookUiState, Acade
                 setState { copy(selectedViewMode = action.modeIndex) }
             }
             is AcademicGradebookUiAction.Refresh -> {
-                loadGradebookData(currentState.selectedClassId)
+                val currentClassId = currentState.selectedClassId.takeIf { it.isNotBlank() }
+                if (currentClassId != null) {
+                    loadGradebookData(currentClassId)
+                }
             }
             is AcademicGradebookUiAction.OpenScoreEditor -> {
                 val currentScore = action.student.scores[action.column.id]?.score?.toString() ?: ""
@@ -137,42 +161,141 @@ class AcademicGradebookViewModel : BaseViewModel<AcademicGradebookUiState, Acade
         }
     }
 
-    private fun loadGradebookData(classId: String = "cls-101") {
-        viewModelScope.launch {
-            setState { copy(isLoading = true) }
-            delay(300) // Simulated quick load for prototype
-
-            val classes = listOf(
-                GradebookClassOption("cls-101", "الصف الثالث ثانوي (أ)", "الذكاء الاصطناعي وهياكل البيانات", "الفصل الدراسي الثاني"),
-                GradebookClassOption("cls-102", "الصف الثالث ثانوي (ب)", "الذكاء الاصطناعي وهياكل البيانات", "الفصل الدراسي الثاني"),
-                GradebookClassOption("cls-201", "الصف الثاني ثانوي (ج)", "مقدمة البرمجة وتقنيات الويب", "الفصل الدراسي الثاني"),
-                GradebookClassOption("cls-301", "الصف الأول ثانوي (أ)", "المعلوماتية والمهارات الرقمية", "الفصل الدراسي الثاني")
-            )
-
-            val columns = listOf(
-                AssessmentColumn("col-hw1", "الواجب 1", 10.0, 10, "واجبات"),
-                AssessmentColumn("col-hw2", "الواجب 2", 10.0, 10, "واجبات"),
-                AssessmentColumn("col-quiz1", "اختبار قصير 1", 15.0, 15, "اختبارات قصيرة"),
-                AssessmentColumn("col-midterm", "الاختبار النصفي", 25.0, 25, "اختبارات فصلية"),
-                AssessmentColumn("col-project", "مشروع الذكاء الاصطناعي", 20.0, 20, "مشاريع عملية"),
-                AssessmentColumn("col-final", "المشاركة والحضور", 20.0, 20, "أداء صفي")
-            )
-
-            val initialStudents = emptyList<StudentGradeRow>()
-            val stats = computeStats(initialStudents)
-
+    private fun loadGradebookData(classId: String) {
+        if (classId.isBlank()) {
             setState {
                 copy(
                     isLoading = false,
-                    availableClasses = classes,
-                    selectedClassId = classId,
-                    columns = columns,
-                    students = initialStudents,
-                    classAverage = stats.first,
-                    highestScore = stats.second,
-                    lowestScore = stats.third,
-                    passRatePercentage = 0
+                    selectedClassId = "",
+                    students = emptyList(),
+                    columns = emptyList(),
+                    classAverage = 0.0,
+                    highestScore = 0.0,
+                    lowestScore = 0.0,
+                    passRatePercentage = 0,
+                    errorMessage = null
                 )
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            setState { copy(isLoading = true, errorMessage = null) }
+
+            if (getClassGradebookUseCase == null) {
+                setState {
+                    copy(
+                        isLoading = false,
+                        selectedClassId = classId,
+                        students = emptyList(),
+                        columns = emptyList(),
+                        classAverage = 0.0,
+                        highestScore = 0.0,
+                        lowestScore = 0.0,
+                        passRatePercentage = 0
+                    )
+                }
+                return@launch
+            }
+
+            try {
+                when (val result = getClassGradebookUseCase(classId)) {
+                    is RtiqaResult.Success -> {
+                        val gradebook = result.data
+                        val mappedColumns = gradebook.assessments.map { assessment ->
+                            val weightPct = assessment.weight?.let { w ->
+                                if (w <= 1.0) (w * 100).toInt() else w.toInt()
+                            } ?: 0
+                            AssessmentColumn(
+                                id = assessment.assessmentId,
+                                title = assessment.title,
+                                maxScore = assessment.maxScore,
+                                weightPercentage = weightPct,
+                                category = ""
+                            )
+                        }
+
+                        val scoresByStudent = gradebook.scores.groupBy { it.studentId }
+                        val maxPossible = mappedColumns.sumOf { it.maxScore }.takeIf { it > 0 } ?: 100.0
+
+                        val mappedStudents = gradebook.students.map { student ->
+                            val studentScores = scoresByStudent[student.studentId] ?: emptyList()
+                            val scoreMap = mappedColumns.associate { col ->
+                                val scoreObj = studentScores.find { it.assessmentId == col.id }
+                                col.id to StudentAssessmentScore(
+                                    columnId = col.id,
+                                    score = scoreObj?.score,
+                                    isExcused = false,
+                                    note = null
+                                )
+                            }
+                            val totalScore = scoreMap.values.mapNotNull { it.score }.sum()
+
+                            StudentGradeRow(
+                                studentId = student.studentId,
+                                studentName = student.displayName,
+                                studentNumber = student.studentNumber ?: "",
+                                avatarInitial = student.displayName.take(1),
+                                scores = scoreMap,
+                                totalScore = totalScore,
+                                maxPossibleScore = maxPossible,
+                                percentage = if (maxPossible > 0) (totalScore / maxPossible) * 100.0 else 0.0
+                            )
+                        }
+
+                        val stats = computeStats(mappedStudents)
+                        val passRate = if (mappedStudents.isEmpty()) 0 else {
+                            val passing = mappedStudents.count { it.percentage >= 60.0 }
+                            ((passing.toDouble() / mappedStudents.size) * 100.0).toInt()
+                        }
+
+                        setState {
+                            copy(
+                                isLoading = false,
+                                selectedClassId = classId,
+                                columns = mappedColumns,
+                                students = mappedStudents,
+                                classAverage = stats.first,
+                                highestScore = stats.second,
+                                lowestScore = stats.third,
+                                passRatePercentage = passRate,
+                                errorMessage = null
+                            )
+                        }
+                    }
+                    is RtiqaResult.Error -> {
+                        setState {
+                            copy(
+                                isLoading = false,
+                                selectedClassId = classId,
+                                students = emptyList(),
+                                columns = emptyList(),
+                                classAverage = 0.0,
+                                highestScore = 0.0,
+                                lowestScore = 0.0,
+                                passRatePercentage = 0,
+                                errorMessage = result.error.message
+                            )
+                        }
+                        sendEvent(AcademicGradebookUiEvent.ShowToast(result.error.message))
+                    }
+                    is RtiqaResult.Loading -> {
+                        // Already in loading state
+                    }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                val errorMsg = e.message ?: "An unexpected error occurred"
+                setState {
+                    copy(
+                        isLoading = false,
+                        students = emptyList(),
+                        columns = emptyList(),
+                        errorMessage = errorMsg
+                    )
+                }
+                sendEvent(AcademicGradebookUiEvent.ShowToast(errorMsg))
             }
         }
     }
