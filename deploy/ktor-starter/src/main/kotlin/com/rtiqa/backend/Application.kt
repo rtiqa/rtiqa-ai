@@ -4,6 +4,7 @@ import com.rtiqa.backend.auth.SupabaseAuthClient
 import com.rtiqa.backend.auth.authRoutes
 import com.rtiqa.backend.auth.configureSecurity
 import com.rtiqa.backend.courses.courseRoutes
+import com.rtiqa.backend.gradebook.gradebookRoutes
 import com.rtiqa.backend.config.DatabaseConfig
 import com.rtiqa.backend.config.SupabaseConfig
 import com.rtiqa.backend.database.DatabaseFactory
@@ -94,5 +95,6 @@ fun Application.module() {
         
         authRoutes(authClient)
         courseRoutes()
+        gradebookRoutes()
     }
 }

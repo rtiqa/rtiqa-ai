@@ -82,6 +82,32 @@ data class NetworkSyncResponseDto(
     val serverMessage: String
 )
 
+data class GradebookStudentDto(
+    val studentId: String,
+    val displayName: String,
+    val studentNumber: String? = null
+)
+
+data class GradebookAssessmentDto(
+    val assessmentId: String,
+    val title: String,
+    val maxScore: Double,
+    val weight: Double? = null
+)
+
+data class GradebookScoreDto(
+    val studentId: String,
+    val assessmentId: String,
+    val score: Double? = null
+)
+
+data class ClassGradebookDto(
+    val classId: String,
+    val students: List<GradebookStudentDto>,
+    val assessments: List<GradebookAssessmentDto>,
+    val scores: List<GradebookScoreDto>
+)
+
 /**
  * Production Retrofit interface for Rtiqa remote backend services.
  */
@@ -138,4 +164,9 @@ interface RtiqaApiService {
     suspend fun syncOfflineData(
         @Body payload: NetworkSyncPayloadDto
     ): Response<NetworkSyncResponseDto>
+
+    @GET("api/v1/classes/{classId}/gradebook")
+    suspend fun getClassGradebook(
+        @Path("classId") classId: String
+    ): Response<ClassGradebookDto>
 }
