@@ -54,7 +54,7 @@ class RegisterViewModelTest {
 
         viewModel.onAction(RegisterUiAction.NameChanged("Sara Learner"))
         viewModel.onAction(RegisterUiAction.EmailChanged("sara@example.com"))
-        viewModel.onAction(RegisterUiAction.PasswordChanged("secure-password"))
+        viewModel.onAction(RegisterUiAction.PasswordChanged("secure-password1"))
         viewModel.onAction(RegisterUiAction.SubmitRegister)
         testDispatcher.scheduler.advanceUntilIdle()
 
