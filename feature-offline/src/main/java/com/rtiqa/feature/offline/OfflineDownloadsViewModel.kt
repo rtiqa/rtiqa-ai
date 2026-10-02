@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.rtiqa.core.domain.model.Course
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.domain.usecase.GetCoursesUseCase
+import com.rtiqa.core.domain.usecase.DeleteCourseDownloadUseCase
 import com.rtiqa.core.domain.usecase.ObserveSyncStatusUseCase
 import com.rtiqa.core.domain.usecase.SyncOfflineDataUseCase
 import com.rtiqa.core.ui.base.BaseViewModel
@@ -25,6 +26,7 @@ data class OfflineDownloadsUiState(
 sealed interface OfflineDownloadsUiAction : ViewUiAction {
     object TriggerSyncClicked : OfflineDownloadsUiAction
     data class CourseClicked(val courseId: String) : OfflineDownloadsUiAction
+    data class RemoveDownloadClicked(val courseId: String) : OfflineDownloadsUiAction
 }
 
 sealed interface OfflineDownloadsUiEvent : ViewUiEvent {
@@ -35,7 +37,8 @@ sealed interface OfflineDownloadsUiEvent : ViewUiEvent {
 class OfflineDownloadsViewModel(
     private val getCoursesUseCase: GetCoursesUseCase,
     private val syncOfflineDataUseCase: SyncOfflineDataUseCase,
-    private val observeSyncStatusUseCase: ObserveSyncStatusUseCase
+    private val observeSyncStatusUseCase: ObserveSyncStatusUseCase,
+    private val deleteCourseDownloadUseCase: DeleteCourseDownloadUseCase
 ) : BaseViewModel<OfflineDownloadsUiState, OfflineDownloadsUiAction, OfflineDownloadsUiEvent>(OfflineDownloadsUiState()) {
 
     init {
@@ -62,6 +65,22 @@ class OfflineDownloadsViewModel(
         when (action) {
             is OfflineDownloadsUiAction.TriggerSyncClicked -> triggerSync()
             is OfflineDownloadsUiAction.CourseClicked -> sendEvent(OfflineDownloadsUiEvent.NavigateToCourseDetail(action.courseId))
+            is OfflineDownloadsUiAction.RemoveDownloadClicked -> removeDownload(action.courseId)
+        }
+    }
+
+    private fun removeDownload(courseId: String) {
+        viewModelScope.launch {
+            when (val result = deleteCourseDownloadUseCase(courseId)) {
+                is RtiqaResult.Success -> sendEvent(
+                    OfflineDownloadsUiEvent.ShowToast("تمت إزالة إتاحة المقرر بدون إنترنت")
+                )
+                is RtiqaResult.Error -> {
+                    setState { copy(errorMessage = result.error.message) }
+                    sendEvent(OfflineDownloadsUiEvent.ShowToast(result.error.message))
+                }
+                is RtiqaResult.Loading -> Unit
+            }
         }
     }
 

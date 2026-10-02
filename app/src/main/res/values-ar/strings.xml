@@ -88,8 +88,8 @@
 
     <!-- Downloads Screen -->
     <string name="downloads_title">المحفوظات والتعلم بدون إنترنت</string>
-    <string name="storage_used">مساحة التخزين المحلية المستخدمة: 142 MB (نموذج معروض)</string>
-    <string name="downloaded_lessons_count">الدروس المحفوظة محلياً (%1$d)</string>
+    <string name="offline_content_summary">المحتوى المحفوظ للعمل بدون إنترنت</string>
+    <string name="downloaded_courses_count">المقررات المحفوظة (%1$d)</string>
     <string name="available_offline_text">متاح بدون إنترنت • %1$d دقيقة</string>
 
     <!-- Profile Screen -->

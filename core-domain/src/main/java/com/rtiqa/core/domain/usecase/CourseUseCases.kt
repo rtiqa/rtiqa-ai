@@ -106,6 +106,17 @@ class DownloadCourseUseCase(
     }
 }
 
+class DeleteCourseDownloadUseCase(
+    private val downloadManager: DownloadManagerContract
+) {
+    suspend operator fun invoke(courseId: String): RtiqaResult<Unit> {
+        if (courseId.isBlank()) {
+            return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Course ID cannot be blank.")))
+        }
+        return downloadManager.deleteCourseDownload(courseId)
+    }
+}
+
 /**
  * Use case to save/create a course in the platform.
  */
@@ -206,4 +217,3 @@ class SaveLessonProgressUseCase(
         return courseRepository.updateLessonProgress(lessonId, courseId, clampedProgress)
     }
 }
-

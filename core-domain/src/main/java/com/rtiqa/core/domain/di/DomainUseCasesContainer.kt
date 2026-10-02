@@ -148,6 +148,7 @@ class DomainUseCasesContainer(
     val completeLessonUseCase by lazy { CompleteLessonUseCase(courseRepository, userRepository) }
     val searchCoursesUseCase by lazy { SearchCoursesUseCase(courseRepository) }
     val downloadCourseUseCase by lazy { DownloadCourseUseCase(downloadManager) }
+    val deleteCourseDownloadUseCase by lazy { DeleteCourseDownloadUseCase(downloadManager) }
     val saveCourseUseCase by lazy { SaveCourseUseCase(courseRepository) }
     val deleteCourseUseCase by lazy { DeleteCourseUseCase(courseRepository) }
     val enrollCourseUseCase by lazy { com.rtiqa.core.domain.usecase.EnrollCourseUseCase(courseRepository) }

@@ -88,8 +88,8 @@
 
     <!-- Downloads Screen -->
     <string name="downloads_title">Saved Items &amp; Offline Learning</string>
-    <string name="storage_used">Local Storage Used: 142 MB (Sample View)</string>
-    <string name="downloaded_lessons_count">Saved Lessons Locally (%1$d)</string>
+    <string name="offline_content_summary">Content saved for offline use</string>
+    <string name="downloaded_courses_count">Saved courses (%1$d)</string>
     <string name="available_offline_text">Available Offline • %1$d min</string>
 
     <!-- Profile Screen -->

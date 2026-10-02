@@ -38,8 +38,10 @@ import com.rtiqa.mobile.ui.viewmodel.AiTutorViewModel
 import com.rtiqa.mobile.ui.viewmodel.CourseViewModel
 import com.rtiqa.mobile.ui.viewmodel.MainViewModel
 import com.rtiqa.mobile.ui.viewmodel.HomeDashboardViewModelFactory
+import com.rtiqa.mobile.ui.viewmodel.OfflineDownloadsViewModelFactory
 import com.rtiqa.mobile.ui.viewmodel.QuizViewModel
 import com.rtiqa.feature.home.HomeDashboardViewModel
+import com.rtiqa.feature.offline.OfflineDownloadsViewModel
 import com.rtiqa.feature.courses.CoursesListScreen
 import com.rtiqa.feature.courses.CourseDetailScreen as FeatureCourseDetailScreen
 import com.rtiqa.feature.courses.CoursesListViewModel
@@ -89,9 +91,6 @@ fun RtiqaApp(
 
     val courses by courseViewModel.filteredCourses.collectAsState()
     val bookmarkedCourses by courseViewModel.bookmarkedCourses.collectAsState()
-    val downloadedCourses by courseViewModel.downloadedCourses.collectAsState()
-    val downloadedLessons by courseViewModel.downloadedLessons.collectAsState()
-
     val selectedCategory by courseViewModel.selectedCategory.collectAsState()
     val searchQuery by courseViewModel.searchQuery.collectAsState()
 
@@ -228,7 +227,11 @@ fun RtiqaApp(
                     },
                     onToggleDownload = { id, status ->
                         scope.launch {
-                            appDiContainer.courseRepository.toggleCourseDownload(id, !status)
+                            if (status) {
+                                appDiContainer.domainUseCasesContainer.deleteCourseDownloadUseCase(id)
+                            } else {
+                                appDiContainer.domainUseCasesContainer.downloadCourseUseCase(id)
+                            }
                         }
                     },
                     onToggleLanguage = { mainViewModel.toggleLanguage() },
@@ -445,12 +448,13 @@ fun RtiqaApp(
             }
 
             composable("downloads") {
+                val offlineDownloadsViewModel: OfflineDownloadsViewModel = viewModel(
+                    factory = OfflineDownloadsViewModelFactory(appDiContainer)
+                )
                 DownloadsScreen(
-                    downloadedCourses = downloadedCourses,
-                    downloadedLessons = downloadedLessons,
-                    onLessonClick = { lessonId ->
-                        courseViewModel.selectLesson(lessonId)
-                        navController.navigate("lesson_player/$lessonId")
+                    viewModel = offlineDownloadsViewModel,
+                    onNavigateToCourse = { courseId ->
+                        navController.navigate("course_detail/$courseId")
                     },
                     isArabic = isArabic
                 )
