@@ -1,9 +1,7 @@
 package com.rtiqa.mobile.ui.navigation
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.rtiqa.core.data.di.AppDiContainer
@@ -39,15 +37,14 @@ import com.rtiqa.mobile.ui.screens.ProfileScreen
 import com.rtiqa.mobile.ui.screens.QuizScreen
 import com.rtiqa.mobile.ui.screens.SettingsScreen
 import com.rtiqa.mobile.ui.viewmodel.AiTutorViewModel
-import com.rtiqa.mobile.ui.viewmodel.CourseViewModel
-import com.rtiqa.mobile.ui.viewmodel.MainViewModel
 import com.rtiqa.mobile.ui.viewmodel.HomeDashboardViewModelFactory
 import com.rtiqa.mobile.ui.viewmodel.OfflineDownloadsViewModelFactory
 import com.rtiqa.mobile.ui.viewmodel.ProfileViewModelFactory
-import com.rtiqa.mobile.ui.viewmodel.QuizViewModel
+import com.rtiqa.mobile.ui.viewmodel.SettingsViewModelFactory
 import com.rtiqa.feature.home.HomeDashboardViewModel
 import com.rtiqa.feature.offline.OfflineDownloadsViewModel
 import com.rtiqa.feature.profile.ProfileViewModel
+import com.rtiqa.feature.settings.SettingsViewModel
 import com.rtiqa.feature.courses.CoursesListScreen
 import com.rtiqa.feature.courses.CourseDetailScreen as FeatureCourseDetailScreen
 import com.rtiqa.feature.courses.CoursesListViewModel
@@ -81,35 +78,26 @@ import com.rtiqa.feature.admin.teacher.TeacherDashboardUiAction
 
 @Composable
 fun RtiqaApp(
-    mainViewModel: MainViewModel = viewModel(),
-    courseViewModel: CourseViewModel = viewModel(),
+    appDiContainer: AppDiContainer,
     aiTutorViewModel: AiTutorViewModel = viewModel(),
-    quizViewModel: QuizViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
-    val context = LocalContext.current
-    val appDiContainer = remember(context) { AppDiContainer(context.applicationContext) }
     val scope = rememberCoroutineScope()
 
     val activeSession by appDiContainer.authRepository.observeUserSession().collectAsState(initial = null)
-    val userProfile by mainViewModel.userProfile.collectAsState()
-    val isOnline by mainViewModel.isOnline.collectAsState()
-
-    val courses by courseViewModel.filteredCourses.collectAsState()
-    val bookmarkedCourses by courseViewModel.bookmarkedCourses.collectAsState()
-    val selectedCategory by courseViewModel.selectedCategory.collectAsState()
-    val searchQuery by courseViewModel.searchQuery.collectAsState()
+    val preferences by appDiContainer.preferencesDataStore.userPreferencesFlow.collectAsState(
+        initial = com.rtiqa.core.data.datastore.UserPreferences(false, false, null, 0L)
+    )
+    val isOnline by appDiContainer.networkMonitor.isOnline.collectAsState(initial = true)
 
     val chatMessages by aiTutorViewModel.messages.collectAsState()
     val aiInputText by aiTutorViewModel.inputText.collectAsState()
     val isAiLoading by aiTutorViewModel.isLoading.collectAsState()
     val aiErrorMessage by aiTutorViewModel.errorMessage.collectAsState()
 
-    val quizUiState by quizViewModel.uiState.collectAsState()
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: "home"
-    val isArabic = userProfile.language == "ar"
+    val isArabic = preferences.languageCode == "ar"
     val layoutDirection = if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr
 
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
@@ -240,7 +228,13 @@ fun RtiqaApp(
                             }
                         }
                     },
-                    onToggleLanguage = { mainViewModel.toggleLanguage() },
+                    onToggleLanguage = {
+                        scope.launch {
+                            appDiContainer.preferencesDataStore.setLanguageCode(
+                                if (isArabic) "en" else "ar"
+                            )
+                        }
+                    },
                     isArabic = isArabic
                 )
             }
@@ -596,14 +590,12 @@ fun RtiqaApp(
             }
 
             composable("settings") {
+                val settingsViewModel: SettingsViewModel = viewModel(
+                    factory = SettingsViewModelFactory(appDiContainer)
+                )
                 SettingsScreen(
-                    userProfile = userProfile,
-                    isOnline = isOnline,
+                    viewModel = settingsViewModel,
                     onBack = { navController.popBackStack() },
-                    onToggleLanguage = { mainViewModel.toggleLanguage() },
-                    onToggleTheme = { mainViewModel.toggleTheme() },
-                    onToggleOfflineAutoSync = { mainViewModel.toggleOfflineAutoSync() },
-                    isArabic = isArabic
                 )
             }
         }
