@@ -83,7 +83,7 @@ class ProfileViewModelTest {
         assertEquals("Persisted Name", vm.currentState.profile?.name)
     }
 
-    @Test fun logoutSuccess_emitsNavigateEvent() = runTest {
+    @Test fun remoteLogoutFailure_butRepositoryLocalLogoutSuccess_navigatesExactlyOnce() = runTest {
         val vm = viewModel(); val events = mutableListOf<ProfileUiEvent>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiEvent.collect { events += it } }
         vm.onAction(ProfileUiAction.LogoutClicked); advanceUntilIdle()

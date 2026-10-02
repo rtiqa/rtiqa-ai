@@ -147,10 +147,10 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun logout(): RtiqaResult<Unit> {
-        val remoteResult = try {
+        try {
             authRemoteDataSource.logout()
         } catch (e: Exception) {
-            RtiqaResult.Error(RtiqaError.UnknownError("Remote logout failed.", e))
+            // Remote revocation is best effort; local cleanup determines device logout state.
         }
 
         return try {
@@ -162,7 +162,7 @@ class AuthRepositoryImpl(
                 userProfileDao.clearUserProfile()
                 database.clearSensitiveData()
             }
-            remoteResult
+            RtiqaResult.Success(Unit)
         } catch (e: Exception) {
             RtiqaResult.Error(RtiqaError.UnknownError("Failed to logout cleanly.", e))
         }

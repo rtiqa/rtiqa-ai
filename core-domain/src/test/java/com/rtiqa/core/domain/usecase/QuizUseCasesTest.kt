@@ -24,6 +24,7 @@ class FakeQuizRepository : QuizRepositoryContract {
     val resultsList = mutableListOf<QuizResult>()
     var submittedScore: Int = -1
     var submittedTotal: Int = -1
+    var passingThreshold: Int = 70
 
     override fun getQuizzesForCourse(courseId: String): Flow<List<Quiz>> {
         return flowOf(quizzesMap.values.filter { it.courseId == courseId })
@@ -42,7 +43,7 @@ class FakeQuizRepository : QuizRepositoryContract {
         submittedTotal = total
         val totalCount = if (total <= 0) 1 else total
         val percent = ((score.toFloat() / totalCount) * 100).toInt()
-        val isPassed = percent >= 70
+        val isPassed = percent >= passingThreshold
 
         val res = QuizResult(
             id = "res_1",
@@ -184,6 +185,19 @@ class QuizUseCasesTest {
         val result = submitQuizResultUseCase("q1", 2, 2)
         assertTrue(result is RtiqaResult.Error)
         assertEquals(-1, quizRepo.submittedScore)
+        assertEquals(0, userRepo.addedXp)
+    }
+
+    @Test
+    fun firstPassXpLogic_respectsRepositoryResultUsingRealThreshold() = runBlocking {
+        quizRepo.passingThreshold = 80
+
+        val result = submitQuizResultUseCase("q1", 3, 4)
+
+        assertTrue(result is RtiqaResult.Success)
+        val success = result as RtiqaResult.Success
+        assertFalse(success.data.isPassed)
+        assertEquals(0, success.data.xpEarned)
         assertEquals(0, userRepo.addedXp)
     }
 }

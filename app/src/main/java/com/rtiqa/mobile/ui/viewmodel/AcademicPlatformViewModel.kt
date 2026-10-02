@@ -310,7 +310,8 @@ class AcademicPlatformViewModel(application: Application) : AndroidViewModel(app
 
     private fun submitAssessmentAttempt(assessmentId: String, scorePercent: Int) {
         viewModelScope.launch {
-            val isPassed = scorePercent >= 70
+            val assessment = uiState.value.assessments.firstOrNull { it.id == assessmentId } ?: return@launch
+            val isPassed = scorePercent >= assessment.passingScore
             val attempt = AssessmentAttempt(
                 id = UUID.randomUUID().toString(),
                 assessmentId = assessmentId,

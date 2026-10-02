@@ -97,12 +97,14 @@ class AuthRepositoryImplTest {
     private class FakeUserProfileDao : UserProfileDao {
         val profile = MutableStateFlow<UserProfileEntity?>(null)
         var insertCount = 0
+        var clearFailure: Throwable? = null
         override fun getUserProfile(): Flow<UserProfileEntity?> = profile
         override suspend fun insertOrUpdateProfile(profile: UserProfileEntity) {
             insertCount++
             this.profile.value = profile
         }
         override suspend fun clearUserProfile() {
+            clearFailure?.let { throw it }
             profile.value = null
         }
     }
@@ -383,7 +385,14 @@ class AuthRepositoryImplTest {
         assertNull(f.dataStore.activeUserId)
     }
 
-    @Test fun logout_remoteFailure_stillClearsLocalSessionTokenOrganizationAndUserState() = runTest {
+    @Test fun remoteLogoutFailure_localCleanupSuccess_returnsSuccess() = runTest {
+        val f = fixture()
+        f.remote.logoutFailure = IOException("server unavailable")
+
+        assertTrue(f.repository.logout() is RtiqaResult.Success)
+    }
+
+    @Test fun remoteLogoutFailure_localCleanupSuccess_clearsTokenOrgUserProfileAndIds() = runTest {
         val f = fixture()
         f.cacheProfile()
         f.session.saveSession("token", "org")
@@ -392,8 +401,9 @@ class AuthRepositoryImplTest {
         f.dataStore.activeUserId = "u1"
         f.remote.logoutFailure = IOException("server unavailable")
 
-        f.repository.logout()
+        val result = f.repository.logout()
 
+        assertTrue(result is RtiqaResult.Success)
         assertNull(f.session.token)
         assertNull(f.session.organizationId)
         assertNull(f.session.storedSessionId)
@@ -401,6 +411,17 @@ class AuthRepositoryImplTest {
         assertNull(f.dataStore.activeUserId)
         assertNull(f.dao.profile.value)
         assertTrue(f.database.sensitiveDataCleared)
+    }
+
+    @Test fun localCleanupFailure_returnsError() = runTest {
+        val f = fixture()
+        f.cacheProfile()
+        f.session.saveSession("token", "org")
+        f.dao.clearFailure = IOException("room cleanup failed")
+
+        val result = f.repository.logout()
+
+        assertTrue(result is RtiqaResult.Error)
     }
 
     @Test fun resetPassword_remoteFailure_doesNotReturnSuccess() = runTest {

@@ -254,4 +254,36 @@ class QuizRepositoryImplTest {
         assertEquals("user_123", queuedItems[0].ownerUserId)
         assertEquals("test_session_id", queuedItems[0].ownerSessionId)
     }
+
+    @Test
+    fun assessmentPassingScore80_score75_isNotPassed() = runTest {
+        fakeDao.assessments += AssessmentEntity("quiz_80", "c1", "org", "Real", "QUIZ", 80, 5, 4)
+
+        val result = repository.submitQuizResult("quiz_80", 3, 4) as RtiqaResult.Success
+
+        assertEquals(75, result.data.scorePercent)
+        assertTrue(!result.data.isPassed)
+        assertTrue(!fakeDao.attempts.single().isPassed)
+    }
+
+    @Test
+    fun assessmentPassingScore60_score65_isPassed() = runTest {
+        fakeDao.assessments += AssessmentEntity("quiz_60", "c1", "org", "Real", "QUIZ", 60, 5, 20)
+
+        val result = repository.submitQuizResult("quiz_60", 13, 20) as RtiqaResult.Success
+
+        assertEquals(65, result.data.scorePercent)
+        assertTrue(result.data.isPassed)
+        assertTrue(fakeDao.attempts.single().isPassed)
+    }
+
+    @Test
+    fun submitResult_passStatusMatchesPersistedAssessmentThreshold() = runTest {
+        fakeDao.assessments += AssessmentEntity("quiz_threshold", "c1", "org", "Real", "QUIZ", 90, 5, 10)
+
+        val result = repository.submitQuizResult("quiz_threshold", 8, 10) as RtiqaResult.Success
+
+        assertTrue(!result.data.isPassed)
+        assertTrue(fakeSyncDao.items.single().payloadJson.contains("\"isPassed\":false"))
+    }
 }

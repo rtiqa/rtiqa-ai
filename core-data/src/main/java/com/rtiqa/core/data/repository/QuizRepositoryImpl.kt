@@ -79,13 +79,13 @@ class QuizRepositoryImpl(
 
     override suspend fun submitQuizResult(quizId: String, score: Int, total: Int): RtiqaResult<QuizResult> {
         return try {
-            val totalCount = if (total <= 0) 1 else total
-            val scorePercent = ((score.toFloat() / totalCount) * 100).toInt()
-            val isPassed = scorePercent >= 70
-            val userId = currentUserIdProvider()
-                ?: return RtiqaResult.Error(RtiqaError.AuthError("An authenticated user is required to submit a quiz."))
             val assessment = academicDao.getAssessmentById(quizId).firstOrNull()
                 ?: return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Quiz is not available.")))
+            val totalCount = if (total <= 0) 1 else total
+            val scorePercent = ((score.toFloat() / totalCount) * 100).toInt()
+            val isPassed = scorePercent >= assessment.passingScore
+            val userId = currentUserIdProvider()
+                ?: return RtiqaResult.Error(RtiqaError.AuthError("An authenticated user is required to submit a quiz."))
             val courseId = assessment.courseId
 
             val attemptId = UUID.randomUUID().toString()
