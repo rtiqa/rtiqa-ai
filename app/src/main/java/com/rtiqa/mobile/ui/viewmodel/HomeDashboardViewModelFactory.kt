@@ -15,6 +15,7 @@ class HomeDashboardViewModelFactory(
             return HomeDashboardViewModel(
                 getUserProfileUseCase = useCases.getUserProfileUseCase,
                 getCoursesUseCase = useCases.getCoursesUseCase,
+                getLessonsForCourseUseCase = useCases.getLessonsForCourseUseCase,
                 observeSyncStatusUseCase = useCases.observeSyncStatusUseCase,
                 updateUserStreakUseCase = useCases.updateUserStreakUseCase
             ) as T

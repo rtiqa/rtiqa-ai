@@ -211,10 +211,14 @@ fun RtiqaApp(
                 HomeScreen(
                     userProfile = homeUiState.userProfile,
                     courses = homeUiState.featuredCourses,
-                    completedLessonsCount = 0,
-                    passedQuizzesCount = 0,
+                    currentLesson = homeUiState.currentLesson,
+                    completedLessonsCount = homeUiState.completedLessonsCount,
+                    passedQuizzesCount = homeUiState.passedQuizzesCount,
                     onCourseClick = { courseId ->
                         navController.navigate("course_detail/$courseId")
+                    },
+                    onLessonClick = { lessonId ->
+                        navController.navigate("lesson_player/$lessonId")
                     },
                     onNavigate = { route -> navController.navigate(route) },
                     onToggleBookmark = { id, status ->
