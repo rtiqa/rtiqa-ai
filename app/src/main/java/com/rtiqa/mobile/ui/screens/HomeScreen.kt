@@ -72,7 +72,7 @@ fun HomeScreen(
     completedLessonsCount: Int = 0,
     passedQuizzesCount: Int = 0,
     onCourseClick: (String) -> Unit,
-    onLessonClick: (String) -> Unit,
+    onLessonClick: (String, String) -> Unit,
     onNavigate: (String) -> Unit,
     onToggleBookmark: (String, Boolean) -> Unit,
     onToggleDownload: (String, Boolean) -> Unit,
@@ -259,7 +259,7 @@ fun HomeScreen(
                         currentLesson?.let { lesson ->
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(
-                                onClick = { onLessonClick(lesson.id) },
+                                onClick = { onLessonClick(lesson.courseId, lesson.id) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .testTag("continue_learning_button"),

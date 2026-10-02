@@ -25,7 +25,6 @@ fun LessonDetailsScreen(
     onAction: (LessonViewerUiAction) -> Unit,
     onBack: () -> Unit,
     onStartQuiz: () -> Unit,
-    onNavigateToLesson: (String) -> Unit = {},
     isQuizPassed: Boolean = false,
     durationMinutes: Int? = null
 ) {
@@ -65,6 +64,17 @@ fun LessonDetailsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator()
+            }
+        } else if (uiState.lesson == null) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = uiState.errorMessage ?: "الدرس غير متاح",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyLarge
+                )
             }
         } else {
             val isCompleted = uiState.isCompleted || (uiState.lesson?.isCompleted == true) || uiState.progressPercent >= 1.0f
@@ -171,28 +181,21 @@ fun LessonDetailsScreen(
                         }
                     }
 
-                    // مدة الدرس المقدرة
-                    val displayDuration = when {
-                        durationMinutes != null && durationMinutes > 0 -> "$durationMinutes دقيقة"
-                        else -> {
-                            val wordCount = uiState.lesson?.content?.split("\\s+".toRegex())?.size ?: 0
-                            val estMin = (wordCount / 30).coerceIn(2, 15)
-                            "$estMin د قراءة"
-                        }
-                    }
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    if (durationMinutes != null && durationMinutes > 0) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
                         ) {
-                            Text(
-                                text = "⏱️ $displayDuration",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "⏱️ $durationMinutes دقيقة",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
 
@@ -341,7 +344,7 @@ fun LessonDetailsScreen(
                     ) {
                         if (uiState.prevLesson != null) {
                             OutlinedButton(
-                                onClick = { onNavigateToLesson(uiState.prevLesson.id) },
+                                onClick = { onAction(LessonViewerUiAction.PrevLessonClicked) },
                                 modifier = Modifier
                                     .weight(1f)
                                     .testTag("prev_lesson_button")
@@ -357,7 +360,7 @@ fun LessonDetailsScreen(
                         }
                         if (uiState.nextLesson != null) {
                             Button(
-                                onClick = { onNavigateToLesson(uiState.nextLesson.id) },
+                                onClick = { onAction(LessonViewerUiAction.NextLessonClicked) },
                                 modifier = Modifier
                                     .weight(1f)
                                     .testTag("next_lesson_button")

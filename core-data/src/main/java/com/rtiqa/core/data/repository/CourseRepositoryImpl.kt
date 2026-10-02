@@ -342,7 +342,10 @@ class CourseRepositoryImpl(
             }
             val score = (normalizedProgress * 100).toInt().coerceIn(0, 100)
             val existingLesson = lessonDao.getLessonById(lessonId)
-            val shouldBeCompleted = normalizedProgress >= 1.0f || (existingLesson?.isCompleted == true)
+                ?: return RtiqaResult.Error(
+                    com.rtiqa.core.domain.error.RtiqaError.DatabaseError("Lesson is not available locally.")
+                )
+            val shouldBeCompleted = normalizedProgress >= 1.0f || existingLesson.isCompleted
 
             var remoteSuccess = false
             if (apiService != null) {
@@ -359,22 +362,8 @@ class CourseRepositoryImpl(
                     if (response.isSuccessful) {
                         val completion = response.body()
                         if (completion != null) {
-                            if (existingLesson != null) {
-                                val finalCompleted = existingLesson.isCompleted || shouldBeCompleted
-                                lessonDao.updateLessonCompletion(lessonId, finalCompleted)
-                            } else {
-                                lessonDao.insertLesson(
-                                    LessonEntity(
-                                        id = lessonId,
-                                        courseId = courseId,
-                                        title = "الدرس $lessonId",
-                                        content = "",
-                                        order = 1,
-                                        isCompleted = shouldBeCompleted,
-                                        audioUrl = null
-                                    )
-                                )
-                            }
+                            val finalCompleted = existingLesson.isCompleted || shouldBeCompleted
+                            lessonDao.updateLessonCompletion(lessonId, finalCompleted)
                             val serverProgress = if (completion.courseProgressPercent > 1f) {
                                 completion.courseProgressPercent / 100f
                             } else {
@@ -396,22 +385,8 @@ class CourseRepositoryImpl(
 
             if (!remoteSuccess) {
                 // Local-first fallback when offline or when network call fails
-                if (existingLesson != null) {
-                    val finalCompleted = existingLesson.isCompleted || shouldBeCompleted
-                    lessonDao.updateLessonCompletion(lessonId, finalCompleted)
-                } else {
-                    lessonDao.insertLesson(
-                        LessonEntity(
-                            id = lessonId,
-                            courseId = courseId,
-                            title = "الدرس $lessonId",
-                            content = "",
-                            order = 1,
-                            isCompleted = shouldBeCompleted,
-                            audioUrl = null
-                        )
-                    )
-                }
+                val finalCompleted = existingLesson.isCompleted || shouldBeCompleted
+                lessonDao.updateLessonCompletion(lessonId, finalCompleted)
 
                 // Recalculate course progress from completed lessons without overwriting with individual lesson progress
                 val lessons = lessonDao.getLessonsForCourseList(courseId)

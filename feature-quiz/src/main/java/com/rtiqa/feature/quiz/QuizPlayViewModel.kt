@@ -26,6 +26,7 @@ data class QuizPlayUiState(
     val currentQuestionIndex: Int = 0,
     val selectedAnswers: Map<Int, Int> = emptyMap(),
     val isSubmitted: Boolean = false,
+    val isSubmitting: Boolean = false,
     val score: Int = 0,
     val totalQuestions: Int = 0,
     val scorePercent: Int = 0,
@@ -58,6 +59,7 @@ class QuizPlayViewModel(
 ) : BaseViewModel<QuizPlayUiState, QuizPlayUiAction, QuizPlayUiEvent>(QuizPlayUiState()) {
 
     private var timerJob: Job? = null
+    private var quizJob: Job? = null
 
     override fun onAction(action: QuizPlayUiAction) {
         when (action) {
@@ -88,12 +90,14 @@ class QuizPlayViewModel(
 
     private fun loadQuiz(courseId: String, lessonId: String = "") {
         timerJob?.cancel()
+        quizJob?.cancel()
         setState {
             copy(
                 courseId = courseId,
                 lessonId = lessonId,
                 isLoading = true,
                 isSubmitted = false,
+                isSubmitting = false,
                 selectedAnswers = emptyMap(),
                 currentQuestionIndex = 0,
                 score = 0,
@@ -103,20 +107,27 @@ class QuizPlayViewModel(
                 errorMessage = null
             )
         }
-        getQuizForCourseUseCase(courseId)
+        quizJob = getQuizForCourseUseCase(courseId)
             .onEach { quiz ->
-                val timeLimit = quiz?.timeLimitSeconds ?: 300
+                val validQuiz = quiz?.takeIf { candidate ->
+                    candidate.questions.isNotEmpty() && candidate.questions.all { question ->
+                        question.text.isNotBlank() &&
+                            question.options.size >= 2 &&
+                            question.correctAnswerIndex in question.options.indices
+                    }
+                }
+                val timeLimit = validQuiz?.timeLimitSeconds ?: 0
                 setState {
                     copy(
-                        quiz = quiz,
-                        totalQuestions = quiz?.questions?.size ?: 0,
+                        quiz = validQuiz,
+                        totalQuestions = validQuiz?.questions?.size ?: 0,
                         timeLeftSeconds = timeLimit,
-                        isTimerActive = quiz != null,
+                        isTimerActive = validQuiz != null,
                         isLoading = false,
-                        errorMessage = if (quiz == null) "لم يتم العثور على تقييم لهذه الدورة" else null
+                        errorMessage = if (validQuiz == null) "لا يوجد اختبار صالح متاح لهذا المقرر" else null
                     )
                 }
-                if (quiz != null) {
+                if (validQuiz != null) {
                     startTimer()
                 }
             }
@@ -144,7 +155,7 @@ class QuizPlayViewModel(
     }
 
     private fun submitQuiz() {
-        if (currentState.isSubmitted) return
+        if (currentState.isSubmitted || currentState.isSubmitting) return
         timerJob?.cancel()
         val q = currentState.quiz ?: return
 
@@ -154,7 +165,7 @@ class QuizPlayViewModel(
 
         val evaluation = evaluateQuizAnswersUseCase(q, userAnswersMap)
 
-        setState { copy(isLoading = true, isTimerActive = false) }
+        setState { copy(isLoading = true, isSubmitting = true, isTimerActive = false) }
         viewModelScope.launch {
             when (val result = submitQuizResultUseCase(q.id, evaluation.score, evaluation.totalQuestions)) {
                 is RtiqaResult.Success -> {
@@ -164,14 +175,15 @@ class QuizPlayViewModel(
                             score = evaluation.score,
                             scorePercent = evaluation.scorePercent,
                             isPassed = evaluation.isPassed,
-                            xpEarned = evaluation.xpEarned,
+                            xpEarned = result.data.xpEarned,
+                            isSubmitting = false,
                             isLoading = false
                         )
                     }
-                    sendEvent(QuizPlayUiEvent.QuizSubmitted(result.data, evaluation.xpEarned))
+                    sendEvent(QuizPlayUiEvent.QuizSubmitted(result.data, result.data.xpEarned))
                 }
                 is RtiqaResult.Error -> {
-                    setState { copy(isLoading = false, errorMessage = result.error.message) }
+                    setState { copy(isLoading = false, isSubmitting = false, errorMessage = result.error.message) }
                     sendEvent(QuizPlayUiEvent.ShowToast(result.error.message))
                 }
                 is RtiqaResult.Loading -> {
@@ -184,6 +196,7 @@ class QuizPlayViewModel(
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+        quizJob?.cancel()
     }
 }
 

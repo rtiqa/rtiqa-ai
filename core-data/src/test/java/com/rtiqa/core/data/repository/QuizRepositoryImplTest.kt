@@ -181,11 +181,37 @@ class QuizRepositoryImplTest {
         )
     }
 
-    @Test    fun getQuizzesForCourse_returnsDefaultWhenDbEmpty() = runTest {
+    @Test
+    fun noAssessment_returnsNoQuiz() = runTest {
         val quizzes = repository.getQuizzesForCourse("c1").first()
-        assertEquals(1, quizzes.size)
-        assertEquals("quiz_c1", quizzes[0].id)
-        assertEquals(70, quizzes[0].passingScorePercent)
+        assertTrue(quizzes.isEmpty())
+        assertEquals(null, repository.getQuizForCourse("c1").first())
+    }
+
+    @Test
+    fun missingQuizById_returnsNull() = runTest {
+        assertEquals(null, repository.getQuizById("missing").first())
+    }
+
+    @Test
+    fun noQuestions_doesNotReturnDefaultQuestions() = runTest {
+        fakeDao.assessments += AssessmentEntity("a1", "c1", "org", "Real", "QUIZ", 70, 5, 0)
+        val quiz = repository.getQuizForCourse("c1").first()
+        assertNotNull(quiz)
+        assertTrue(quiz!!.questions.isEmpty())
+    }
+
+    @Test
+    fun noAuthenticatedUser_doesNotSaveQuizAttempt() = runTest {
+        val unauthenticated = QuizRepositoryImpl(
+            academicDao = fakeDao,
+            offlineSyncManager = offlineSyncManager,
+            currentUserIdProvider = { null }
+        )
+        val result = unauthenticated.submitQuizResult("quiz_c1", 1, 1)
+        assertTrue(result is RtiqaResult.Error)
+        assertTrue(fakeDao.attempts.isEmpty())
+        assertTrue(fakeSyncDao.items.isEmpty())
     }
 
     @Test
@@ -212,6 +238,7 @@ class QuizRepositoryImplTest {
 
     @Test
     fun submitQuizResult_calculatesPercentagePassesAndEnqueuesOfflineAction() = runTest {
+        fakeDao.assessments += AssessmentEntity("quiz_c1", "c1", "org", "Real", "QUIZ", 70, 5, 4)
         val result = repository.submitQuizResult("quiz_c1", 3, 4) // 75% -> passed
         assertTrue(result is RtiqaResult.Success)
 

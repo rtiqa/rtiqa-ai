@@ -71,7 +71,8 @@ class FakeQuizRepository : QuizRepositoryContract {
 
 class FakeUserRepoForQuiz : UserRepositoryContract {
     var addedXp: Int = 0
-    override fun getUserProfile(): Flow<UserProfile?> = flowOf(null)
+    var profile: UserProfile? = UserProfile("u1", "User", "user@example.com")
+    override fun getUserProfile(): Flow<UserProfile?> = flowOf(profile)
     override suspend fun updateUserProfile(profile: UserProfile): RtiqaResult<Unit> = RtiqaResult.Success(Unit)
     override suspend fun addXp(amount: Int): RtiqaResult<Unit> {
         addedXp += amount
@@ -175,5 +176,14 @@ class QuizUseCasesTest {
         val result2 = submitQuizResultUseCase("q1", 2, 2)
         assertTrue(result2 is RtiqaResult.Success)
         assertEquals(50, userRepo.addedXp)
+    }
+
+    @Test
+    fun noAuthenticatedUser_doesNotAwardXpOrSubmitAttempt() = runBlocking {
+        userRepo.profile = null
+        val result = submitQuizResultUseCase("q1", 2, 2)
+        assertTrue(result is RtiqaResult.Error)
+        assertEquals(-1, quizRepo.submittedScore)
+        assertEquals(0, userRepo.addedXp)
     }
 }
