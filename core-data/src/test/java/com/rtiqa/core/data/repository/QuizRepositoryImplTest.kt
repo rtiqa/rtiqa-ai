@@ -25,6 +25,7 @@ import com.rtiqa.core.domain.model.QuestionType
 import com.rtiqa.core.domain.model.Quiz
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.network.api.AuthResponseDto
+import com.rtiqa.core.network.api.ClassGradebookDto
 import com.rtiqa.core.network.api.LessonCompletionResponseDto
 import com.rtiqa.core.network.api.LoginRequestDto
 import com.rtiqa.core.network.api.NetworkCourseDto
@@ -134,6 +135,8 @@ class FakeRtiqaApiService : RtiqaApiService {
     override suspend fun updateLessonProgress(courseId: String, lessonId: String, request: com.rtiqa.core.network.api.LessonProgressRequestDto): Response<com.rtiqa.core.network.api.LessonProgressResponseDto> =
         Response.success(LessonCompletionResponseDto(true, lessonId, courseId, true, 100.0f, 1, 1))
     override suspend fun syncOfflineData(payload: NetworkSyncPayloadDto): Response<NetworkSyncResponseDto> = throw NotImplementedError()
+    override suspend fun getClassGradebook(classId: String): Response<ClassGradebookDto> =
+        Response.success(ClassGradebookDto(classId, emptyList(), emptyList(), emptyList()))
 }
 
 class QuizRepositoryImplTest {

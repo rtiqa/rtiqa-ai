@@ -14,6 +14,7 @@ import com.rtiqa.core.domain.repository.AuthRemoteDataSource
 import com.rtiqa.core.domain.repository.RemoteAuthUser
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.network.api.AuthResponseDto
+import com.rtiqa.core.network.api.ClassGradebookDto
 import com.rtiqa.core.network.api.LessonCompletionResponseDto
 import com.rtiqa.core.network.api.LessonProgressRequestDto
 import com.rtiqa.core.network.api.LessonProgressResponseDto
@@ -88,6 +89,9 @@ class AuthRepositoryImplTest {
             lessonId: String,
             request: LessonProgressRequestDto
         ): Response<LessonProgressResponseDto> = completeLesson(courseId, lessonId)
+
+        override suspend fun getClassGradebook(classId: String): Response<ClassGradebookDto> =
+            Response.success(ClassGradebookDto(classId, emptyList(), emptyList(), emptyList()))
     }
 
     private class FakeUserProfileDao : UserProfileDao {
