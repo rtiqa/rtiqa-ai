@@ -2,6 +2,7 @@ package com.rtiqa.feature.profile
 
 import androidx.lifecycle.viewModelScope
 import com.rtiqa.core.domain.model.UserProfile
+import com.rtiqa.core.domain.error.RtiqaError
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.domain.usecase.GetUserProfileUseCase
 import com.rtiqa.core.domain.usecase.LogoutUseCase
@@ -19,6 +20,7 @@ data class ProfileUiState(
     val isEditing: Boolean = false,
     val editName: String = "",
     val isLoading: Boolean = true,
+    val isSaving: Boolean = false,
     val errorMessage: String? = null
 ) : ViewUiState
 
@@ -71,21 +73,28 @@ class ProfileViewModel(
 
     private fun saveProfile() {
         val currentP = currentState.profile ?: return
-        val updated = currentP.copy(name = currentState.editName.trim())
+        val trimmedName = currentState.editName.trim()
+        if (trimmedName.isBlank()) {
+            val message = RtiqaError.ValidationError(listOf("Name cannot be blank.")).message
+            setState { copy(errorMessage = message) }
+            sendEvent(ProfileUiEvent.ShowToast(message))
+            return
+        }
+        val updated = currentP.copy(name = trimmedName)
 
-        setState { copy(isLoading = true) }
+        setState { copy(isSaving = true, errorMessage = null) }
         viewModelScope.launch {
             when (val result = updateUserProfileUseCase(updated)) {
                 is RtiqaResult.Success -> {
-                    setState { copy(isEditing = false, isLoading = false) }
+                    setState { copy(isEditing = false, isSaving = false) }
                     sendEvent(ProfileUiEvent.ShowToast("تم تحديث الملف الشخصي!"))
                 }
                 is RtiqaResult.Error -> {
-                    setState { copy(isLoading = false, errorMessage = result.error.message) }
+                    setState { copy(isSaving = false, errorMessage = result.error.message) }
                     sendEvent(ProfileUiEvent.ShowToast(result.error.message))
                 }
                 is RtiqaResult.Loading -> {
-                    setState { copy(isLoading = true) }
+                    setState { copy(isSaving = true) }
                 }
             }
         }
@@ -95,7 +104,10 @@ class ProfileViewModel(
         viewModelScope.launch {
             when (val result = logoutUseCase()) {
                 is RtiqaResult.Success -> sendEvent(ProfileUiEvent.NavigateToLogin)
-                is RtiqaResult.Error -> sendEvent(ProfileUiEvent.ShowToast(result.error.message))
+                is RtiqaResult.Error -> {
+                    setState { copy(errorMessage = result.error.message) }
+                    sendEvent(ProfileUiEvent.ShowToast(result.error.message))
+                }
                 is RtiqaResult.Loading -> {}
             }
         }

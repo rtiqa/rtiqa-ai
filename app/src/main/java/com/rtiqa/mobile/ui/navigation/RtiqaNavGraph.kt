@@ -39,9 +39,11 @@ import com.rtiqa.mobile.ui.viewmodel.CourseViewModel
 import com.rtiqa.mobile.ui.viewmodel.MainViewModel
 import com.rtiqa.mobile.ui.viewmodel.HomeDashboardViewModelFactory
 import com.rtiqa.mobile.ui.viewmodel.OfflineDownloadsViewModelFactory
+import com.rtiqa.mobile.ui.viewmodel.ProfileViewModelFactory
 import com.rtiqa.mobile.ui.viewmodel.QuizViewModel
 import com.rtiqa.feature.home.HomeDashboardViewModel
 import com.rtiqa.feature.offline.OfflineDownloadsViewModel
+import com.rtiqa.feature.profile.ProfileViewModel
 import com.rtiqa.feature.courses.CoursesListScreen
 import com.rtiqa.feature.courses.CourseDetailScreen as FeatureCourseDetailScreen
 import com.rtiqa.feature.courses.CoursesListViewModel
@@ -461,16 +463,15 @@ fun RtiqaApp(
             }
 
             composable("profile") {
+                val profileViewModel: ProfileViewModel = viewModel(
+                    factory = ProfileViewModelFactory(appDiContainer)
+                )
                 ProfileScreen(
-                    userProfile = userProfile,
+                    viewModel = profileViewModel,
                     onNavigateToAdmin = { navController.navigate("admin_dashboard") },
-                    onNavigateToTeacherDashboard = { navController.navigate("teacher_dashboard") },
-                    onLogout = {
-                        scope.launch {
-                            appDiContainer.authRepository.logout()
-                            navController.navigate("welcome") {
-                                popUpTo("home") { inclusive = true }
-                            }
+                    onNavigateToLogin = {
+                        navController.navigate("welcome") {
+                            popUpTo("home") { inclusive = true }
                         }
                     },
                     isArabic = isArabic
