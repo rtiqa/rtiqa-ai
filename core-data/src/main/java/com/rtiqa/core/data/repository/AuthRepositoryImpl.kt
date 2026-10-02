@@ -10,16 +10,13 @@ import com.rtiqa.core.domain.repository.AuthRemoteDataSource
 import com.rtiqa.core.domain.repository.AuthRepositoryContract
 import com.rtiqa.core.domain.repository.RemoteSyncDataSource
 import com.rtiqa.core.domain.result.RtiqaResult
-import com.rtiqa.core.logging.RtiqaLog
 import com.rtiqa.core.network.api.LoginRequestDto
 import com.rtiqa.core.network.api.NetworkUserDto
 import com.rtiqa.core.network.api.RegisterRequestDto
 import com.rtiqa.core.network.api.RtiqaApiService
 import com.rtiqa.core.security.SecurityManager
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
-import java.util.UUID
+import kotlinx.coroutines.flow.combine
 
 import com.rtiqa.core.network.session.RestSessionStore
 import kotlinx.coroutines.sync.Mutex
@@ -41,17 +38,32 @@ class AuthRepositoryImpl(
     private val syncMutex: Mutex
 ) : AuthRepositoryContract {
 
-    private val tag = "AuthRepositoryImpl"
-
     override fun observeUserSession(): Flow<UserProfile?> {
-        return userProfileDao.getUserProfile().map { it?.toDomain() }
+        return combine(
+            userProfileDao.getUserProfile(),
+            preferencesDataStore.userPreferencesFlow
+        ) { profile, preferences ->
+            val token = sessionStore.getSessionToken()
+            val storedUserId = securityManager.getEncryptedString(KEY_USER_ID)
+            if (
+                profile != null &&
+                !token.isNullOrBlank() &&
+                preferences.activeUserId == profile.id &&
+                storedUserId == profile.id
+            ) {
+                profile.toDomain()
+            } else {
+                null
+            }
+        }
     }
 
     private suspend fun persistAuthenticatedUser(
         token: String,
-        netUser: NetworkUserDto
+        netUser: NetworkUserDto,
+        organizationId: String?
     ): RtiqaResult.Success<UserProfile> {
-        sessionStore.saveSession(token, null)
+        sessionStore.saveSession(token, organizationId)
         securityManager.putEncryptedString(KEY_USER_ID, netUser.id)
         preferencesDataStore.setActiveUserId(netUser.id)
 
@@ -67,34 +79,6 @@ class AuthRepositoryImpl(
         return RtiqaResult.Success(entity.toDomain())
     }
 
-    private suspend fun findAndActivateOfflineProfile(email: String): UserProfile? {
-        val existingLocalProfile = userProfileDao.getUserProfile().firstOrNull()?.toDomain()
-        if (existingLocalProfile != null && existingLocalProfile.email.equals(email, ignoreCase = true)) {
-            preferencesDataStore.setActiveUserId(existingLocalProfile.id)
-            securityManager.putEncryptedString(KEY_USER_ID, existingLocalProfile.id)
-            sessionStore.generateAndSaveSessionId()
-            return existingLocalProfile
-        }
-        return null
-    }
-
-    private suspend fun createOfflineProfile(name: String, email: String): RtiqaResult.Success<UserProfile> {
-        val newUserId = UUID.randomUUID().toString()
-        val entity = UserProfileEntity(
-            id = newUserId,
-            name = name,
-            email = email,
-            levelXp = 0,
-            streakDays = 1
-        )
-        userProfileDao.insertOrUpdateProfile(entity)
-        preferencesDataStore.setActiveUserId(newUserId)
-        securityManager.putEncryptedString(KEY_USER_ID, newUserId)
-        sessionStore.saveSession("offline_token_$newUserId", null)
-        sessionStore.generateAndSaveSessionId()
-        return RtiqaResult.Success(entity.toDomain())
-    }
-
     override suspend fun login(email: String, pass: String): RtiqaResult<UserProfile> {
         val remoteAuth = authRemoteDataSource.login(email, pass)
         if (remoteAuth is RtiqaResult.Success) {
@@ -102,7 +86,9 @@ class AuthRepositoryImpl(
             val uid = remoteUser.uid
             val name = remoteUser.displayName.takeIf { !it.isNullOrEmpty() } ?: email.substringBefore("@")
             
-            sessionStore.saveSession("remote_token_$uid", null)
+            if (sessionStore.getSessionToken().isNullOrBlank()) {
+                return RtiqaResult.Error(RtiqaError.AuthError("Authentication succeeded without a valid server session."))
+            }
             securityManager.putEncryptedString(KEY_USER_ID, uid)
             preferencesDataStore.setActiveUserId(uid)
 
@@ -121,8 +107,11 @@ class AuthRepositoryImpl(
             remoteSyncDataSource?.syncUserProfileToCloud(entity.toDomain())
             sessionStore.generateAndSaveSessionId()
             return RtiqaResult.Success(entity.toDomain())
-        } else {
-            RtiqaLog.w(tag, "Remote login failed, trying REST API or local database")
+        }
+        if (remoteAuth is RtiqaResult.Error &&
+            (remoteAuth.error is RtiqaError.AuthError || remoteAuth.error is RtiqaError.ValidationError)
+        ) {
+            return remoteAuth
         }
 
         // Fallback: REST API authentication
@@ -130,81 +119,41 @@ class AuthRepositoryImpl(
             val response = apiService.login(LoginRequestDto(email = email, passwordHash = pass))
             if (response.isSuccessful && response.body() != null) {
                 val authBody = response.body()!!
-                persistAuthenticatedUser(authBody.token, authBody.user)
+                persistAuthenticatedUser(authBody.token, authBody.user, authBody.organizationId)
             } else {
-                // Offline fallback authentication check
-                val offlineProfile = findAndActivateOfflineProfile(email)
-                if (offlineProfile != null) {
-                    RtiqaResult.Success(offlineProfile)
-                } else {
-                    RtiqaResult.Error(RtiqaError.AuthError("Invalid credentials or user not found offline."))
-                }
+                RtiqaResult.Error(loginHttpError(response.code()))
             }
         } catch (e: Exception) {
-            // Network failure fallback
-            val offlineProfile = findAndActivateOfflineProfile(email)
-            if (offlineProfile != null) {
-                RtiqaResult.Success(offlineProfile)
-            } else {
-                RtiqaResult.Error(RtiqaError.NetworkError("Authentication failed due to connectivity.", cause = e))
-            }
+            RtiqaResult.Error(RtiqaError.NetworkError("Authentication failed due to connectivity.", cause = e))
         }
     }
 
     override suspend fun register(name: String, email: String, pass: String): RtiqaResult<UserProfile> {
-        val remoteAuth = authRemoteDataSource.register(name, email, pass)
-        if (remoteAuth is RtiqaResult.Success) {
-            val remoteUser = remoteAuth.data
-            val uid = remoteUser.uid
-            
-            sessionStore.saveSession("remote_token_$uid", null)
-            securityManager.putEncryptedString(KEY_USER_ID, uid)
-            preferencesDataStore.setActiveUserId(uid)
-
-            val entity = UserProfileEntity(
-                id = uid,
-                name = name,
-                email = email,
-                levelXp = 0,
-                streakDays = 1
-            )
-            userProfileDao.insertOrUpdateProfile(entity)
-            remoteSyncDataSource?.syncUserProfileToCloud(entity.toDomain())
-            sessionStore.generateAndSaveSessionId()
-            return RtiqaResult.Success(entity.toDomain())
-        } else {
-            RtiqaLog.w(tag, "Remote register failed, trying REST API or offline local fallback")
-        }
-
-        // Fallback: REST API registration
         return try {
             val response = apiService.register(RegisterRequestDto(name = name, email = email, passwordHash = pass))
             if (response.isSuccessful && response.body() != null) {
                 val authBody = response.body()!!
-                persistAuthenticatedUser(authBody.token, authBody.user)
+                persistAuthenticatedUser(authBody.token, authBody.user, authBody.organizationId)
             } else {
-                // Local registration creation for offline availability
-                createOfflineProfile(name, email)
+                RtiqaResult.Error(registrationHttpError(response.code()))
             }
         } catch (e: Exception) {
-            // Local offline registration creation
-            createOfflineProfile(name, email)
+            RtiqaResult.Error(RtiqaError.NetworkError("Registration failed due to connectivity.", cause = e))
         }
     }
 
     override suspend fun resetPassword(email: String): RtiqaResult<Unit> {
-        val result = authRemoteDataSource.resetPassword(email)
-        if (result is RtiqaResult.Success) {
-            return result
-        }
-        // Simulated local success for password reset when remote not present
-        RtiqaLog.i(tag, "Simulating password reset email for $email (Remote unavailable)")
-        return RtiqaResult.Success(Unit)
+        return authRemoteDataSource.resetPassword(email)
     }
 
     override suspend fun logout(): RtiqaResult<Unit> {
+        val remoteResult = try {
+            authRemoteDataSource.logout()
+        } catch (e: Exception) {
+            RtiqaResult.Error(RtiqaError.UnknownError("Remote logout failed.", e))
+        }
+
         return try {
-            authRemoteDataSource.logout() // Network call outside mutex
             syncMutex.withLock {
                 sessionStore.clearSession()
                 securityManager.removeKey(KEY_AUTH_TOKEN)
@@ -213,7 +162,7 @@ class AuthRepositoryImpl(
                 userProfileDao.clearUserProfile()
                 database.clearSensitiveData()
             }
-            RtiqaResult.Success(Unit)
+            remoteResult
         } catch (e: Exception) {
             RtiqaResult.Error(RtiqaError.UnknownError("Failed to logout cleanly.", e))
         }
@@ -228,5 +177,15 @@ class AuthRepositoryImpl(
     companion object {
         private const val KEY_AUTH_TOKEN = "auth_token"
         private const val KEY_USER_ID = "user_id"
+    }
+
+    private fun loginHttpError(statusCode: Int): RtiqaError = when (statusCode) {
+        400, 401, 403, 404, 422 -> RtiqaError.AuthError("Authentication rejected by server.", cause = null)
+        else -> RtiqaError.NetworkError("Authentication request failed.", statusCode = statusCode)
+    }
+
+    private fun registrationHttpError(statusCode: Int): RtiqaError = when (statusCode) {
+        400, 403, 409, 422 -> RtiqaError.AuthError("Registration rejected by server.", cause = null)
+        else -> RtiqaError.NetworkError("Registration request failed.", statusCode = statusCode)
     }
 }

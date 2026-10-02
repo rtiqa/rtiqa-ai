@@ -2,9 +2,11 @@ package com.rtiqa.core.network.model
 
 import com.rtiqa.core.network.api.LessonProgressRequestDto
 import com.rtiqa.core.network.api.LessonProgressResponseDto
+import com.rtiqa.core.network.api.AuthResponseDto
 import com.rtiqa.core.network.api.NetworkCourseDto
 import com.rtiqa.core.network.api.NetworkLessonDto
 import com.rtiqa.core.network.api.RestLoginRequest
+import com.rtiqa.core.network.RetrofitNetworkClient
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import org.junit.Assert.assertEquals
@@ -19,6 +21,31 @@ class RestDtoSerializationTest {
     private val moshi: Moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
+
+    @Test
+    fun `AuthResponseDto parses organization id with production Moshi configuration`() {
+        val json = """
+            {
+              "token": "server-token",
+              "organization_id": "org-42",
+              "user": {
+                "id": "u1",
+                "email": "user@example.com",
+                "name": "User",
+                "streakCount": 1,
+                "totalXp": 100
+              }
+            }
+        """.trimIndent()
+
+        val adapter = RetrofitNetworkClient.createMoshi().adapter(AuthResponseDto::class.java)
+        val response = adapter.fromJson(json)
+
+        assertNotNull(response)
+        assertEquals("server-token", response?.token)
+        assertEquals("org-42", response?.organizationId)
+        assertEquals("u1", response?.user?.id)
+    }
 
     @Test
     fun `DTO serialization and deserialization works`() {
