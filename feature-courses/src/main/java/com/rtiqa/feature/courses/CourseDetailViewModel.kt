@@ -6,6 +6,10 @@ import com.rtiqa.core.domain.model.Lesson
 import com.rtiqa.core.domain.usecase.DownloadCourseUseCase
 import com.rtiqa.core.domain.usecase.GetCourseDetailUseCase
 import com.rtiqa.core.domain.usecase.GetLessonsForCourseUseCase
+import com.rtiqa.core.domain.usecase.EnrollCourseUseCase
+import com.rtiqa.core.domain.usecase.ToggleBookmarkUseCase
+import com.rtiqa.core.domain.usecase.CompleteLessonUseCase
+import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.ui.base.BaseViewModel
 import com.rtiqa.core.ui.base.ViewUiAction
 import com.rtiqa.core.ui.base.ViewUiEvent
@@ -42,9 +46,9 @@ class CourseDetailViewModel(
     private val getCourseDetailUseCase: GetCourseDetailUseCase,
     private val getLessonsForCourseUseCase: GetLessonsForCourseUseCase,
     private val downloadCourseUseCase: DownloadCourseUseCase,
-    private val enrollCourseUseCase: com.rtiqa.core.domain.usecase.EnrollCourseUseCase? = null,
-    private val toggleBookmarkUseCase: com.rtiqa.core.domain.usecase.ToggleBookmarkUseCase? = null,
-    private val completeLessonUseCase: com.rtiqa.core.domain.usecase.CompleteLessonUseCase? = null
+    private val enrollCourseUseCase: EnrollCourseUseCase,
+    private val toggleBookmarkUseCase: ToggleBookmarkUseCase,
+    private val completeLessonUseCase: CompleteLessonUseCase
 ) : BaseViewModel<CourseDetailUiState, CourseDetailUiAction, CourseDetailUiEvent>(CourseDetailUiState()) {
 
     override fun onAction(action: CourseDetailUiAction) {
@@ -76,7 +80,7 @@ class CourseDetailViewModel(
             } else {
                 course?.progressPercent ?: 0f
             }
-            val effectiveCourse = course?.copy(progressPercent = computedProgress)
+            val effectiveCourse = course?.copy(progressPercent = computedProgress.coerceIn(0f, 1f))
             setState {
                 copy(
                     course = effectiveCourse,
@@ -92,14 +96,14 @@ class CourseDetailViewModel(
         val id = currentState.courseId
         if (id.isBlank()) return
         viewModelScope.launch {
-            when (val result = enrollCourseUseCase?.invoke(id)) {
-                is com.rtiqa.core.domain.result.RtiqaResult.Success -> {
+            when (val result = enrollCourseUseCase(id)) {
+                is RtiqaResult.Success -> {
                     sendEvent(CourseDetailUiEvent.ShowToast("تم التسجيل في المقرر بنجاح!"))
                 }
-                is com.rtiqa.core.domain.result.RtiqaResult.Error -> {
+                is RtiqaResult.Error -> {
                     sendEvent(CourseDetailUiEvent.ShowToast(result.error.message))
                 }
-                else -> {}
+                is RtiqaResult.Loading -> Unit
             }
         }
     }
@@ -107,7 +111,11 @@ class CourseDetailViewModel(
     private fun toggleBookmark() {
         val course = currentState.course ?: return
         viewModelScope.launch {
-            toggleBookmarkUseCase?.invoke(course.id, !course.isBookmarked)
+            when (val result = toggleBookmarkUseCase(course.id, !course.isBookmarked)) {
+                is RtiqaResult.Success -> Unit
+                is RtiqaResult.Error -> sendEvent(CourseDetailUiEvent.ShowToast(result.error.message))
+                is RtiqaResult.Loading -> Unit
+            }
         }
     }
 
@@ -119,14 +127,14 @@ class CourseDetailViewModel(
         if (existingLesson?.isCompleted == true) return
 
         viewModelScope.launch {
-            when (val result = completeLessonUseCase?.invoke(lessonId, courseId)) {
-                is com.rtiqa.core.domain.result.RtiqaResult.Success -> {
+            when (val result = completeLessonUseCase(lessonId, courseId)) {
+                is RtiqaResult.Success -> {
                     sendEvent(CourseDetailUiEvent.ShowToast("تم إكمال الدرس! +25 XP 🎉"))
                 }
-                is com.rtiqa.core.domain.result.RtiqaResult.Error -> {
+                is RtiqaResult.Error -> {
                     sendEvent(CourseDetailUiEvent.ShowToast(result.error.message))
                 }
-                else -> {}
+                is RtiqaResult.Loading -> Unit
             }
         }
     }

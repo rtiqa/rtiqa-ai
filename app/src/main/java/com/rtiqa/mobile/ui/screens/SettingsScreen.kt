@@ -23,8 +23,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -32,22 +39,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rtiqa.mobile.BuildConfig
-import com.rtiqa.mobile.domain.model.UserProfile
+import com.rtiqa.feature.settings.SettingsUiAction
+import com.rtiqa.feature.settings.SettingsUiEvent
+import com.rtiqa.feature.settings.SettingsViewModel
 
 import androidx.compose.ui.res.stringResource
 import com.rtiqa.mobile.R
 
 @Composable
 fun SettingsScreen(
-    userProfile: UserProfile,
-    isOnline: Boolean,
+    viewModel: SettingsViewModel,
     onBack: () -> Unit,
-    onToggleLanguage: () -> Unit,
-    onToggleTheme: () -> Unit,
-    onToggleOfflineAutoSync: () -> Unit = {},
-    isArabic: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    val isArabic = uiState.isArabic
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(viewModel) {
+        viewModel.uiEvent.collect { event ->
+            if (event is SettingsUiEvent.ShowToast) snackbarHostState.showSnackbar(event.message)
+        }
+    }
     val apiKeyPresent = try {
         val k = BuildConfig.GEMINI_API_KEY
         k.isNotEmpty() && k != "MY_GEMINI_API_KEY" && k != "null"
@@ -109,7 +121,9 @@ fun SettingsScreen(
 
                 Switch(
                     checked = isArabic,
-                    onCheckedChange = { onToggleLanguage() },
+                    onCheckedChange = { useArabic ->
+                        viewModel.onAction(SettingsUiAction.LanguageChanged(if (useArabic) "ar" else "en"))
+                    },
                     modifier = Modifier.testTag("settings_lang_switch")
                 )
             }
@@ -139,8 +153,8 @@ fun SettingsScreen(
                 }
 
                 Switch(
-                    checked = userProfile.isDarkMode,
-                    onCheckedChange = { onToggleTheme() },
+                    checked = uiState.isDarkTheme,
+                    onCheckedChange = { viewModel.onAction(SettingsUiAction.DarkThemeToggled(it)) },
                     modifier = Modifier.testTag("settings_theme_switch")
                 )
             }
@@ -164,14 +178,14 @@ fun SettingsScreen(
                     Icon(Icons.Default.CloudSync, contentDescription = "المزامنة", tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
-                        Text(stringResource(R.string.offline_auto_sync), fontWeight = FontWeight.Bold)
-                        Text(stringResource(R.string.auto_sync_desc), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(if (isArabic) "إتاحة وضع عدم الاتصال" else "Offline mode", fontWeight = FontWeight.Bold)
+                        Text(if (isArabic) "الاحتفاظ بالمحتوى والإعدادات للعمل بدون إنترنت" else "Keep supported content available offline", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
                 Switch(
-                    checked = userProfile.isOfflineAutoSyncEnabled,
-                    onCheckedChange = { onToggleOfflineAutoSync() },
+                    checked = uiState.isOfflineModeEnabled,
+                    onCheckedChange = { viewModel.onAction(SettingsUiAction.OfflineModeToggled(it)) },
                     modifier = Modifier.testTag("settings_sync_switch")
                 )
             }
@@ -221,12 +235,26 @@ fun SettingsScreen(
                 Column {
                     Text(stringResource(R.string.network_status_title), fontWeight = FontWeight.Bold)
                     Text(
-                        text = if (isOnline) stringResource(R.string.network_online) else stringResource(R.string.network_offline),
+                        text = if (uiState.isOnline) stringResource(R.string.network_online) else stringResource(R.string.network_offline),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        Button(
+            onClick = { viewModel.onAction(SettingsUiAction.ManualSyncRequested) },
+            enabled = !uiState.isSyncing && uiState.isOnline,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (uiState.isSyncing) "…" else if (isArabic) "مزامنة الآن" else "Sync now")
+        }
+        uiState.errorMessage?.let {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(it, color = MaterialTheme.colorScheme.error)
+        }
+        SnackbarHost(hostState = snackbarHostState)
     }
 }

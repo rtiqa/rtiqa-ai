@@ -1,5 +1,6 @@
 package com.rtiqa.core.network.api
 
+import com.squareup.moshi.Json
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -28,7 +29,8 @@ data class RegisterRequestDto(
 
 data class AuthResponseDto(
     val token: String,
-    val user: NetworkUserDto
+    val user: NetworkUserDto,
+    @Json(name = "organization_id") val organizationId: String? = null
 )
 
 data class NetworkCourseDto(

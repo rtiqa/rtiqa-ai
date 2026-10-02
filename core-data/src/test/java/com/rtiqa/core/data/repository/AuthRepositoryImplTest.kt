@@ -1,13 +1,23 @@
 package com.rtiqa.core.data.repository
 
+import android.content.Context
+import androidx.room.DatabaseConfiguration
+import androidx.room.InvalidationTracker
+import androidx.sqlite.db.SupportSQLiteOpenHelper
 import androidx.test.core.app.ApplicationProvider
 import com.rtiqa.core.data.datastore.RtiqaPreferencesDataStore
+import com.rtiqa.core.database.RtiqaDatabase
 import com.rtiqa.core.database.dao.UserProfileDao
 import com.rtiqa.core.database.entity.UserProfileEntity
 import com.rtiqa.core.domain.error.RtiqaError
+import com.rtiqa.core.domain.repository.AuthRemoteDataSource
+import com.rtiqa.core.domain.repository.RemoteAuthUser
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.network.api.AuthResponseDto
+import com.rtiqa.core.network.api.ClassGradebookDto
 import com.rtiqa.core.network.api.LessonCompletionResponseDto
+import com.rtiqa.core.network.api.LessonProgressRequestDto
+import com.rtiqa.core.network.api.LessonProgressResponseDto
 import com.rtiqa.core.network.api.LoginRequestDto
 import com.rtiqa.core.network.api.NetworkCourseDto
 import com.rtiqa.core.network.api.NetworkLessonDto
@@ -16,13 +26,17 @@ import com.rtiqa.core.network.api.NetworkSyncResponseDto
 import com.rtiqa.core.network.api.NetworkUserDto
 import com.rtiqa.core.network.api.RegisterRequestDto
 import com.rtiqa.core.network.api.RtiqaApiService
+import com.rtiqa.core.network.session.RestSessionStore
 import com.rtiqa.core.security.SecurityManager
+import java.io.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.test.runTest
 import okhttp3.ResponseBody
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -33,294 +47,387 @@ import retrofit2.Response
 @RunWith(RobolectricTestRunner::class)
 class AuthRepositoryImplTest {
 
-    private class DynamicFakeApiService : RtiqaApiService {
-        var shouldFailLogin = false
-        var shouldFailRegister = false
-        var isNetworkDown = false
-        var errorStatusCode = 401
+    private class FakeApiService : RtiqaApiService {
+        var loginResponseCode: Int? = null
+        var registerResponseCode: Int? = null
+        var networkFailure = false
+        var loginCalls = 0
+        var registerCalls = 0
 
         override suspend fun login(request: LoginRequestDto): Response<AuthResponseDto> {
-            if (isNetworkDown) throw java.io.IOException("Network down")
-            if (shouldFailLogin) {
-                return Response.error(errorStatusCode, ResponseBody.create(null, "Error"))
-            }
-            val user = NetworkUserDto("u1", request.email, "Alex", 5, 200)
-            return Response.success(AuthResponseDto("fake_jwt_token", user))
+            loginCalls++
+            if (networkFailure) throw IOException("Network down")
+            loginResponseCode?.let { return Response.error(it, ResponseBody.create(null, "Error")) }
+            return Response.success(
+                AuthResponseDto("secondary_access_token", NetworkUserDto("u1", request.email, "Alex", 5, 200))
+            )
         }
 
         override suspend fun register(request: RegisterRequestDto): Response<AuthResponseDto> {
-            if (isNetworkDown) throw java.io.IOException("Network down")
-            if (shouldFailRegister) {
-                return Response.error(409, ResponseBody.create(null, "Conflict"))
-            }
-            val user = NetworkUserDto("u2", request.email, request.name, 0, 0)
-            return Response.success(AuthResponseDto("fake_jwt_token_2", user))
-        }
-
-        override suspend fun getUserProfile(): Response<NetworkUserDto> {
-            return Response.success(NetworkUserDto("u1", "alex@rtiqa.com", "Alex", 5, 200))
-        }
-
-        override suspend fun getCourses(category: String?): Response<List<NetworkCourseDto>> {
-            return Response.success(emptyList())
-        }
-
-        override suspend fun getCourse(courseId: String): Response<NetworkCourseDto> {
-            throw NotImplementedError()
-        }
-
-        override suspend fun getCourseLessons(courseId: String): Response<List<NetworkLessonDto>> {
-            return Response.success(emptyList())
-        }
-
-        override suspend fun getLesson(courseId: String, lessonId: String): Response<NetworkLessonDto> {
-            throw NotImplementedError()
-        }
-
-        override suspend fun syncOfflineData(payload: NetworkSyncPayloadDto): Response<NetworkSyncResponseDto> {
-            return Response.success(NetworkSyncResponseDto(true, System.currentTimeMillis(), "Synced"))
-        }
-
-        override suspend fun completeLesson(courseId: String, lessonId: String): Response<LessonCompletionResponseDto> {
+            registerCalls++
+            if (networkFailure) throw IOException("Network down")
+            registerResponseCode?.let { return Response.error(it, ResponseBody.create(null, "Error")) }
             return Response.success(
-                LessonCompletionResponseDto(
-                    success = true,
-                    lessonId = lessonId,
-                    courseId = courseId,
-                    completed = true,
-                    courseProgressPercent = 100.0f,
-                    completedLessons = 1,
-                    totalLessons = 1
-                )
+                AuthResponseDto("registration_access_token", NetworkUserDto("u2", request.email, request.name, 0, 0))
             )
         }
 
+        override suspend fun getUserProfile() =
+            Response.success(NetworkUserDto("u1", "alex@rtiqa.com", "Alex", 5, 200))
+        override suspend fun getCourses(category: String?) = Response.success(emptyList<NetworkCourseDto>())
+        override suspend fun getCourse(courseId: String): Response<NetworkCourseDto> = throw NotImplementedError()
+        override suspend fun getCourseLessons(courseId: String) = Response.success(emptyList<NetworkLessonDto>())
+        override suspend fun getLesson(courseId: String, lessonId: String): Response<NetworkLessonDto> =
+            throw NotImplementedError()
+        override suspend fun syncOfflineData(payload: NetworkSyncPayloadDto) =
+            Response.success(NetworkSyncResponseDto(true, 1L, "Synced"))
+        override suspend fun completeLesson(courseId: String, lessonId: String) = Response.success(
+            LessonCompletionResponseDto(true, lessonId, courseId, true, 100f, 1, 1)
+        )
         override suspend fun updateLessonProgress(
             courseId: String,
             lessonId: String,
-            request: com.rtiqa.core.network.api.LessonProgressRequestDto
-        ): Response<com.rtiqa.core.network.api.LessonProgressResponseDto> {
-            return Response.success(
-                LessonCompletionResponseDto(
-                    success = true,
-                    lessonId = lessonId,
-                    courseId = courseId,
-                    completed = true,
-                    courseProgressPercent = 100.0f,
-                    completedLessons = 1,
-                    totalLessons = 1
-                )
-            )
-        }
+            request: LessonProgressRequestDto
+        ): Response<LessonProgressResponseDto> = completeLesson(courseId, lessonId)
+
+        override suspend fun getClassGradebook(classId: String): Response<ClassGradebookDto> =
+            Response.success(ClassGradebookDto(classId, emptyList(), emptyList(), emptyList()))
     }
 
-    private class DynamicFakeUserProfileDao : UserProfileDao {
-        val stateFlow = MutableStateFlow<UserProfileEntity?>(null)
-        override fun getUserProfile(): Flow<UserProfileEntity?> = stateFlow
+    private class FakeUserProfileDao : UserProfileDao {
+        val profile = MutableStateFlow<UserProfileEntity?>(null)
+        var insertCount = 0
+        var clearFailure: Throwable? = null
+        override fun getUserProfile(): Flow<UserProfileEntity?> = profile
         override suspend fun insertOrUpdateProfile(profile: UserProfileEntity) {
-            stateFlow.value = profile
+            insertCount++
+            this.profile.value = profile
         }
         override suspend fun clearUserProfile() {
-            stateFlow.value = null
+            clearFailure?.let { throw it }
+            profile.value = null
         }
     }
 
     private class FakeSecurityManager : SecurityManager {
-        private val map = mutableMapOf<String, String>()
-        override fun putEncryptedString(key: String, value: String) { map[key] = value }
-        override fun getEncryptedString(key: String, defaultValue: String?) = map[key] ?: defaultValue
-        override fun removeKey(key: String) { map.remove(key) }
-        override fun clearAll() { map.clear() }
+        private val values = mutableMapOf<String, String>()
+        override fun putEncryptedString(key: String, value: String) { values[key] = value }
+        override fun getEncryptedString(key: String, defaultValue: String?) = values[key] ?: defaultValue
+        override fun removeKey(key: String) { values.remove(key) }
+        override fun clearAll() = values.clear()
     }
 
-    private class FakeDataStore(context: android.content.Context) : RtiqaPreferencesDataStore(context) {
-        var activeUserId: String? = null
-        override suspend fun setActiveUserId(userId: String?) {
-            activeUserId = userId
+    private class FakeSessionStore : RestSessionStore {
+        var token: String? = null
+        var organizationId: String? = null
+        var storedSessionId: String? = null
+        override fun saveSession(token: String, organizationId: String?) {
+            this.token = token
+            this.organizationId = organizationId
+        }
+        override fun getSessionToken() = token
+        override fun getActiveOrganizationId() = organizationId
+        override fun updateActiveOrganizationId(organizationId: String?) { this.organizationId = organizationId }
+        override fun generateAndSaveSessionId(): String = "session-id".also { storedSessionId = it }
+        override fun getSessionId() = storedSessionId
+        override fun clearSession() {
+            token = null
+            organizationId = null
+            storedSessionId = null
         }
     }
 
-    private fun createRepository(
-        apiService: DynamicFakeApiService,
-        userProfileDao: DynamicFakeUserProfileDao,
-        securityManager: FakeSecurityManager,
-        dataStore: FakeDataStore
-    ) = AuthRepositoryImpl(
-        database = object : com.rtiqa.core.database.RtiqaDatabase() { override fun createOpenHelper(config: androidx.room.DatabaseConfiguration): androidx.sqlite.db.SupportSQLiteOpenHelper { throw NotImplementedError() } override fun createInvalidationTracker(): androidx.room.InvalidationTracker { throw NotImplementedError() } override fun clearAllTables() {} override fun userProfileDao(): com.rtiqa.core.database.dao.UserProfileDao { throw NotImplementedError() } override fun courseDao(): com.rtiqa.core.database.dao.CourseDao { throw NotImplementedError() } override fun lessonDao(): com.rtiqa.core.database.dao.LessonDao { throw NotImplementedError() } override fun aiInsightDao(): com.rtiqa.core.database.dao.AiInsightDao { throw NotImplementedError() } override fun syncDao(): com.rtiqa.core.database.dao.SyncDao { throw NotImplementedError() } override fun enterpriseDao(): com.rtiqa.core.database.dao.EnterpriseDao { throw NotImplementedError() } override fun schoolClassDao(): com.rtiqa.core.database.dao.SchoolClassDao { throw NotImplementedError() } override fun academicDao(): com.rtiqa.core.database.dao.AcademicDao { throw NotImplementedError() } override fun schoolManagementCoreDao(): com.rtiqa.core.database.dao.SchoolManagementCoreDao { throw NotImplementedError() } override fun clearSensitiveData() { } },
-        apiService = apiService,
-        userProfileDao = userProfileDao,
-        preferencesDataStore = dataStore,
-        securityManager = securityManager,
-        authRemoteDataSource = object : com.rtiqa.core.domain.repository.AuthRemoteDataSource {
-        override suspend fun login(email: String, pass: String) = com.rtiqa.core.domain.result.RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.AuthError("Not used in test fallback"))
-        override suspend fun register(name: String, email: String, pass: String) = com.rtiqa.core.domain.result.RtiqaResult.Error(com.rtiqa.core.domain.error.RtiqaError.AuthError("Not used"))
-        override suspend fun resetPassword(email: String) = com.rtiqa.core.domain.result.RtiqaResult.Success(Unit)
-        override suspend fun logout() = com.rtiqa.core.domain.result.RtiqaResult.Success(Unit)
+    private class FakeDataStore(context: Context) : RtiqaPreferencesDataStore(context) {
+        var activeUserId: String? = null
+        override suspend fun setActiveUserId(userId: String?) { activeUserId = userId }
+    }
+
+    private class FakeRemoteAuth(
+        private val sessionStore: FakeSessionStore
+    ) : AuthRemoteDataSource {
+        var loginResult: RtiqaResult<RemoteAuthUser> = RtiqaResult.Error(RtiqaError.AuthError("Rejected"))
+        var registerResult: RtiqaResult<RemoteAuthUser> = RtiqaResult.Error(RtiqaError.AuthError("Rejected"))
+        var resetResult: RtiqaResult<Unit> = RtiqaResult.Success(Unit)
+        var logoutFailure: Throwable? = null
+        var serverToken: String? = null
+        var serverOrganizationId: String? = null
+        var registerCalls = 0
+
+        override suspend fun login(email: String, pass: String): RtiqaResult<RemoteAuthUser> {
+            if (loginResult is RtiqaResult.Success && serverToken != null) {
+                sessionStore.saveSession(serverToken!!, serverOrganizationId)
+            }
+            return loginResult
+        }
+        override suspend fun register(name: String, email: String, pass: String): RtiqaResult<RemoteAuthUser> {
+            registerCalls++
+            return registerResult
+        }
+        override suspend fun resetPassword(email: String) = resetResult
+        override suspend fun logout(): RtiqaResult<Unit> {
+            logoutFailure?.let { throw it }
+            sessionStore.clearSession()
+            return RtiqaResult.Success(Unit)
+        }
         override suspend fun getCurrentUserId(): String? = null
-    },
-        sessionStore = com.rtiqa.core.network.session.RestSessionStoreImpl(securityManager),
-        syncMutex = kotlinx.coroutines.sync.Mutex()
+    }
+
+    private class FakeDatabase : RtiqaDatabase() {
+        var sensitiveDataCleared = false
+        override fun createOpenHelper(config: DatabaseConfiguration): SupportSQLiteOpenHelper = throw NotImplementedError()
+        override fun createInvalidationTracker(): InvalidationTracker = throw NotImplementedError()
+        override fun clearAllTables() = Unit
+        override fun userProfileDao() = throw NotImplementedError()
+        override fun courseDao() = throw NotImplementedError()
+        override fun lessonDao() = throw NotImplementedError()
+        override fun aiInsightDao() = throw NotImplementedError()
+        override fun syncDao() = throw NotImplementedError()
+        override fun enterpriseDao() = throw NotImplementedError()
+        override fun schoolClassDao() = throw NotImplementedError()
+        override fun academicDao() = throw NotImplementedError()
+        override fun schoolManagementCoreDao() = throw NotImplementedError()
+        override fun clearSensitiveData() { sensitiveDataCleared = true }
+    }
+
+    private data class Fixture(
+        val api: FakeApiService,
+        val dao: FakeUserProfileDao,
+        val security: FakeSecurityManager,
+        val dataStore: FakeDataStore,
+        val session: FakeSessionStore,
+        val remote: FakeRemoteAuth,
+        val database: FakeDatabase,
+        val repository: AuthRepositoryImpl
     )
 
-    // Test 1: Correct login
-    @Test
-    fun login_correctCredentials_returnsSuccess() = runTest {
-        val apiService = DynamicFakeApiService()
-        val dao = DynamicFakeUserProfileDao()
-        val sec = FakeSecurityManager()
-        val ds = FakeDataStore(ApplicationProvider.getApplicationContext())
-        val repo = createRepository(apiService, dao, sec, ds)
-
-        val result = repo.login("alex@rtiqa.com", "password123")
-        assertTrue(result is RtiqaResult.Success)
-        assertEquals("fake_jwt_token", sec.getEncryptedString("rtiqa_rest_auth_token"))
-        assertEquals("u1", ds.activeUserId)
+    private fun fixture(): Fixture {
+        val api = FakeApiService()
+        val dao = FakeUserProfileDao()
+        val security = FakeSecurityManager()
+        val dataStore = FakeDataStore(ApplicationProvider.getApplicationContext())
+        val session = FakeSessionStore()
+        val remote = FakeRemoteAuth(session)
+        val database = FakeDatabase()
+        val repository = AuthRepositoryImpl(
+            database, api, dao, dataStore, security, remote, null, session, Mutex()
+        )
+        return Fixture(api, dao, security, dataStore, session, remote, database, repository)
     }
 
-    // Test 2: Wrong password
-    @Test
-    fun login_wrongPassword_returnsAuthError() = runTest {
-        val apiService = DynamicFakeApiService().apply {
-            shouldFailLogin = true
-            errorStatusCode = 401
-        }
-        val dao = DynamicFakeUserProfileDao()
-        val sec = FakeSecurityManager()
-        val ds = FakeDataStore(ApplicationProvider.getApplicationContext())
-        val repo = createRepository(apiService, dao, sec, ds)
+    private suspend fun Fixture.cacheProfile() {
+        dao.insertOrUpdateProfile(UserProfileEntity("u1", "Alex", "alex@rtiqa.com", null, 100, 5))
+        dao.insertCount = 0
+    }
 
-        val result = repo.login("alex@rtiqa.com", "wrong_pass")
+    private fun assertNotAuthenticated(fixture: Fixture, result: RtiqaResult<*>) {
+        assertTrue("Expected authentication error, got $result", result is RtiqaResult.Error)
+        assertNull(fixture.dataStore.activeUserId)
+        assertNull(fixture.security.getEncryptedString("user_id"))
+        assertNull(fixture.session.getSessionToken())
+        assertNull(fixture.session.getSessionId())
+    }
+
+    @Test fun login_correctCredentials_returnsSuccess() = runTest {
+        val f = fixture()
+        val result = f.repository.login("alex@rtiqa.com", "password123")
+        assertTrue(result is RtiqaResult.Success)
+        assertEquals("secondary_access_token", f.session.token)
+        assertEquals("u1", f.dataStore.activeUserId)
+    }
+
+    @Test fun login_401WithCachedProfile_returnsAuthError_andDoesNotActivateProfile() = runTest {
+        val f = fixture().also { it.api.loginResponseCode = 401 }
+        f.cacheProfile()
+        assertNotAuthenticated(f, f.repository.login("alex@rtiqa.com", "wrong"))
+    }
+
+    @Test fun login_403WithCachedProfile_returnsAuthError_andDoesNotActivateProfile() = runTest {
+        val f = fixture().also { it.api.loginResponseCode = 403 }
+        f.cacheProfile()
+        assertNotAuthenticated(f, f.repository.login("alex@rtiqa.com", "wrong"))
+    }
+
+    @Test fun login_validationFailure_doesNotActivateCachedProfile() = runTest {
+        val f = fixture().also {
+            it.remote.loginResult = RtiqaResult.Error(RtiqaError.ValidationError(listOf("invalid request")))
+            it.api.loginResponseCode = 422
+        }
+        f.cacheProfile()
+        assertNotAuthenticated(f, f.repository.login("alex@rtiqa.com", "wrong"))
+    }
+
+    @Test fun login_networkFailure_withoutSecureOfflineVerifier_doesNotAuthenticateCachedProfile() = runTest {
+        val f = fixture().also {
+            it.remote.loginResult = RtiqaResult.Error(RtiqaError.NetworkError("offline"))
+            it.api.networkFailure = true
+        }
+        f.cacheProfile()
+        assertNotAuthenticated(f, f.repository.login("alex@rtiqa.com", "any-password"))
+    }
+
+    @Test fun login_wrongPasswordWithCachedProfile_doesNotActivateCachedIdentity() = runTest {
+        val f = fixture().also { it.api.loginResponseCode = 401 }
+        f.cacheProfile()
+        assertNotAuthenticated(f, f.repository.login("alex@rtiqa.com", "definitely-wrong"))
+    }
+
+    @Test fun login_authError_doesNotFallThroughToAnAlternativeProviderIfThatWouldBypassAuthoritativeRejection() = runTest {
+        val f = fixture().also {
+            it.remote.loginResult = RtiqaResult.Error(RtiqaError.AuthError("Invalid credentials"))
+        }
+        val result = f.repository.login("alex@rtiqa.com", "wrong")
         assertTrue(result is RtiqaResult.Error)
-        assertTrue((result as RtiqaResult.Error).error is RtiqaError.AuthError)
+        assertEquals(0, f.api.loginCalls)
     }
 
-    // Test 3: Non-existent user
-    @Test
-    fun login_nonExistentUser_returnsAuthError() = runTest {
-        val apiService = DynamicFakeApiService().apply {
-            shouldFailLogin = true
-            errorStatusCode = 404
-        }
-        val dao = DynamicFakeUserProfileDao()
-        val sec = FakeSecurityManager()
-        val ds = FakeDataStore(ApplicationProvider.getApplicationContext())
-        val repo = createRepository(apiService, dao, sec, ds)
+    @Test fun register_createNewAccount_returnsSuccess() = runTest {
+        val f = fixture()
+        val result = f.repository.register("Sara", "sara@rtiqa.com", "pass123")
+        assertTrue(result is RtiqaResult.Success)
+        assertEquals("u2", f.dataStore.activeUserId)
+    }
 
-        val result = repo.login("nobody@rtiqa.com", "pass")
+    @Test fun register_usesAuthoritativeApiDirectly_andDoesNotConsultLegacyProvider() = runTest {
+        val f = fixture().also {
+            it.remote.registerResult = RtiqaResult.Error(RtiqaError.AuthError("Authoritative rejection"))
+        }
+
+        val result = f.repository.register("Sara", "sara@rtiqa.com", "pass123")
+
+        assertTrue(result is RtiqaResult.Success)
+        assertEquals(0, f.remote.registerCalls)
+        assertEquals(1, f.api.registerCalls)
+    }
+
+    @Test fun register_409Conflict_returnsError_andCreatesNoLocalAuthenticatedProfile() = runTest {
+        val f = fixture().also { it.api.registerResponseCode = 409 }
+        val result = f.repository.register("Existing", "exist@rtiqa.com", "pass123")
+        assertNotAuthenticated(f, result)
+        assertEquals(0, f.dao.insertCount)
+    }
+
+    @Test fun register_422ValidationError_returnsError_andCreatesNoSession() = runTest {
+        val f = fixture().also { it.api.registerResponseCode = 422 }
+        assertNotAuthenticated(f, f.repository.register("Sara", "bad@rtiqa.com", "pass123"))
+        assertEquals(0, f.dao.insertCount)
+    }
+
+    @Test fun register_403Rejection_returnsError_andCreatesNoSession() = runTest {
+        val f = fixture().also { it.api.registerResponseCode = 403 }
+        assertNotAuthenticated(f, f.repository.register("Sara", "sara@rtiqa.com", "pass123"))
+        assertEquals(0, f.dao.insertCount)
+    }
+
+    @Test fun register_networkFailure_doesNotReturnAuthenticatedSuccess() = runTest {
+        val f = fixture().also { it.api.networkFailure = true }
+        assertNotAuthenticated(f, f.repository.register("Sara", "sara@rtiqa.com", "pass123"))
+        assertEquals(0, f.dao.insertCount)
+    }
+
+    @Test fun repositoryLogin_success_preservesExactServerAccessToken() = runTest {
+        val f = successfulPrimaryLoginFixture()
+        f.repository.login("alex@rtiqa.com", "correct")
+        assertEquals("real.server.jwt", f.session.token)
+    }
+
+    @Test fun repositoryLogin_success_preservesReturnedOrganizationId() = runTest {
+        val f = successfulPrimaryLoginFixture()
+        f.repository.login("alex@rtiqa.com", "correct")
+        assertEquals("org-42", f.session.organizationId)
+    }
+
+    @Test fun repositoryLogin_success_doesNotReplaceTokenWithPlaceholder() = runTest {
+        val f = successfulPrimaryLoginFixture()
+        f.repository.login("alex@rtiqa.com", "correct")
+        assertFalse(f.session.token.orEmpty().startsWith("remote_token_"))
+        assertFalse(f.session.token.orEmpty().startsWith("offline_token_"))
+    }
+
+    @Test fun repositoryLogin_success_doesNotClearOrganizationAfterProfilePersistence() = runTest {
+        val f = successfulPrimaryLoginFixture()
+        f.repository.login("alex@rtiqa.com", "correct")
+        assertEquals("u1", f.dao.profile.value?.id)
+        assertEquals("org-42", f.session.organizationId)
+    }
+
+    private fun successfulPrimaryLoginFixture() = fixture().also {
+        it.remote.serverToken = "real.server.jwt"
+        it.remote.serverOrganizationId = "org-42"
+        it.remote.loginResult = RtiqaResult.Success(RemoteAuthUser("u1", "alex@rtiqa.com", "Alex"))
+    }
+
+    @Test fun observeUserSession_profileWithoutValidSession_returnsNull() = runTest {
+        val f = fixture()
+        f.cacheProfile()
+        assertNull(f.repository.observeUserSession().first())
+    }
+
+    @Test fun observeUserSession_tokenWithoutMatchingProfile_returnsNull() = runTest {
+        val f = fixture()
+        f.session.saveSession("orphan-token", "org-42")
+        assertNull(f.repository.observeUserSession().first())
+    }
+
+    @Test fun observeUserSession_whenLoggedOut_returnsNull() = runTest {
+        assertNull(fixture().repository.observeUserSession().first())
+    }
+
+    @Test fun logout_clearsDataAndSession() = runTest {
+        val f = fixture()
+        f.cacheProfile()
+        f.session.saveSession("token", "org")
+        f.security.putEncryptedString("user_id", "u1")
+        f.dataStore.activeUserId = "u1"
+        assertTrue(f.repository.logout() is RtiqaResult.Success)
+        assertNull(f.dao.profile.value)
+        assertNull(f.session.token)
+        assertNull(f.session.organizationId)
+        assertNull(f.dataStore.activeUserId)
+    }
+
+    @Test fun remoteLogoutFailure_localCleanupSuccess_returnsSuccess() = runTest {
+        val f = fixture()
+        f.remote.logoutFailure = IOException("server unavailable")
+
+        assertTrue(f.repository.logout() is RtiqaResult.Success)
+    }
+
+    @Test fun remoteLogoutFailure_localCleanupSuccess_clearsTokenOrgUserProfileAndIds() = runTest {
+        val f = fixture()
+        f.cacheProfile()
+        f.session.saveSession("token", "org")
+        f.session.generateAndSaveSessionId()
+        f.security.putEncryptedString("user_id", "u1")
+        f.dataStore.activeUserId = "u1"
+        f.remote.logoutFailure = IOException("server unavailable")
+
+        val result = f.repository.logout()
+
+        assertTrue(result is RtiqaResult.Success)
+        assertNull(f.session.token)
+        assertNull(f.session.organizationId)
+        assertNull(f.session.storedSessionId)
+        assertNull(f.security.getEncryptedString("user_id"))
+        assertNull(f.dataStore.activeUserId)
+        assertNull(f.dao.profile.value)
+        assertTrue(f.database.sensitiveDataCleared)
+    }
+
+    @Test fun localCleanupFailure_returnsError() = runTest {
+        val f = fixture()
+        f.cacheProfile()
+        f.session.saveSession("token", "org")
+        f.dao.clearFailure = IOException("room cleanup failed")
+
+        val result = f.repository.logout()
+
         assertTrue(result is RtiqaResult.Error)
     }
 
-    // Test 4: Create new account
-    @Test
-    fun register_createNewAccount_returnsSuccess() = runTest {
-        val apiService = DynamicFakeApiService()
-        val dao = DynamicFakeUserProfileDao()
-        val sec = FakeSecurityManager()
-        val ds = FakeDataStore(ApplicationProvider.getApplicationContext())
-        val repo = createRepository(apiService, dao, sec, ds)
-
-        val result = repo.register("Sara", "sara@rtiqa.com", "pass123")
-        assertTrue(result is RtiqaResult.Success)
-        assertEquals("Sara", (result as RtiqaResult.Success).data.name)
-        assertEquals("u2", ds.activeUserId)
-    }
-
-    // Test 5: Account already exists offline fallback
-    @Test
-    fun register_apiFailure_fallbackCreatesLocalProfile() = runTest {
-        val apiService = DynamicFakeApiService().apply { shouldFailRegister = true }
-        val dao = DynamicFakeUserProfileDao()
-        val sec = FakeSecurityManager()
-        val ds = FakeDataStore(ApplicationProvider.getApplicationContext())
-        val repo = createRepository(apiService, dao, sec, ds)
-
-        val result = repo.register("Existing User", "exist@rtiqa.com", "pass")
-        assertTrue(result is RtiqaResult.Success)
-        assertEquals("Existing User", (result as RtiqaResult.Success).data.name)
-    }
-
-    // Test 6: Forgot password
-    @Test
-    fun resetPassword_alwaysReturnsSuccess() = runTest {
-        val repo = createRepository(
-            DynamicFakeApiService(),
-            DynamicFakeUserProfileDao(),
-            FakeSecurityManager(),
-            FakeDataStore(ApplicationProvider.getApplicationContext())
-        )
-
-        val result = repo.resetPassword("alex@rtiqa.com")
-        assertTrue(result is RtiqaResult.Success)
-    }
-
-    // Test 7: Logout
-    @Test
-    fun logout_clearsDataAndSession() = runTest {
-        val dao = DynamicFakeUserProfileDao()
-        val sec = FakeSecurityManager().apply { putEncryptedString("rtiqa_rest_auth_token", "token") }
-        val ds = FakeDataStore(ApplicationProvider.getApplicationContext()).apply { activeUserId = "u1" }
-        val repo = createRepository(DynamicFakeApiService(), dao, sec, ds)
-
-        val result = repo.logout()
-        assertTrue(result is RtiqaResult.Success)
-        assertNull(ds.activeUserId)
-        assertNull(sec.getEncryptedString("rtiqa_rest_auth_token"))
-        assertNull(dao.getUserProfile().first())
-    }
-
-    // Test 8: Re-open app & session persistence
-    @Test
-    fun observeUserSession_returnsPersistedUser() = runTest {
-        val dao = DynamicFakeUserProfileDao().apply {
-            insertOrUpdateProfile(UserProfileEntity("u1", "Alex", "alex@rtiqa.com", null, 100, 5))
+    @Test fun resetPassword_remoteFailure_doesNotReturnSuccess() = runTest {
+        val f = fixture().also {
+            it.remote.resetResult = RtiqaResult.Error(RtiqaError.NetworkError("server unavailable"))
         }
-        val repo = createRepository(
-            DynamicFakeApiService(),
-            dao,
-            FakeSecurityManager(),
-            FakeDataStore(ApplicationProvider.getApplicationContext())
-        )
-
-        val session = repo.observeUserSession().first()
-        assertEquals("u1", session?.id)
-        assertEquals("Alex", session?.name)
-    }
-
-    // Test 9: Protected screen attempt without login (no session)
-    @Test
-    fun observeUserSession_whenLoggedOut_returnsNull() = runTest {
-        val dao = DynamicFakeUserProfileDao()
-        val repo = createRepository(
-            DynamicFakeApiService(),
-            dao,
-            FakeSecurityManager(),
-            FakeDataStore(ApplicationProvider.getApplicationContext())
-        )
-
-        val session = repo.observeUserSession().first()
-        assertNull(session)
-    }
-
-    // Test 10: Offline mode login with cached profile
-    @Test
-    fun login_offlineWithCachedProfile_succeeds() = runTest {
-        val apiService = DynamicFakeApiService().apply { isNetworkDown = true }
-        val dao = DynamicFakeUserProfileDao().apply {
-            insertOrUpdateProfile(UserProfileEntity("u1", "Alex", "alex@rtiqa.com", null, 100, 5))
-        }
-        val sec = FakeSecurityManager()
-        val ds = FakeDataStore(ApplicationProvider.getApplicationContext())
-        val repo = createRepository(apiService, dao, sec, ds)
-
-        val result = repo.login("alex@rtiqa.com", "anypass")
-        assertTrue(result is RtiqaResult.Success)
-        assertEquals("Alex", (result as RtiqaResult.Success).data.name)
+        assertTrue(f.repository.resetPassword("alex@rtiqa.com") is RtiqaResult.Error)
     }
 }
-
-
-// Dummy implementation of RtiqaDatabase for testing
-abstract class FakeRtiqaDatabase : com.rtiqa.core.database.RtiqaDatabase() {
-    // We don't need to implement anything since it's just passed along
-}
-// End of file

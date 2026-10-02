@@ -141,4 +141,16 @@ class LessonUseCasesTest {
         assertTrue(secondResult is RtiqaResult.Success)
         assertEquals(25, userRepo.xpAdded) // Still 25, not 50!
     }
+
+    @Test
+    fun persistedCompletedLesson_doesNotAwardXpAfterNewUseCaseInstance() = runBlocking {
+        courseRepo.lessonsMap["l1"] = courseRepo.lessonsMap.getValue("l1").copy(isCompleted = true)
+
+        val recreatedUseCase = CompleteLessonUseCase(courseRepo, userRepo)
+        val result = recreatedUseCase("l1", "c1")
+
+        assertTrue(result is RtiqaResult.Success)
+        assertEquals(0, userRepo.xpAdded)
+        assertEquals(null, courseRepo.markedCompletedId)
+    }
 }

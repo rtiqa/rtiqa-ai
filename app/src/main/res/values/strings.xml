@@ -88,22 +88,11 @@
 
     <!-- Downloads Screen -->
     <string name="downloads_title">Saved Items &amp; Offline Learning</string>
-    <string name="storage_used">Local Storage Used: 142 MB (Sample View)</string>
-    <string name="downloaded_lessons_count">Saved Lessons Locally (%1$d)</string>
+    <string name="offline_content_summary">Content saved for offline use</string>
+    <string name="downloaded_courses_count">Saved courses (%1$d)</string>
     <string name="available_offline_text">Available Offline • %1$d min</string>
 
     <!-- Profile Screen -->
-    <string name="certificates_title">Course Completion Certificates</string>
-    <string name="accredited_cert">Certificate of Completion</string>
-    <string name="cert_ai_title">Artificial Intelligence &amp; Neural Networks</string>
-    <string name="cert_issued_to">Issued to: %1$s • Code: RTIQA-2026-X92</string>
-    <string name="achievements_title">Achievements &amp; Badges</string>
-    <string name="achievement_ai_pioneer">AI Pioneer</string>
-    <string name="achievement_ai_pioneer_desc">Complete 5 AI lessons locally</string>
-    <string name="achievement_consistent">Dedicated Learner</string>
-    <string name="achievement_consistent_desc">Maintain a 12-day learning streak</string>
-    <string name="achievement_quiz_master">Quiz Master</string>
-    <string name="achievement_quiz_master_desc">Score 100%% on 3 assessments</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings &amp; Options</string>

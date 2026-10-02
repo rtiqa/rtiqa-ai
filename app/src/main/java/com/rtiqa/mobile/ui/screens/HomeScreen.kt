@@ -15,33 +15,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Quiz
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -51,8 +44,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rtiqa.mobile.R
-import com.rtiqa.mobile.domain.model.Course
-import com.rtiqa.mobile.domain.model.UserProfile
+import com.rtiqa.core.domain.model.Course
+import com.rtiqa.core.domain.model.Lesson
+import com.rtiqa.core.domain.model.UserProfile
 import com.rtiqa.mobile.ui.components.CourseCard
 import com.rtiqa.mobile.ui.components.XpCoinChip
 
@@ -66,22 +60,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.LinearScale
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.LinearProgressIndicator
 
 @Composable
 fun HomeScreen(
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     courses: List<Course>,
-    enrolledCourses: List<Course> = emptyList(),
+    currentLesson: Lesson? = null,
     completedLessonsCount: Int = 0,
     passedQuizzesCount: Int = 0,
     onCourseClick: (String) -> Unit,
-    onLessonClick: (String) -> Unit = {},
+    onLessonClick: (String, String) -> Unit,
     onNavigate: (String) -> Unit,
     onToggleBookmark: (String, Boolean) -> Unit,
     onToggleDownload: (String, Boolean) -> Unit,
@@ -91,9 +82,8 @@ fun HomeScreen(
 ) {
     var showNotificationsDialog by remember { mutableStateOf(false) }
 
-    // Enrolled courses list or fallback to courses marked as enrolled
-    val activeEnrolledCourses = if (enrolledCourses.isNotEmpty()) enrolledCourses else courses.filter { it.isEnrolled }
-    val continueCourse = activeEnrolledCourses.firstOrNull() ?: courses.firstOrNull()
+    val activeEnrolledCourses = homeEnrolledCourses(courses)
+    val continueCourse = homeContinueLearningCourse(activeEnrolledCourses)
 
     LazyColumn(
         modifier = modifier
@@ -131,12 +121,12 @@ fun HomeScreen(
 
                     Column {
                         Text(
-                            text = if (isArabic) "مرحباً، ${userProfile.name} 👋" else "Welcome, ${userProfile.name} 👋",
+                            text = if (isArabic) "مرحباً، ${userProfile?.name.orEmpty()} 👋" else "Welcome, ${userProfile?.name.orEmpty()} 👋",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (isArabic) "المستوى ${userProfile.level} • طالب متميز" else "Level ${userProfile.level} • Star Student",
+                            text = if (isArabic) "المستوى ${userProfile?.calculateLevel() ?: 1} • طالب متميز" else "Level ${userProfile?.calculateLevel() ?: 1} • Star Student",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -194,44 +184,11 @@ fun HomeScreen(
 
             // XP, Coins & Streak Bar
             XpCoinChip(
-                xp = userProfile.xp,
-                coins = userProfile.coins,
-                streak = userProfile.streakDays,
+                xp = userProfile?.levelXp ?: 0,
+                coins = 0,
+                streak = userProfile?.streakDays ?: 0,
                 modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Last Activity Badge Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("last_activity_card"),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.History,
-                        contentDescription = "آخر نشاط",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (isArabic) "آخر نشاط: أكملت درس الخلايا العصبية بنجاح • منذ 15 دقيقة"
-                        else "Last Activity: Completed Neural Networks lesson • 15m ago",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -261,7 +218,7 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (isArabic) course.titleAr else course.title,
+                                text = if (isArabic) course.titleAr ?: course.title else course.title,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -280,10 +237,10 @@ fun HomeScreen(
 
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = if (course.progressPercent >= 1.0f) {
-                                if (isArabic) "🎉 تم إكمال جميع دروس هذا المقرر بنجاح!" else "🎉 All lessons in this course completed!"
-                            } else {
-                                if (isArabic) "الدرس الحالي: الخلية العصبية الاصطناعية ومعمارية Deep Learning" else "Current Lesson: Artificial Neuron & Deep Learning Architecture"
+                            text = when {
+                                course.progressPercent >= 1.0f -> if (isArabic) "🎉 تم إكمال جميع دروس هذا المقرر بنجاح!" else "🎉 All lessons in this course completed!"
+                                currentLesson != null -> if (isArabic) "الدرس الحالي: ${currentLesson.title}" else "Current lesson: ${currentLesson.title}"
+                                else -> if (isArabic) "لا يوجد درس متاح للمتابعة حالياً" else "No lesson is currently available to continue"
                             },
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -299,25 +256,23 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Button(
-                            onClick = { onLessonClick("l_ai_1") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag("continue_learning_button"),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                        ) {
-                            Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "متابعة")
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (course.progressPercent >= 1.0f) {
-                                    if (isArabic) "مراجعة المقرر ➔" else "Review Course ➔"
-                                } else {
-                                    if (isArabic) "متابعة التعلم ➔" else "Continue Lesson ➔"
-                                },
-                                fontWeight = FontWeight.Bold
-                            )
+                        currentLesson?.let { lesson ->
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(
+                                onClick = { onLessonClick(lesson.courseId, lesson.id) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .testTag("continue_learning_button"),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            ) {
+                                Icon(imageVector = Icons.Default.PlayArrow, contentDescription = "متابعة")
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isArabic) "متابعة التعلم ➔" else "Continue Lesson ➔",
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
@@ -349,14 +304,14 @@ fun HomeScreen(
                 )
                 StatCard(
                     title = if (isArabic) "الدروس المكتملة" else "Completed Lessons",
-                    value = "${completedLessonsCount.coerceAtLeast(1)}",
+                    value = "${homeDisplayCount(completedLessonsCount)}",
                     icon = Icons.Default.PlayArrow,
                     accentColor = Color(0xFF10B981),
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     title = if (isArabic) "الاختبارات المجتازة" else "Passed Quizzes",
-                    value = "${passedQuizzesCount.coerceAtLeast(1)}",
+                    value = "${homeDisplayCount(passedQuizzesCount)}",
                     icon = Icons.Default.Quiz,
                     accentColor = Color(0xFFF59E0B),
                     modifier = Modifier.weight(1f)
@@ -373,14 +328,14 @@ fun HomeScreen(
             ) {
                 StatCard(
                     title = if (isArabic) "إجمالي XP" else "Total XP",
-                    value = "${userProfile.xp}",
+                    value = "${userProfile?.levelXp ?: 0}",
                     icon = Icons.Default.Star,
                     accentColor = Color(0xFF8B5CF6),
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     title = if (isArabic) "الأيام المتتالية" else "Streak Days",
-                    value = "${userProfile.streakDays} أيام",
+                    value = "${userProfile?.streakDays ?: 0} أيام",
                     icon = Icons.Default.LocalFireDepartment,
                     accentColor = Color(0xFFEF4444),
                     modifier = Modifier.weight(1f)
@@ -426,40 +381,7 @@ fun HomeScreen(
             )
         }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 5. Achievements Section (قسم: الإنجازات)
-            Text(
-                text = if (isArabic) "الأوسمة والإنجازات 🏆" else "Achievements & Badges 🏆",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.testTag("section_achievements_header")
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            AchievementItem(
-                title = if (isArabic) "رائد الذكاء الاصطناعي 🤖" else "AI Pioneer 🤖",
-                desc = if (isArabic) "إكمال أول وحدة في التعلم العميق والشبكات العصبية" else "Completed first module in Deep Learning",
-                reward = "+200 XP",
-                unlocked = true
-            )
-            AchievementItem(
-                title = if (isArabic) "المتعلم المواظب 🔥" else "Consistent Learner 🔥",
-                desc = if (isArabic) "المواظبة على الدراسة لمدة 3 أيام متتالية" else "Maintain 3 consecutive learning days",
-                reward = "+150 XP",
-                unlocked = true
-            )
-            AchievementItem(
-                title = if (isArabic) "خبير الاختبارات 🎯" else "Quiz Master 🎯",
-                desc = if (isArabic) "اجتياز جميع اختبارات الدروس بعلامة كاملة" else "Pass all lesson quizzes with 100% score",
-                reward = "+300 XP",
-                unlocked = true
-            )
-
-            Spacer(modifier = Modifier.height(80.dp))
-        }
+        item { Spacer(modifier = Modifier.height(80.dp)) }
     }
 
     if (showNotificationsDialog) {
@@ -477,21 +399,7 @@ fun HomeScreen(
                 }
             },
             text = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    NotificationCard(
-                        title = "تمت المزامنة أوتوماتيكياً 🔄",
-                        time = "منذ 5 دقائق",
-                        desc = "تم حفظ جميع تقدمك واختباراتك في قاعدة البيانات المحلية والسحابية بنجاح."
-                    )
-                    NotificationCard(
-                        title = "مستشار الذكاء الاصطناعي 🤖",
-                        time = "ساعة واحدة",
-                        desc = "قام المعلم الذكي بإعداد خطة مراجعة مخصصة لدرس المعالجة اللغوية."
-                    )
-                }
+                Text(if (isArabic) "لا توجد إشعارات حالياً" else "No notifications yet")
             },
             confirmButton = {
                 Button(
@@ -504,6 +412,14 @@ fun HomeScreen(
         )
     }
 }
+
+internal fun homeEnrolledCourses(courses: List<Course>): List<Course> =
+    courses.filter { it.isEnrolled }
+
+internal fun homeContinueLearningCourse(enrolledCourses: List<Course>): Course? =
+    enrolledCourses.firstOrNull { it.progressPercent in 0f..0.999999f }
+
+internal fun homeDisplayCount(count: Int): Int = count.coerceAtLeast(0)
 
 @Composable
 fun StatCard(
@@ -582,27 +498,5 @@ fun QuickActionItem(
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold
         )
-    }
-}
-
-@Composable
-fun NotificationCard(title: String, time: String, desc: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = title, fontWeight = FontWeight.Bold, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
-                Text(text = time, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = desc, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
     }
 }

@@ -12,6 +12,7 @@ import com.rtiqa.core.ui.base.BaseViewModel
 import com.rtiqa.core.ui.base.ViewUiAction
 import com.rtiqa.core.ui.base.ViewUiEvent
 import com.rtiqa.core.ui.base.ViewUiState
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -28,7 +29,7 @@ data class LessonViewerUiState(
 ) : ViewUiState
 
 sealed interface LessonViewerUiAction : ViewUiAction {
-    data class InitializeLesson(val lessonId: String, val courseId: String, val title: String = "", val content: String = "") : LessonViewerUiAction
+    data class InitializeLesson(val lessonId: String, val courseId: String) : LessonViewerUiAction
     data class SaveProgress(val progressPercent: Float) : LessonViewerUiAction
     object MarkLessonCompleteClicked : LessonViewerUiAction
     object NextLessonClicked : LessonViewerUiAction
@@ -37,22 +38,26 @@ sealed interface LessonViewerUiAction : ViewUiAction {
 
 sealed interface LessonViewerUiEvent : ViewUiEvent {
     data class ShowToast(val message: String) : LessonViewerUiEvent
-    data class NavigateToNextLesson(val lessonId: String) : LessonViewerUiEvent
-    data class NavigateToPrevLesson(val lessonId: String) : LessonViewerUiEvent
+    data class NavigateToNextLesson(val courseId: String, val lessonId: String) : LessonViewerUiEvent
+    data class NavigateToPrevLesson(val courseId: String, val lessonId: String) : LessonViewerUiEvent
     object NavigateBack : LessonViewerUiEvent
 }
 
 class LessonViewerViewModel(
     private val completeLessonUseCase: CompleteLessonUseCase,
-    private val getLessonDetailUseCase: GetLessonDetailUseCase? = null,
-    private val getNextLessonUseCase: GetNextLessonUseCase? = null,
-    private val saveLessonProgressUseCase: SaveLessonProgressUseCase? = null,
-    private val getLessonsForCourseUseCase: GetLessonsForCourseUseCase? = null
+    private val getLessonDetailUseCase: GetLessonDetailUseCase,
+    private val getNextLessonUseCase: GetNextLessonUseCase,
+    private val saveLessonProgressUseCase: SaveLessonProgressUseCase,
+    private val getLessonsForCourseUseCase: GetLessonsForCourseUseCase
 ) : BaseViewModel<LessonViewerUiState, LessonViewerUiAction, LessonViewerUiEvent>(LessonViewerUiState()) {
+
+    private var lessonJob: Job? = null
+    private var nextLessonJob: Job? = null
+    private var courseLessonsJob: Job? = null
 
     override fun onAction(action: LessonViewerUiAction) {
         when (action) {
-            is LessonViewerUiAction.InitializeLesson -> loadLesson(action.lessonId, action.courseId, action.title, action.content)
+            is LessonViewerUiAction.InitializeLesson -> loadLesson(action.lessonId, action.courseId)
             is LessonViewerUiAction.SaveProgress -> updateProgress(action.progressPercent)
             is LessonViewerUiAction.MarkLessonCompleteClicked -> markComplete()
             is LessonViewerUiAction.NextLessonClicked -> handleNextLesson()
@@ -60,79 +65,62 @@ class LessonViewerViewModel(
         }
     }
 
-    private fun loadLesson(lessonId: String, courseId: String, fallbackTitle: String, fallbackContent: String) {
-        setState { copy(lessonId = lessonId, courseId = courseId, isLoading = true) }
-        
-        if (getLessonDetailUseCase != null) {
-            viewModelScope.launch {
-                getLessonDetailUseCase.invoke(lessonId).collectLatest { fetchedLesson ->
-                    val current = fetchedLesson ?: Lesson(
-                        id = lessonId,
-                        courseId = courseId,
-                        title = fallbackTitle.ifBlank { "الدرس $lessonId" },
-                        content = fallbackContent.ifBlank { "محتوى الدرس المفصل" },
-                        order = 1,
-                        isCompleted = false
-                    )
+    private fun loadLesson(lessonId: String, courseId: String) {
+        lessonJob?.cancel()
+        nextLessonJob?.cancel()
+        courseLessonsJob?.cancel()
+        if (lessonId.isBlank() || courseId.isBlank()) {
+            setState { copy(lesson = null, isLoading = false, errorMessage = "Lesson unavailable.") }
+            return
+        }
+        setState {
+            copy(
+                lessonId = lessonId,
+                courseId = courseId,
+                lesson = null,
+                nextLesson = null,
+                prevLesson = null,
+                isLoading = true,
+                errorMessage = null
+            )
+        }
+        lessonJob = viewModelScope.launch {
+            getLessonDetailUseCase(lessonId).collectLatest { fetchedLesson ->
+                if (fetchedLesson == null || fetchedLesson.courseId != courseId) {
+                    setState { copy(lesson = null, isLoading = false, errorMessage = "Lesson unavailable.") }
+                } else {
                     setState {
                         copy(
-                            lesson = current,
-                            isCompleted = current.isCompleted,
-                            progressPercent = if (current.isCompleted) 1.0f else currentState.progressPercent,
-                            isLoading = false
+                            lesson = fetchedLesson,
+                            isCompleted = fetchedLesson.isCompleted,
+                            progressPercent = if (fetchedLesson.isCompleted) 1f else 0f,
+                            isLoading = false,
+                            errorMessage = null
                         )
                     }
-                    observeLessons(courseId, lessonId)
                 }
             }
-        } else {
-            val fallbackLesson = Lesson(
-                id = lessonId,
-                courseId = courseId,
-                title = fallbackTitle.ifBlank { "الدرس $lessonId" },
-                content = fallbackContent.ifBlank { "محتوى الدرس المفصل" },
-                order = 1,
-                isCompleted = false
-            )
-            setState {
-                copy(
-                    lesson = fallbackLesson,
-                    isCompleted = fallbackLesson.isCompleted,
-                    progressPercent = if (fallbackLesson.isCompleted) 1.0f else currentState.progressPercent,
-                    isLoading = false
-                )
-            }
         }
+        observeLessons(courseId, lessonId)
     }
 
     private fun observeLessons(courseId: String, currentLessonId: String) {
-        if (courseId.isBlank() || currentLessonId.isBlank()) return
-
-        // 1. Observe next lesson via GetNextLessonUseCase (primary requirement)
-        if (getNextLessonUseCase != null) {
-            viewModelScope.launch {
-                getNextLessonUseCase.invoke(courseId, currentLessonId).collectLatest { next ->
-                    setState { copy(nextLesson = next) }
-                }
+        nextLessonJob = viewModelScope.launch {
+            getNextLessonUseCase(courseId, currentLessonId).collectLatest { next ->
+                setState { copy(nextLesson = next) }
             }
         }
-
-        // 2. Observe course lessons to reliably resolve previous and next lessons from real course data
-        if (getLessonsForCourseUseCase != null) {
-            viewModelScope.launch {
-                getLessonsForCourseUseCase.invoke(courseId).collectLatest { courseLessons ->
-                    if (courseLessons.isNotEmpty()) {
-                        val sorted = courseLessons.sortedBy { it.order }
-                        val currentIndex = sorted.indexOfFirst { it.id == currentLessonId }
-                        val prev = if (currentIndex > 0) sorted[currentIndex - 1] else null
-                        val nextFromList = if (currentIndex != -1 && currentIndex + 1 < sorted.size) sorted[currentIndex + 1] else null
-                        setState {
-                            copy(
-                                prevLesson = prev,
-                                nextLesson = currentState.nextLesson ?: nextFromList
-                            )
-                        }
-                    }
+        courseLessonsJob = viewModelScope.launch {
+            getLessonsForCourseUseCase(courseId).collectLatest { courseLessons ->
+                val sorted = courseLessons.sortedBy { it.order }
+                val currentIndex = sorted.indexOfFirst { it.id == currentLessonId }
+                setState {
+                    copy(
+                        prevLesson = if (currentIndex > 0) sorted[currentIndex - 1] else null,
+                        nextLesson = if (currentIndex >= 0 && currentIndex + 1 < sorted.size) {
+                            sorted[currentIndex + 1]
+                        } else currentState.nextLesson
+                    )
                 }
             }
         }
@@ -145,9 +133,16 @@ class LessonViewerViewModel(
         // Never downgrade progress if lesson was already completed
         if (currentState.isCompleted || currentState.lesson?.isCompleted == true) return
 
-        setState { copy(progressPercent = percent) }
+        val clamped = percent.coerceIn(0f, 1f)
         viewModelScope.launch {
-            saveLessonProgressUseCase?.invoke(lId, cId, percent)
+            when (val result = saveLessonProgressUseCase(lId, cId, clamped)) {
+                is RtiqaResult.Success -> setState { copy(progressPercent = clamped, errorMessage = null) }
+                is RtiqaResult.Error -> {
+                    setState { copy(errorMessage = result.error.message) }
+                    sendEvent(LessonViewerUiEvent.ShowToast(result.error.message))
+                }
+                is RtiqaResult.Loading -> Unit
+            }
         }
     }
 
@@ -160,11 +155,10 @@ class LessonViewerViewModel(
 
         setState { copy(isLoading = true) }
         viewModelScope.launch {
-            saveLessonProgressUseCase?.invoke(lId, cId, 1.0f)
             when (val result = completeLessonUseCase(lId, cId)) {
                 is RtiqaResult.Success -> {
                     setState { copy(isCompleted = true, progressPercent = 1.0f, isLoading = false) }
-                    sendEvent(LessonViewerUiEvent.ShowToast("تم إكمال الدرس! كسبت +25 XP 🎉"))
+                    sendEvent(LessonViewerUiEvent.ShowToast("تم إكمال الدرس بنجاح"))
                 }
                 is RtiqaResult.Error -> {
                     setState { copy(isLoading = false, errorMessage = result.error.message) }
@@ -180,7 +174,7 @@ class LessonViewerViewModel(
     private fun handleNextLesson() {
         val nextId = currentState.nextLesson?.id
         if (nextId != null) {
-            sendEvent(LessonViewerUiEvent.NavigateToNextLesson(nextId))
+            sendEvent(LessonViewerUiEvent.NavigateToNextLesson(currentState.courseId, nextId))
         } else {
             sendEvent(LessonViewerUiEvent.ShowToast("وصلت لأخر درس في هذا المقرر 👍"))
         }
@@ -189,7 +183,7 @@ class LessonViewerViewModel(
     private fun handlePrevLesson() {
         val prevId = currentState.prevLesson?.id
         if (prevId != null) {
-            sendEvent(LessonViewerUiEvent.NavigateToPrevLesson(prevId))
+            sendEvent(LessonViewerUiEvent.NavigateToPrevLesson(currentState.courseId, prevId))
         }
     }
 }
@@ -197,10 +191,10 @@ class LessonViewerViewModel(
 
 class LessonViewerViewModelFactory(
     private val completeLessonUseCase: CompleteLessonUseCase,
-    private val getLessonDetailUseCase: GetLessonDetailUseCase? = null,
-    private val getNextLessonUseCase: GetNextLessonUseCase? = null,
-    private val saveLessonProgressUseCase: SaveLessonProgressUseCase? = null,
-    private val getLessonsForCourseUseCase: GetLessonsForCourseUseCase? = null
+    private val getLessonDetailUseCase: GetLessonDetailUseCase,
+    private val getNextLessonUseCase: GetNextLessonUseCase,
+    private val saveLessonProgressUseCase: SaveLessonProgressUseCase,
+    private val getLessonsForCourseUseCase: GetLessonsForCourseUseCase
 ) : androidx.lifecycle.ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LessonViewerViewModel::class.java)) {

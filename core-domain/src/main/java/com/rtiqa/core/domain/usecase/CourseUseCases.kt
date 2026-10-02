@@ -63,17 +63,16 @@ class CompleteLessonUseCase(
     private val courseRepository: CourseRepositoryContract,
     private val userRepository: UserRepositoryContract
 ) {
-    private val completedLessonIds = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
-
     suspend operator fun invoke(lessonId: String, courseId: String): RtiqaResult<Unit> {
         if (lessonId.isBlank() || courseId.isBlank()) {
             return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Invalid lesson or course identifier.")))
         }
-        val wasAlreadyCompleted = completedLessonIds.contains(lessonId)
+        val wasAlreadyCompleted = courseRepository.getLessonById(lessonId)
+            .firstOrNull()
+            ?.isCompleted == true
+        if (wasAlreadyCompleted) return RtiqaResult.Success(Unit)
         val completeResult = courseRepository.markLessonCompleted(lessonId, courseId)
-        if (completeResult is RtiqaResult.Success && !wasAlreadyCompleted) {
-            completedLessonIds.add(lessonId)
-            // Reward 25 XP only once for newly completed lesson
+        if (completeResult is RtiqaResult.Success) {
             userRepository.addXp(25)
         }
         return completeResult
@@ -103,6 +102,17 @@ class DownloadCourseUseCase(
             return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Course ID cannot be blank.")))
         }
         return downloadManager.downloadCourse(courseId)
+    }
+}
+
+class DeleteCourseDownloadUseCase(
+    private val downloadManager: DownloadManagerContract
+) {
+    suspend operator fun invoke(courseId: String): RtiqaResult<Unit> {
+        if (courseId.isBlank()) {
+            return RtiqaResult.Error(RtiqaError.ValidationError(listOf("Course ID cannot be blank.")))
+        }
+        return downloadManager.deleteCourseDownload(courseId)
     }
 }
 
@@ -206,4 +216,3 @@ class SaveLessonProgressUseCase(
         return courseRepository.updateLessonProgress(lessonId, courseId, clampedProgress)
     }
 }
-

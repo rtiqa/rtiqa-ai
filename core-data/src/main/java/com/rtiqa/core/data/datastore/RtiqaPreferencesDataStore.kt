@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
+import com.rtiqa.core.domain.repository.SettingsPreferences
+import com.rtiqa.core.domain.repository.SettingsPreferencesContract
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "rtiqa_user_preferences")
 
@@ -21,7 +23,8 @@ data class UserPreferences(
     val isOfflineModeEnabled: Boolean,
     val activeUserId: String?,
     val lastSyncTimestamp: Long,
-    val activeSchoolId: String? = null
+    val activeSchoolId: String? = null,
+    val languageCode: String = "ar"
 )
 
 /**
@@ -29,7 +32,7 @@ data class UserPreferences(
  */
 open class RtiqaPreferencesDataStore(
     private val context: Context
-) {
+) : SettingsPreferencesContract {
     private val dataStore by lazy { context.dataStore }
 
     open val userPreferencesFlow: Flow<UserPreferences>
@@ -47,9 +50,21 @@ open class RtiqaPreferencesDataStore(
                     isOfflineModeEnabled = preferences[KEY_OFFLINE_MODE] ?: false,
                     activeUserId = preferences[KEY_ACTIVE_USER_ID],
                     lastSyncTimestamp = preferences[KEY_LAST_SYNC_TIMESTAMP] ?: 0L,
-                    activeSchoolId = preferences[KEY_ACTIVE_SCHOOL_ID]?.takeIf { it.isNotBlank() }
+                    activeSchoolId = preferences[KEY_ACTIVE_SCHOOL_ID]?.takeIf { it.isNotBlank() },
+                    languageCode = sanitizeLanguage(preferences[KEY_LANGUAGE_CODE])
                 )
             }
+
+    override val settingsFlow: Flow<SettingsPreferences>
+        get() = userPreferencesFlow.map {
+            SettingsPreferences(it.languageCode, it.isDarkTheme, it.isOfflineModeEnabled)
+        }
+
+    override suspend fun setLanguageCode(languageCode: String) {
+        dataStore.edit { preferences ->
+            preferences[KEY_LANGUAGE_CODE] = sanitizeLanguage(languageCode)
+        }
+    }
 
     open suspend fun setActiveSchoolId(schoolId: String?) {
         dataStore.edit { preferences ->
@@ -61,13 +76,13 @@ open class RtiqaPreferencesDataStore(
         }
     }
 
-    open suspend fun setDarkTheme(enabled: Boolean) {
+    override suspend fun setDarkTheme(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[KEY_DARK_THEME] = enabled
         }
     }
 
-    open suspend fun setOfflineMode(enabled: Boolean) {
+    override suspend fun setOfflineMode(enabled: Boolean) {
         dataStore.edit { preferences ->
             preferences[KEY_OFFLINE_MODE] = enabled
         }
@@ -95,5 +110,9 @@ open class RtiqaPreferencesDataStore(
         private val KEY_ACTIVE_USER_ID = stringPreferencesKey("key_active_user_id")
         private val KEY_LAST_SYNC_TIMESTAMP = longPreferencesKey("key_last_sync_timestamp")
         private val KEY_ACTIVE_SCHOOL_ID = stringPreferencesKey("key_active_school_id")
+        private val KEY_LANGUAGE_CODE = stringPreferencesKey("key_language_code")
+
+        private fun sanitizeLanguage(languageCode: String?): String =
+            if (languageCode == "en") "en" else "ar"
     }
 }

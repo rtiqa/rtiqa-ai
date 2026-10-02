@@ -1,6 +1,7 @@
 package com.rtiqa.feature.auth
 
 import com.rtiqa.core.domain.model.UserProfile
+import com.rtiqa.core.domain.error.RtiqaError
 import com.rtiqa.core.domain.repository.AuthRepositoryContract
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.domain.usecase.LoginUseCase
@@ -10,9 +11,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.launch
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -26,10 +29,12 @@ class LoginViewModelTest {
 
     private class FakeAuthRepository : AuthRepositoryContract {
         private val session = MutableStateFlow<UserProfile?>(null)
+        var loginResult: RtiqaResult<UserProfile>? = null
 
         override fun observeUserSession(): Flow<UserProfile?> = session
 
         override suspend fun login(email: String, pass: String): RtiqaResult<UserProfile> {
+            loginResult?.let { return it }
             val user = UserProfile("u1", "Alex", email, null, 100, 3, false, false)
             session.value = user
             return RtiqaResult.Success(user)
@@ -85,5 +90,45 @@ class LoginViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals("alex@rtiqa.com", viewModel.currentState.email)
+    }
+
+    @Test
+    fun LoginViewModel_authError_doesNotNavigate() = runTest {
+        val repo = FakeAuthRepository().apply {
+            loginResult = RtiqaResult.Error(RtiqaError.AuthError("Invalid credentials"))
+        }
+        val viewModel = LoginViewModel(LoginUseCase(repo), ObserveUserSessionUseCase(repo))
+        val events = mutableListOf<LoginUiEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiEvent.collect { events += it }
+        }
+
+        viewModel.onAction(LoginUiAction.EmailChanged("alex@rtiqa.com"))
+        viewModel.onAction(LoginUiAction.PasswordChanged("wrong-password"))
+        viewModel.onAction(LoginUiAction.SubmitLogin)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("Invalid credentials", viewModel.currentState.errorMessage)
+        assertEquals(false, events.any { it is LoginUiEvent.NavigateToHome })
+    }
+
+    @Test
+    fun LoginViewModel_networkError_doesNotNavigate() = runTest {
+        val repo = FakeAuthRepository().apply {
+            loginResult = RtiqaResult.Error(RtiqaError.NetworkError("Network unavailable"))
+        }
+        val viewModel = LoginViewModel(LoginUseCase(repo), ObserveUserSessionUseCase(repo))
+        val events = mutableListOf<LoginUiEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiEvent.collect { events += it }
+        }
+
+        viewModel.onAction(LoginUiAction.EmailChanged("alex@rtiqa.com"))
+        viewModel.onAction(LoginUiAction.PasswordChanged("password123"))
+        viewModel.onAction(LoginUiAction.SubmitLogin)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("Network unavailable", viewModel.currentState.errorMessage)
+        assertEquals(false, events.any { it is LoginUiEvent.NavigateToHome })
     }
 }

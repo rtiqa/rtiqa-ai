@@ -40,15 +40,18 @@ class RestInterceptorsTest {
     }
 
     @Test
-    fun testAuthorizationHeaderAddedWhenSessionExists() {
-        sessionStore.token = "valid_rest_token"
+    fun authenticatedRequest_usesExactServerBearerToken() {
+        sessionStore.token = "eyJhbGciOiJIUzI1NiJ9.real-server-signature"
         mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
         val request = Request.Builder().url(mockWebServer.url("/")).build()
         client.newCall(request).execute()
 
         val recordedRequest = mockWebServer.takeRequest()
-        assertEquals("Bearer valid_rest_token", recordedRequest.getHeader("Authorization"))
+        assertEquals(
+            "Bearer eyJhbGciOiJIUzI1NiJ9.real-server-signature",
+            recordedRequest.getHeader("Authorization")
+        )
     }
 
     @Test
@@ -76,15 +79,16 @@ class RestInterceptorsTest {
     }
 
     @Test
-    fun testTenantHeaderAddedWhenActiveTenantExists() {
-        sessionStore.tenantId = "tenant-123"
+    fun tenantScopedRequest_usesReturnedOrganizationHeader() {
+        sessionStore.saveSession("real-server-token", "organization-from-login")
         mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
         val request = Request.Builder().url(mockWebServer.url("/")).build()
         client.newCall(request).execute()
 
         val recordedRequest = mockWebServer.takeRequest()
-        assertEquals("tenant-123", recordedRequest.getHeader("X-Tenant-Id"))
+        assertEquals("organization-from-login", recordedRequest.getHeader("X-Tenant-Id"))
+        assertEquals("Bearer real-server-token", recordedRequest.getHeader("Authorization"))
     }
 
     @Test

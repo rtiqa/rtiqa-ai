@@ -88,22 +88,11 @@
 
     <!-- Downloads Screen -->
     <string name="downloads_title">المحفوظات والتعلم بدون إنترنت</string>
-    <string name="storage_used">مساحة التخزين المحلية المستخدمة: 142 MB (نموذج معروض)</string>
-    <string name="downloaded_lessons_count">الدروس المحفوظة محلياً (%1$d)</string>
+    <string name="offline_content_summary">المحتوى المحفوظ للعمل بدون إنترنت</string>
+    <string name="downloaded_courses_count">المقررات المحفوظة (%1$d)</string>
     <string name="available_offline_text">متاح بدون إنترنت • %1$d دقيقة</string>
 
     <!-- Profile Screen -->
-    <string name="certificates_title">شهادات إتمام الدورات من رتقاء</string>
-    <string name="accredited_cert">شهادة إتمام دورة</string>
-    <string name="cert_ai_title">الذكاء الاصطناعي والشبكات العصبية</string>
-    <string name="cert_issued_to">صادرة لـ: %1$s • رمز: RTIQA-2026-X92</string>
-    <string name="achievements_title">الإنجازات والأوسمة</string>
-    <string name="achievement_ai_pioneer">رائد الذكاء الاصطناعي</string>
-    <string name="achievement_ai_pioneer_desc">أكمل 5 دروس ذكاء اصطناعي محلياً</string>
-    <string name="achievement_consistent">باحث مواظب</string>
-    <string name="achievement_consistent_desc">حافظ على تتابع دراسي لمدة 12 يوماً</string>
-    <string name="achievement_quiz_master">خبير التقييمات</string>
-    <string name="achievement_quiz_master_desc">احصل على 100%% في 3 تقييمات</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">الإعدادات والخيارات</string>

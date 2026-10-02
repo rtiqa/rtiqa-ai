@@ -86,6 +86,19 @@ interface OfflineSyncContract {
     fun observePendingSyncCount(): Flow<Int>
 }
 
+data class SettingsPreferences(
+    val languageCode: String = "ar",
+    val isDarkTheme: Boolean = false,
+    val isOfflineModeEnabled: Boolean = false
+)
+
+interface SettingsPreferencesContract {
+    val settingsFlow: Flow<SettingsPreferences>
+    suspend fun setLanguageCode(languageCode: String)
+    suspend fun setDarkTheme(enabled: Boolean)
+    suspend fun setOfflineMode(enabled: Boolean)
+}
+
 /**
  * Contract for Media and Course Content Download management.
  */

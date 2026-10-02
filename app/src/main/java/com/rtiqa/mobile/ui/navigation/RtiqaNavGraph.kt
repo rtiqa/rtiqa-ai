@@ -1,9 +1,7 @@
 package com.rtiqa.mobile.ui.navigation
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.rtiqa.core.data.di.AppDiContainer
@@ -11,8 +9,12 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,9 +37,14 @@ import com.rtiqa.mobile.ui.screens.ProfileScreen
 import com.rtiqa.mobile.ui.screens.QuizScreen
 import com.rtiqa.mobile.ui.screens.SettingsScreen
 import com.rtiqa.mobile.ui.viewmodel.AiTutorViewModel
-import com.rtiqa.mobile.ui.viewmodel.CourseViewModel
-import com.rtiqa.mobile.ui.viewmodel.MainViewModel
-import com.rtiqa.mobile.ui.viewmodel.QuizViewModel
+import com.rtiqa.mobile.ui.viewmodel.HomeDashboardViewModelFactory
+import com.rtiqa.mobile.ui.viewmodel.OfflineDownloadsViewModelFactory
+import com.rtiqa.mobile.ui.viewmodel.ProfileViewModelFactory
+import com.rtiqa.mobile.ui.viewmodel.SettingsViewModelFactory
+import com.rtiqa.feature.home.HomeDashboardViewModel
+import com.rtiqa.feature.offline.OfflineDownloadsViewModel
+import com.rtiqa.feature.profile.ProfileViewModel
+import com.rtiqa.feature.settings.SettingsViewModel
 import com.rtiqa.feature.courses.CoursesListScreen
 import com.rtiqa.feature.courses.CourseDetailScreen as FeatureCourseDetailScreen
 import com.rtiqa.feature.courses.CoursesListViewModel
@@ -71,38 +78,26 @@ import com.rtiqa.feature.admin.teacher.TeacherDashboardUiAction
 
 @Composable
 fun RtiqaApp(
-    mainViewModel: MainViewModel = viewModel(),
-    courseViewModel: CourseViewModel = viewModel(),
+    appDiContainer: AppDiContainer,
     aiTutorViewModel: AiTutorViewModel = viewModel(),
-    quizViewModel: QuizViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
-    val context = LocalContext.current
-    val appDiContainer = remember(context) { AppDiContainer(context.applicationContext) }
     val scope = rememberCoroutineScope()
 
     val activeSession by appDiContainer.authRepository.observeUserSession().collectAsState(initial = null)
-    val userProfile by mainViewModel.userProfile.collectAsState()
-    val isOnline by mainViewModel.isOnline.collectAsState()
-
-    val courses by courseViewModel.filteredCourses.collectAsState()
-    val bookmarkedCourses by courseViewModel.bookmarkedCourses.collectAsState()
-    val downloadedCourses by courseViewModel.downloadedCourses.collectAsState()
-    val downloadedLessons by courseViewModel.downloadedLessons.collectAsState()
-
-    val selectedCategory by courseViewModel.selectedCategory.collectAsState()
-    val searchQuery by courseViewModel.searchQuery.collectAsState()
+    val preferences by appDiContainer.preferencesDataStore.userPreferencesFlow.collectAsState(
+        initial = com.rtiqa.core.data.datastore.UserPreferences(false, false, null, 0L)
+    )
+    val isOnline by appDiContainer.networkMonitor.isOnline.collectAsState(initial = true)
 
     val chatMessages by aiTutorViewModel.messages.collectAsState()
     val aiInputText by aiTutorViewModel.inputText.collectAsState()
     val isAiLoading by aiTutorViewModel.isLoading.collectAsState()
     val aiErrorMessage by aiTutorViewModel.errorMessage.collectAsState()
 
-    val quizUiState by quizViewModel.uiState.collectAsState()
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: "home"
-    val isArabic = userProfile.language == "ar"
+    val isArabic = preferences.languageCode == "ar"
     val layoutDirection = if (isArabic) LayoutDirection.Rtl else LayoutDirection.Ltr
 
     CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
@@ -201,27 +196,45 @@ fun RtiqaApp(
             }
 
             composable("home") {
-                val enrolledCourses by courseViewModel.enrolledCourses.collectAsState()
-                val completedLessonsCount by courseViewModel.completedLessonsCount.collectAsState()
-                val passedQuizzesCount by courseViewModel.passedQuizzesCount.collectAsState()
+                val homeViewModel: HomeDashboardViewModel = viewModel(
+                    factory = HomeDashboardViewModelFactory(appDiContainer)
+                )
+                val homeUiState by homeViewModel.uiState.collectAsState()
 
                 HomeScreen(
-                    userProfile = userProfile,
-                    courses = courses,
-                    enrolledCourses = enrolledCourses,
-                    completedLessonsCount = completedLessonsCount,
-                    passedQuizzesCount = passedQuizzesCount,
+                    userProfile = homeUiState.userProfile,
+                    courses = homeUiState.featuredCourses,
+                    currentLesson = homeUiState.currentLesson,
+                    completedLessonsCount = homeUiState.completedLessonsCount,
+                    passedQuizzesCount = homeUiState.passedQuizzesCount,
                     onCourseClick = { courseId ->
-                        courseViewModel.selectCourse(courseId)
                         navController.navigate("course_detail/$courseId")
                     },
-                    onLessonClick = { lessonId ->
-                        navController.navigate("lesson_player/$lessonId")
+                    onLessonClick = { courseId, lessonId ->
+                        navController.navigate("lesson_player/$courseId/$lessonId")
                     },
                     onNavigate = { route -> navController.navigate(route) },
-                    onToggleBookmark = { id, status -> courseViewModel.toggleBookmark(id, status) },
-                    onToggleDownload = { id, status -> courseViewModel.toggleCourseDownload(id, status) },
-                    onToggleLanguage = { mainViewModel.toggleLanguage() },
+                    onToggleBookmark = { id, status ->
+                        scope.launch {
+                            appDiContainer.domainUseCasesContainer.toggleBookmarkUseCase(id, !status)
+                        }
+                    },
+                    onToggleDownload = { id, status ->
+                        scope.launch {
+                            if (status) {
+                                appDiContainer.domainUseCasesContainer.deleteCourseDownloadUseCase(id)
+                            } else {
+                                appDiContainer.domainUseCasesContainer.downloadCourseUseCase(id)
+                            }
+                        }
+                    },
+                    onToggleLanguage = {
+                        scope.launch {
+                            appDiContainer.preferencesDataStore.setLanguageCode(
+                                if (isArabic) "en" else "ar"
+                            )
+                        }
+                    },
                     isArabic = isArabic
                 )
             }
@@ -252,7 +265,7 @@ fun RtiqaApp(
                     viewModel = courseDetailViewModel,
                     onBackClick = { navController.popBackStack() },
                     onNavigateToLesson = { lessonId ->
-                        navController.navigate("lesson_player/$lessonId")
+                        navController.navigate("lesson_player/$courseId/$lessonId")
                     },
                     onNavigateToQuiz = { cId ->
                         val targetCourseId = if (cId.isNotBlank()) cId else courseId
@@ -266,17 +279,17 @@ fun RtiqaApp(
             }
 
             composable(
-                route = "lesson_player/{lessonId}",
-                arguments = listOf(navArgument("lessonId") { type = NavType.StringType })
+                route = "lesson_player/{courseId}/{lessonId}",
+                arguments = listOf(
+                    navArgument("courseId") { type = NavType.StringType },
+                    navArgument("lessonId") { type = NavType.StringType }
+                )
             ) { backStack ->
+                val courseId = backStack.arguments?.getString("courseId") ?: ""
                 val lessonId = backStack.arguments?.getString("lessonId") ?: ""
-                val allLessons by courseViewModel.allLessons.collectAsState()
-                val matchingLesson = allLessons.find { it.id == lessonId }
-                val courseId = matchingLesson?.courseId
-                val isQuizPassed = matchingLesson?.isQuizPassed == true
 
                 val viewerViewModel: com.rtiqa.feature.lessons.LessonViewerViewModel = viewModel(
-                    key = "lesson_viewer_$lessonId",
+                    key = "lesson_viewer_${courseId}_$lessonId",
                     factory = com.rtiqa.feature.lessons.LessonViewerViewModelFactory(
                         completeLessonUseCase = appDiContainer.domainUseCasesContainer.completeLessonUseCase,
                         getLessonDetailUseCase = appDiContainer.domainUseCasesContainer.getLessonDetailUseCase,
@@ -287,7 +300,7 @@ fun RtiqaApp(
                 )
 
                 androidx.compose.runtime.LaunchedEffect(lessonId, courseId) {
-                    if (lessonId.isNotBlank() && !courseId.isNullOrBlank()) {
+                    if (lessonId.isNotBlank() && courseId.isNotBlank()) {
                         viewerViewModel.onAction(
                             com.rtiqa.feature.lessons.LessonViewerUiAction.InitializeLesson(
                                 lessonId = lessonId,
@@ -298,30 +311,30 @@ fun RtiqaApp(
                 }
 
                 val uiState by viewerViewModel.uiState.collectAsState()
-
-                val effectiveUiState = if (courseId.isNullOrBlank()) {
-                    uiState.copy(isLoading = true)
-                } else {
-                    uiState
+                androidx.compose.runtime.LaunchedEffect(viewerViewModel) {
+                    viewerViewModel.uiEvent.collect { event ->
+                        when (event) {
+                            is com.rtiqa.feature.lessons.LessonViewerUiEvent.NavigateToNextLesson ->
+                                navController.navigate("lesson_player/${event.courseId}/${event.lessonId}")
+                            is com.rtiqa.feature.lessons.LessonViewerUiEvent.NavigateToPrevLesson ->
+                                navController.navigate("lesson_player/${event.courseId}/${event.lessonId}")
+                            else -> Unit
+                        }
+                    }
                 }
 
                 com.rtiqa.feature.lessons.LessonDetailsScreen(
-                    uiState = effectiveUiState,
+                    uiState = uiState,
                     onAction = { viewerViewModel.onAction(it) },
                     onBack = { navController.popBackStack() },
                     onStartQuiz = {
-                        val targetCourseId = courseId ?: ""
-                        if (targetCourseId.isNotBlank()) {
-                            navController.navigate("quiz/play/$targetCourseId?lessonId=$lessonId")
+                        if (courseId.isNotBlank()) {
+                            navController.navigate("quiz/play/$courseId?lessonId=$lessonId")
                         } else {
                             navController.navigate("quiz")
                         }
                     },
-                    onNavigateToLesson = { targetLessonId ->
-                        navController.navigate("lesson_player/$targetLessonId")
-                    },
-                    isQuizPassed = isQuizPassed,
-                    durationMinutes = matchingLesson?.durationMinutes
+                    isQuizPassed = false
                 )
             }
 
@@ -338,9 +351,6 @@ fun RtiqaApp(
             ) { backStack ->
                 val courseId = backStack.arguments?.getString("courseId") ?: ""
                 val lessonId = backStack.arguments?.getString("lessonId") ?: ""
-                val allLessons by courseViewModel.allLessons.collectAsState()
-                val wasAlreadyPassed = allLessons.find { it.id == lessonId }?.isQuizPassed == true
-
                 val quizPlayViewModel: com.rtiqa.feature.quiz.QuizPlayViewModel = viewModel(
                     key = "quiz_play_${courseId}_$lessonId",
                     factory = com.rtiqa.feature.quiz.QuizPlayViewModelFactory(
@@ -367,17 +377,7 @@ fun RtiqaApp(
                     uiState = quizState,
                     onAction = { quizPlayViewModel.onAction(it) },
                     onBack = { navController.popBackStack() },
-                    onQuizCompleted = { isPassed, xpEarned ->
-                        if (isPassed && lessonId.isNotBlank()) {
-                            courseViewModel.markLessonQuizPassed(lessonId, courseId, true)
-                            scope.launch {
-                                appDiContainer.courseRepository.markLessonCompleted(lessonId, courseId)
-                            }
-                        }
-                        if (isPassed && !wasAlreadyPassed && xpEarned > 0) {
-                            mainViewModel.addRewards(xpEarned, 0)
-                        }
-                    },
+                    onQuizCompleted = { _, _ -> },
                     isArabic = isArabic
                 )
             }
@@ -396,67 +396,41 @@ fun RtiqaApp(
             }
 
             composable("quiz") {
-                val selectedCourseId by courseViewModel.selectedCourseId.collectAsState()
-                val allCourses by courseViewModel.filteredCourses.collectAsState()
-                val effectiveCourseId = selectedCourseId.ifBlank { allCourses.firstOrNull()?.id ?: "" }
-
-                val quizPlayViewModel: com.rtiqa.feature.quiz.QuizPlayViewModel = viewModel(
-                    key = "quiz_play_tab_$effectiveCourseId",
-                    factory = com.rtiqa.feature.quiz.QuizPlayViewModelFactory(
-                        getQuizForCourseUseCase = appDiContainer.domainUseCasesContainer.getQuizForCourseUseCase,
-                        submitQuizResultUseCase = appDiContainer.domainUseCasesContainer.submitQuizResultUseCase,
-                        evaluateQuizAnswersUseCase = appDiContainer.domainUseCasesContainer.evaluateQuizAnswersUseCase
-                    )
-                )
-
-                androidx.compose.runtime.LaunchedEffect(effectiveCourseId) {
-                    if (effectiveCourseId.isNotBlank()) {
-                        quizPlayViewModel.onAction(
-                            com.rtiqa.feature.quiz.QuizPlayUiAction.LoadQuizForCourse(
-                                courseId = effectiveCourseId
-                            )
-                        )
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(if (isArabic) "اختر مقرراً لبدء الاختبار" else "Choose a course to start a quiz")
+                    Button(onClick = { navController.navigate("courses") }) {
+                        Text(if (isArabic) "عرض المقررات" else "View courses")
                     }
                 }
-
-                val quizState by quizPlayViewModel.uiState.collectAsState()
-
-                com.rtiqa.feature.quiz.QuizPlayScreen(
-                    uiState = quizState,
-                    onAction = { quizPlayViewModel.onAction(it) },
-                    onBack = { navController.popBackStack() },
-                    onQuizCompleted = { isPassed, xpEarned ->
-                        if (xpEarned > 0) {
-                            mainViewModel.addRewards(xpEarned, 0)
-                        }
-                    },
-                    isArabic = isArabic
-                )
             }
 
             composable("downloads") {
+                val offlineDownloadsViewModel: OfflineDownloadsViewModel = viewModel(
+                    factory = OfflineDownloadsViewModelFactory(appDiContainer)
+                )
                 DownloadsScreen(
-                    downloadedCourses = downloadedCourses,
-                    downloadedLessons = downloadedLessons,
-                    onLessonClick = { lessonId ->
-                        courseViewModel.selectLesson(lessonId)
-                        navController.navigate("lesson_player/$lessonId")
+                    viewModel = offlineDownloadsViewModel,
+                    onNavigateToCourse = { courseId ->
+                        navController.navigate("course_detail/$courseId")
                     },
                     isArabic = isArabic
                 )
             }
 
             composable("profile") {
+                val profileViewModel: ProfileViewModel = viewModel(
+                    factory = ProfileViewModelFactory(appDiContainer)
+                )
                 ProfileScreen(
-                    userProfile = userProfile,
+                    viewModel = profileViewModel,
                     onNavigateToAdmin = { navController.navigate("admin_dashboard") },
-                    onNavigateToTeacherDashboard = { navController.navigate("teacher_dashboard") },
-                    onLogout = {
-                        scope.launch {
-                            appDiContainer.authRepository.logout()
-                            navController.navigate("welcome") {
-                                popUpTo("home") { inclusive = true }
-                            }
+                    onNavigateToLogin = {
+                        navController.navigate("welcome") {
+                            popUpTo("home") { inclusive = true }
                         }
                     },
                     isArabic = isArabic
@@ -605,37 +579,6 @@ fun RtiqaApp(
             }
 
             
-            composable(com.rtiqa.feature.lessons.LessonRoutes.VIEWER) { backStackEntry ->
-                val lessonId = backStackEntry.arguments?.getString("lessonId") ?: ""
-                val courseId = "course_demo" // fallback for demo since not passed in route
-                val viewModel: com.rtiqa.feature.lessons.LessonViewerViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-                    factory = com.rtiqa.feature.lessons.LessonViewerViewModelFactory(
-                        completeLessonUseCase = appDiContainer.domainUseCasesContainer.completeLessonUseCase,
-                        getLessonDetailUseCase = appDiContainer.domainUseCasesContainer.getLessonDetailUseCase,
-                        getNextLessonUseCase = appDiContainer.domainUseCasesContainer.getNextLessonUseCase,
-                        saveLessonProgressUseCase = appDiContainer.domainUseCasesContainer.saveLessonProgressUseCase,
-                        getLessonsForCourseUseCase = appDiContainer.domainUseCasesContainer.getLessonsForCourseUseCase
-                    )
-                )
-                
-                // Initialize if needed
-                androidx.compose.runtime.LaunchedEffect(lessonId) {
-                    viewModel.onAction(com.rtiqa.feature.lessons.LessonViewerUiAction.InitializeLesson(lessonId, courseId))
-                }
-
-                val uiState by viewModel.uiState.collectAsState()
-                
-                com.rtiqa.feature.lessons.LessonDetailsScreen(
-                    uiState = uiState,
-                    onAction = { viewModel.onAction(it) },
-                    onBack = { navController.popBackStack() },
-                    onStartQuiz = { /* No-op for now based on requirements */ },
-                    onNavigateToLesson = { targetId ->
-                        navController.navigate("lesson_player/$targetId")
-                    }
-                )
-            }
-
             composable("academic_platform") {
                 val academicViewModel: com.rtiqa.mobile.ui.viewmodel.AcademicPlatformViewModel = viewModel()
                 val academicUiState by academicViewModel.uiState.collectAsState()
@@ -647,14 +590,12 @@ fun RtiqaApp(
             }
 
             composable("settings") {
+                val settingsViewModel: SettingsViewModel = viewModel(
+                    factory = SettingsViewModelFactory(appDiContainer)
+                )
                 SettingsScreen(
-                    userProfile = userProfile,
-                    isOnline = isOnline,
+                    viewModel = settingsViewModel,
                     onBack = { navController.popBackStack() },
-                    onToggleLanguage = { mainViewModel.toggleLanguage() },
-                    onToggleTheme = { mainViewModel.toggleTheme() },
-                    onToggleOfflineAutoSync = { mainViewModel.toggleOfflineAutoSync() },
-                    isArabic = isArabic
                 )
             }
         }

@@ -12,10 +12,6 @@ import androidx.compose.ui.unit.dp
 import com.rtiqa.core.domain.model.Lesson
 import com.rtiqa.core.ui.card.RdsCard
 
-object LessonRoutes {
-    const val VIEWER = "lessons/viewer/{lessonId}"
-}
-
 @Composable
 fun LessonContentViewerFoundation(
     lesson: Lesson,

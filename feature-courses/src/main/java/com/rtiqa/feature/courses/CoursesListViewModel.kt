@@ -6,6 +6,9 @@ import com.rtiqa.core.domain.model.PageRequest
 import com.rtiqa.core.domain.usecase.DownloadCourseUseCase
 import com.rtiqa.core.domain.usecase.GetPagedCoursesUseCase
 import com.rtiqa.core.domain.usecase.SearchCoursesUseCase
+import com.rtiqa.core.domain.usecase.SyncCoursesUseCase
+import com.rtiqa.core.domain.usecase.ToggleBookmarkUseCase
+import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.ui.base.BaseViewModel
 import com.rtiqa.core.ui.base.ViewUiAction
 import com.rtiqa.core.ui.base.ViewUiEvent
@@ -23,6 +26,7 @@ data class CoursesListUiState(
     val isLoading: Boolean = true,
     val totalCount: Int = 0,
     val currentPage: Int = 1,
+    val hasNextPage: Boolean = false,
     val errorMessage: String? = null
 ) : ViewUiState
 
@@ -45,17 +49,19 @@ class CoursesListViewModel(
     private val getPagedCoursesUseCase: GetPagedCoursesUseCase,
     private val searchCoursesUseCase: SearchCoursesUseCase,
     private val downloadCourseUseCase: DownloadCourseUseCase,
-    private val toggleBookmarkUseCase: com.rtiqa.core.domain.usecase.ToggleBookmarkUseCase? = null,
-    private val syncCoursesUseCase: com.rtiqa.core.domain.usecase.SyncCoursesUseCase? = null
+    private val toggleBookmarkUseCase: ToggleBookmarkUseCase,
+    private val syncCoursesUseCase: SyncCoursesUseCase
 ) : BaseViewModel<CoursesListUiState, CoursesListUiAction, CoursesListUiEvent>(CoursesListUiState()) {
 
     private var searchJob: Job? = null
+    private var loadJob: Job? = null
 
     init {
         loadCourses()
     }
 
     private fun loadCourses() {
+        loadJob?.cancel()
         setState { copy(isLoading = true) }
         val request = PageRequest(
             page = currentState.currentPage,
@@ -63,12 +69,19 @@ class CoursesListViewModel(
             searchQuery = currentState.searchQuery.ifBlank { null },
             filterCategory = currentState.selectedCategory
         )
-        getPagedCoursesUseCase(request)
+        loadJob = getPagedCoursesUseCase(request)
             .onEach { paged ->
                 setState {
+                    val updatedCourses = if (paged.page == 1) {
+                        paged.items
+                    } else {
+                        (courses + paged.items).distinctBy { it.id }
+                    }
                     copy(
-                        courses = paged.items,
+                        courses = updatedCourses,
                         totalCount = paged.totalItems,
+                        currentPage = paged.page,
+                        hasNextPage = paged.hasNextPage,
                         isLoading = false,
                         errorMessage = null
                     )
@@ -96,24 +109,41 @@ class CoursesListViewModel(
             is CoursesListUiAction.CourseClicked -> sendEvent(CoursesListUiEvent.NavigateToCourseDetail(action.courseId))
             is CoursesListUiAction.SyncRequested -> syncCourses()
             is CoursesListUiAction.LoadNextPage -> {
-                setState { copy(currentPage = currentPage + 1) }
-                loadCourses()
+                if (currentState.hasNextPage && !currentState.isLoading) {
+                    setState { copy(currentPage = currentPage + 1) }
+                    loadCourses()
+                }
             }
         }
     }
 
     private fun toggleBookmark(courseId: String, isBookmarked: Boolean) {
         viewModelScope.launch {
-            toggleBookmarkUseCase?.invoke(courseId, isBookmarked)
+            when (val result = toggleBookmarkUseCase(courseId, isBookmarked)) {
+                is RtiqaResult.Success -> Unit
+                is RtiqaResult.Error -> {
+                    setState { copy(errorMessage = result.error.message) }
+                    sendEvent(CoursesListUiEvent.ShowMessage(result.error.message))
+                }
+                is RtiqaResult.Loading -> Unit
+            }
         }
     }
 
     private fun syncCourses() {
         viewModelScope.launch {
             setState { copy(isLoading = true) }
-            syncCoursesUseCase?.invoke()
-            setState { copy(isLoading = false) }
-            sendEvent(CoursesListUiEvent.ShowMessage("تمت مزامنة المقررات بنجاح"))
+            when (val result = syncCoursesUseCase()) {
+                is RtiqaResult.Success -> {
+                    setState { copy(isLoading = false, errorMessage = null) }
+                    sendEvent(CoursesListUiEvent.ShowMessage("تمت مزامنة المقررات بنجاح"))
+                }
+                is RtiqaResult.Error -> {
+                    setState { copy(isLoading = false, errorMessage = result.error.message) }
+                    sendEvent(CoursesListUiEvent.ShowMessage(result.error.message))
+                }
+                is RtiqaResult.Loading -> setState { copy(isLoading = true) }
+            }
         }
     }
 

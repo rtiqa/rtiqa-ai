@@ -25,6 +25,7 @@ import com.rtiqa.core.domain.model.QuestionType
 import com.rtiqa.core.domain.model.Quiz
 import com.rtiqa.core.domain.result.RtiqaResult
 import com.rtiqa.core.network.api.AuthResponseDto
+import com.rtiqa.core.network.api.ClassGradebookDto
 import com.rtiqa.core.network.api.LessonCompletionResponseDto
 import com.rtiqa.core.network.api.LoginRequestDto
 import com.rtiqa.core.network.api.NetworkCourseDto
@@ -134,6 +135,8 @@ class FakeRtiqaApiService : RtiqaApiService {
     override suspend fun updateLessonProgress(courseId: String, lessonId: String, request: com.rtiqa.core.network.api.LessonProgressRequestDto): Response<com.rtiqa.core.network.api.LessonProgressResponseDto> =
         Response.success(LessonCompletionResponseDto(true, lessonId, courseId, true, 100.0f, 1, 1))
     override suspend fun syncOfflineData(payload: NetworkSyncPayloadDto): Response<NetworkSyncResponseDto> = throw NotImplementedError()
+    override suspend fun getClassGradebook(classId: String): Response<ClassGradebookDto> =
+        Response.success(ClassGradebookDto(classId, emptyList(), emptyList(), emptyList()))
 }
 
 class QuizRepositoryImplTest {
@@ -178,11 +181,37 @@ class QuizRepositoryImplTest {
         )
     }
 
-    @Test    fun getQuizzesForCourse_returnsDefaultWhenDbEmpty() = runTest {
+    @Test
+    fun noAssessment_returnsNoQuiz() = runTest {
         val quizzes = repository.getQuizzesForCourse("c1").first()
-        assertEquals(1, quizzes.size)
-        assertEquals("quiz_c1", quizzes[0].id)
-        assertEquals(70, quizzes[0].passingScorePercent)
+        assertTrue(quizzes.isEmpty())
+        assertEquals(null, repository.getQuizForCourse("c1").first())
+    }
+
+    @Test
+    fun missingQuizById_returnsNull() = runTest {
+        assertEquals(null, repository.getQuizById("missing").first())
+    }
+
+    @Test
+    fun noQuestions_doesNotReturnDefaultQuestions() = runTest {
+        fakeDao.assessments += AssessmentEntity("a1", "c1", "org", "Real", "QUIZ", 70, 5, 0)
+        val quiz = repository.getQuizForCourse("c1").first()
+        assertNotNull(quiz)
+        assertTrue(quiz!!.questions.isEmpty())
+    }
+
+    @Test
+    fun noAuthenticatedUser_doesNotSaveQuizAttempt() = runTest {
+        val unauthenticated = QuizRepositoryImpl(
+            academicDao = fakeDao,
+            offlineSyncManager = offlineSyncManager,
+            currentUserIdProvider = { null }
+        )
+        val result = unauthenticated.submitQuizResult("quiz_c1", 1, 1)
+        assertTrue(result is RtiqaResult.Error)
+        assertTrue(fakeDao.attempts.isEmpty())
+        assertTrue(fakeSyncDao.items.isEmpty())
     }
 
     @Test
@@ -209,6 +238,7 @@ class QuizRepositoryImplTest {
 
     @Test
     fun submitQuizResult_calculatesPercentagePassesAndEnqueuesOfflineAction() = runTest {
+        fakeDao.assessments += AssessmentEntity("quiz_c1", "c1", "org", "Real", "QUIZ", 70, 5, 4)
         val result = repository.submitQuizResult("quiz_c1", 3, 4) // 75% -> passed
         assertTrue(result is RtiqaResult.Success)
 
@@ -223,5 +253,37 @@ class QuizRepositoryImplTest {
         assertTrue(queuedItems[0].payloadJson.contains("\"isPassed\":true"))
         assertEquals("user_123", queuedItems[0].ownerUserId)
         assertEquals("test_session_id", queuedItems[0].ownerSessionId)
+    }
+
+    @Test
+    fun assessmentPassingScore80_score75_isNotPassed() = runTest {
+        fakeDao.assessments += AssessmentEntity("quiz_80", "c1", "org", "Real", "QUIZ", 80, 5, 4)
+
+        val result = repository.submitQuizResult("quiz_80", 3, 4) as RtiqaResult.Success
+
+        assertEquals(75, result.data.scorePercent)
+        assertTrue(!result.data.isPassed)
+        assertTrue(!fakeDao.attempts.single().isPassed)
+    }
+
+    @Test
+    fun assessmentPassingScore60_score65_isPassed() = runTest {
+        fakeDao.assessments += AssessmentEntity("quiz_60", "c1", "org", "Real", "QUIZ", 60, 5, 20)
+
+        val result = repository.submitQuizResult("quiz_60", 13, 20) as RtiqaResult.Success
+
+        assertEquals(65, result.data.scorePercent)
+        assertTrue(result.data.isPassed)
+        assertTrue(fakeDao.attempts.single().isPassed)
+    }
+
+    @Test
+    fun submitResult_passStatusMatchesPersistedAssessmentThreshold() = runTest {
+        fakeDao.assessments += AssessmentEntity("quiz_threshold", "c1", "org", "Real", "QUIZ", 90, 5, 10)
+
+        val result = repository.submitQuizResult("quiz_threshold", 8, 10) as RtiqaResult.Success
+
+        assertTrue(!result.data.isPassed)
+        assertTrue(fakeSyncDao.items.single().payloadJson.contains("\"isPassed\":false"))
     }
 }

@@ -96,7 +96,8 @@ class SubmitQuizResultUseCase(
         }
 
         val userProfile = userRepository.getUserProfile().firstOrNull()
-        val userId = userProfile?.id ?: "u1"
+            ?: return RtiqaResult.Error(RtiqaError.AuthError("An authenticated user is required to submit a quiz."))
+        val userId = userProfile.id
         val previousAttempts = quizRepository.getQuizResultsForUser(quizId, userId).firstOrNull() ?: emptyList()
         val alreadyPassed = previousAttempts.any { it.isPassed }
 
@@ -107,6 +108,7 @@ class SubmitQuizResultUseCase(
             if (resultData.isPassed && !alreadyPassed) {
                 userRepository.addXp(50)
                 userRepository.incrementStreak()
+                return RtiqaResult.Success(resultData.copy(xpEarned = 50))
             }
         }
         return submitResult

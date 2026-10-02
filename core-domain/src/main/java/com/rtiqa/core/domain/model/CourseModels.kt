@@ -115,5 +115,6 @@ data class QuizResult(
     val totalQuestions: Int,
     val scorePercent: Int,
     val isPassed: Boolean,
-    val completedAt: Long = System.currentTimeMillis()
+    val completedAt: Long = System.currentTimeMillis(),
+    val xpEarned: Int = 0
 )

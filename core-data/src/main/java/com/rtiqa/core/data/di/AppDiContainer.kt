@@ -128,7 +128,9 @@ class AppDiContainer(val context: Context) {
 
     val downloadManager: DownloadManagerContract by lazy {
         DownloadManagerImpl(
-            courseDao = database.courseDao()
+            courseDao = database.courseDao(),
+            lessonDao = database.lessonDao(),
+            apiService = apiService
         )
     }
 

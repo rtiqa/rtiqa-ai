@@ -19,12 +19,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -51,12 +54,23 @@ fun CourseDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(courseId) {
         viewModel.onAction(CourseDetailUiAction.LoadCourseDetail(courseId))
     }
+    LaunchedEffect(viewModel) {
+        viewModel.uiEvent.collect { event ->
+            when (event) {
+                is CourseDetailUiEvent.NavigateToLessonViewer -> onNavigateToLesson(event.lessonId)
+                is CourseDetailUiEvent.NavigateToQuiz -> onNavigateToQuiz(event.courseId)
+                is CourseDetailUiEvent.ShowToast -> snackbarHostState.showSnackbar(event.message)
+            }
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -260,7 +274,6 @@ fun CourseDetailScreen(
                                     text = if (isCourseCompleted) "مراجعة اختبار المقرر 🎯" else "بدء اختبار المقرر",
                                     onClick = {
                                         viewModel.onAction(CourseDetailUiAction.StartQuizClicked)
-                                        onNavigateToQuiz(course.id)
                                     },
                                     leadingIcon = RdsIcons.Quiz,
                                     modifier = Modifier.fillMaxWidth()
@@ -283,7 +296,6 @@ fun CourseDetailScreen(
                             lesson = lesson,
                             onClick = {
                                 viewModel.onAction(CourseDetailUiAction.LessonClicked(lesson.id))
-                                onNavigateToLesson(lesson.id)
                             },
                             onToggleComplete = {
                                 viewModel.onAction(CourseDetailUiAction.MarkLessonCompleted(lesson.id))
