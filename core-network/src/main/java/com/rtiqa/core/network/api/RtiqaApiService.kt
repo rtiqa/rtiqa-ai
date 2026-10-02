@@ -30,7 +30,7 @@ data class RegisterRequestDto(
 data class AuthResponseDto(
     val token: String,
     val user: NetworkUserDto,
-    @field:Json(name = "organization_id") val organizationId: String? = null
+    @Json(name = "organization_id") val organizationId: String? = null
 )
 
 data class NetworkCourseDto(
