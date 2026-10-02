@@ -118,7 +118,7 @@ class AuthRepositoryImplTest {
     private class FakeSessionStore : RestSessionStore {
         var token: String? = null
         var organizationId: String? = null
-        var sessionId: String? = null
+        var storedSessionId: String? = null
         override fun saveSession(token: String, organizationId: String?) {
             this.token = token
             this.organizationId = organizationId
@@ -126,12 +126,12 @@ class AuthRepositoryImplTest {
         override fun getSessionToken() = token
         override fun getActiveOrganizationId() = organizationId
         override fun updateActiveOrganizationId(organizationId: String?) { this.organizationId = organizationId }
-        override fun generateAndSaveSessionId(): String = "session-id".also { sessionId = it }
-        override fun getSessionId() = sessionId
+        override fun generateAndSaveSessionId(): String = "session-id".also { storedSessionId = it }
+        override fun getSessionId() = storedSessionId
         override fun clearSession() {
             token = null
             organizationId = null
-            sessionId = null
+            storedSessionId = null
         }
     }
 
@@ -396,7 +396,7 @@ class AuthRepositoryImplTest {
 
         assertNull(f.session.token)
         assertNull(f.session.organizationId)
-        assertNull(f.session.sessionId)
+        assertNull(f.session.storedSessionId)
         assertNull(f.security.getEncryptedString("user_id"))
         assertNull(f.dataStore.activeUserId)
         assertNull(f.dao.profile.value)
