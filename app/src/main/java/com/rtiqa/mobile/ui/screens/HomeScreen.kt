@@ -51,8 +51,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rtiqa.mobile.R
-import com.rtiqa.mobile.domain.model.Course
-import com.rtiqa.mobile.domain.model.UserProfile
+import com.rtiqa.core.domain.model.Course
+import com.rtiqa.core.domain.model.UserProfile
 import com.rtiqa.mobile.ui.components.CourseCard
 import com.rtiqa.mobile.ui.components.XpCoinChip
 
@@ -75,13 +75,11 @@ import androidx.compose.material3.LinearProgressIndicator
 
 @Composable
 fun HomeScreen(
-    userProfile: UserProfile,
+    userProfile: UserProfile?,
     courses: List<Course>,
-    enrolledCourses: List<Course> = emptyList(),
     completedLessonsCount: Int = 0,
     passedQuizzesCount: Int = 0,
     onCourseClick: (String) -> Unit,
-    onLessonClick: (String) -> Unit = {},
     onNavigate: (String) -> Unit,
     onToggleBookmark: (String, Boolean) -> Unit,
     onToggleDownload: (String, Boolean) -> Unit,
@@ -91,9 +89,8 @@ fun HomeScreen(
 ) {
     var showNotificationsDialog by remember { mutableStateOf(false) }
 
-    // Enrolled courses list or fallback to courses marked as enrolled
-    val activeEnrolledCourses = if (enrolledCourses.isNotEmpty()) enrolledCourses else courses.filter { it.isEnrolled }
-    val continueCourse = activeEnrolledCourses.firstOrNull() ?: courses.firstOrNull()
+    val activeEnrolledCourses = homeEnrolledCourses(courses)
+    val continueCourse = homeContinueLearningCourse(activeEnrolledCourses)
 
     LazyColumn(
         modifier = modifier
@@ -131,12 +128,12 @@ fun HomeScreen(
 
                     Column {
                         Text(
-                            text = if (isArabic) "مرحباً، ${userProfile.name} 👋" else "Welcome, ${userProfile.name} 👋",
+                            text = if (isArabic) "مرحباً، ${userProfile?.name.orEmpty()} 👋" else "Welcome, ${userProfile?.name.orEmpty()} 👋",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (isArabic) "المستوى ${userProfile.level} • طالب متميز" else "Level ${userProfile.level} • Star Student",
+                            text = if (isArabic) "المستوى ${userProfile?.calculateLevel() ?: 1} • طالب متميز" else "Level ${userProfile?.calculateLevel() ?: 1} • Star Student",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -194,9 +191,9 @@ fun HomeScreen(
 
             // XP, Coins & Streak Bar
             XpCoinChip(
-                xp = userProfile.xp,
-                coins = userProfile.coins,
-                streak = userProfile.streakDays,
+                xp = userProfile?.levelXp ?: 0,
+                coins = 0,
+                streak = userProfile?.streakDays ?: 0,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -261,7 +258,7 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (isArabic) course.titleAr else course.title,
+                                text = if (isArabic) course.titleAr ?: course.title else course.title,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -301,7 +298,7 @@ fun HomeScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
                         Button(
-                            onClick = { onLessonClick("l_ai_1") },
+                            onClick = { onCourseClick(course.id) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("continue_learning_button"),
@@ -349,14 +346,14 @@ fun HomeScreen(
                 )
                 StatCard(
                     title = if (isArabic) "الدروس المكتملة" else "Completed Lessons",
-                    value = "${completedLessonsCount.coerceAtLeast(1)}",
+                    value = "${homeDisplayCount(completedLessonsCount)}",
                     icon = Icons.Default.PlayArrow,
                     accentColor = Color(0xFF10B981),
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     title = if (isArabic) "الاختبارات المجتازة" else "Passed Quizzes",
-                    value = "${passedQuizzesCount.coerceAtLeast(1)}",
+                    value = "${homeDisplayCount(passedQuizzesCount)}",
                     icon = Icons.Default.Quiz,
                     accentColor = Color(0xFFF59E0B),
                     modifier = Modifier.weight(1f)
@@ -373,14 +370,14 @@ fun HomeScreen(
             ) {
                 StatCard(
                     title = if (isArabic) "إجمالي XP" else "Total XP",
-                    value = "${userProfile.xp}",
+                    value = "${userProfile?.levelXp ?: 0}",
                     icon = Icons.Default.Star,
                     accentColor = Color(0xFF8B5CF6),
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
                     title = if (isArabic) "الأيام المتتالية" else "Streak Days",
-                    value = "${userProfile.streakDays} أيام",
+                    value = "${userProfile?.streakDays ?: 0} أيام",
                     icon = Icons.Default.LocalFireDepartment,
                     accentColor = Color(0xFFEF4444),
                     modifier = Modifier.weight(1f)
@@ -504,6 +501,14 @@ fun HomeScreen(
         )
     }
 }
+
+internal fun homeEnrolledCourses(courses: List<Course>): List<Course> =
+    courses.filter { it.isEnrolled }
+
+internal fun homeContinueLearningCourse(enrolledCourses: List<Course>): Course? =
+    enrolledCourses.firstOrNull { it.progressPercent in 0f..0.999999f }
+
+internal fun homeDisplayCount(count: Int): Int = count.coerceAtLeast(0)
 
 @Composable
 fun StatCard(

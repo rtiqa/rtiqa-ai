@@ -37,7 +37,9 @@ import com.rtiqa.mobile.ui.screens.SettingsScreen
 import com.rtiqa.mobile.ui.viewmodel.AiTutorViewModel
 import com.rtiqa.mobile.ui.viewmodel.CourseViewModel
 import com.rtiqa.mobile.ui.viewmodel.MainViewModel
+import com.rtiqa.mobile.ui.viewmodel.HomeDashboardViewModelFactory
 import com.rtiqa.mobile.ui.viewmodel.QuizViewModel
+import com.rtiqa.feature.home.HomeDashboardViewModel
 import com.rtiqa.feature.courses.CoursesListScreen
 import com.rtiqa.feature.courses.CourseDetailScreen as FeatureCourseDetailScreen
 import com.rtiqa.feature.courses.CoursesListViewModel
@@ -201,26 +203,30 @@ fun RtiqaApp(
             }
 
             composable("home") {
-                val enrolledCourses by courseViewModel.enrolledCourses.collectAsState()
-                val completedLessonsCount by courseViewModel.completedLessonsCount.collectAsState()
-                val passedQuizzesCount by courseViewModel.passedQuizzesCount.collectAsState()
+                val homeViewModel: HomeDashboardViewModel = viewModel(
+                    factory = HomeDashboardViewModelFactory(appDiContainer)
+                )
+                val homeUiState by homeViewModel.uiState.collectAsState()
 
                 HomeScreen(
-                    userProfile = userProfile,
-                    courses = courses,
-                    enrolledCourses = enrolledCourses,
-                    completedLessonsCount = completedLessonsCount,
-                    passedQuizzesCount = passedQuizzesCount,
+                    userProfile = homeUiState.userProfile,
+                    courses = homeUiState.featuredCourses,
+                    completedLessonsCount = 0,
+                    passedQuizzesCount = 0,
                     onCourseClick = { courseId ->
-                        courseViewModel.selectCourse(courseId)
                         navController.navigate("course_detail/$courseId")
                     },
-                    onLessonClick = { lessonId ->
-                        navController.navigate("lesson_player/$lessonId")
-                    },
                     onNavigate = { route -> navController.navigate(route) },
-                    onToggleBookmark = { id, status -> courseViewModel.toggleBookmark(id, status) },
-                    onToggleDownload = { id, status -> courseViewModel.toggleCourseDownload(id, status) },
+                    onToggleBookmark = { id, status ->
+                        scope.launch {
+                            appDiContainer.domainUseCasesContainer.toggleBookmarkUseCase(id, !status)
+                        }
+                    },
+                    onToggleDownload = { id, status ->
+                        scope.launch {
+                            appDiContainer.courseRepository.toggleCourseDownload(id, !status)
+                        }
+                    },
                     onToggleLanguage = { mainViewModel.toggleLanguage() },
                     isArabic = isArabic
                 )

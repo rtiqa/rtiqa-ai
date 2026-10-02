@@ -230,3 +230,41 @@ fun CourseCard(
         }
     }
 }
+
+@Composable
+fun CourseCard(
+    course: com.rtiqa.core.domain.model.Course,
+    onClick: () -> Unit,
+    onToggleBookmark: () -> Unit,
+    onToggleDownload: () -> Unit,
+    isArabic: Boolean = true,
+    modifier: Modifier = Modifier
+) {
+    CourseCard(
+        course = Course(
+            id = course.id,
+            title = course.title,
+            titleAr = course.titleAr ?: course.title,
+            category = course.category,
+            categoryAr = course.category,
+            description = course.description,
+            descriptionAr = course.descriptionAr ?: course.description,
+            rating = course.rating,
+            durationMinutes = course.durationMinutes,
+            totalLessons = course.totalLessons,
+            enrolledCount = 0,
+            imageResName = "img_course_ai_1785095326156",
+            level = course.level,
+            tags = emptyList(),
+            progressPercent = course.progressPercent,
+            isBookmarked = course.isBookmarked,
+            isDownloaded = course.isDownloaded,
+            isEnrolled = course.isEnrolled
+        ),
+        onClick = onClick,
+        onToggleBookmark = onToggleBookmark,
+        onToggleDownload = onToggleDownload,
+        isArabic = isArabic,
+        modifier = modifier
+    )
+}
